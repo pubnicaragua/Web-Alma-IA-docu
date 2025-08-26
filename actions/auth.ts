@@ -31,7 +31,9 @@ export async function ActionMakeLogin(values: AuthLoginSchemaType): Promise<Serv
         }
 
         // Validar las credenciales
-        const loginUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/proxy/auth/login`
+        // ToDo: Crear una instancia de axios
+        const loginUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login`
+
         const response = await fetch(loginUrl, {
             method: "POST",
             headers: {
