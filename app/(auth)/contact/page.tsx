@@ -10,6 +10,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ContactUsSchema } from "@/app/zod/contact";
 import { ContactUsSchemaType } from "@/types/contact";
+import { useAxiosPost } from "@/hooks/use-axios";
+import { FormError } from "@/components/form/form-error";
 
 export default function ContactForm() {
   const { toast } = useToast();
@@ -21,38 +23,45 @@ export default function ContactForm() {
       name: "",
       email: "",
       phone: "",
-      captcha: false,
+      captcha: false as any,
     },
   });
 
   // Desestructuracion del form
   const { register, handleSubmit, formState: { errors, isSubmitting }, reset, watch, setValue } = form;
 
+  const {
+    data: response,
+    loading,
+    error,
+    postData: sendContactMessage,
+  } = useAxiosPost<any, ContactUsSchemaType>(
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/contacto/almaia`
+  );
+
   const isCaptchaChecked = watch("captcha");
 
   // Funcion de submit 
   const onSubmit = async (data: ContactUsSchemaType) => {
-    try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/contacto/almaia`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nombre: data.name,
-          email: data.email,
-          telefono: data.phone,
-        }),
-      });
+    await sendContactMessage({
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      captcha: true,
+    });
 
+    if (!loading && !error) {
       toast({
         title: "Mensaje enviado",
-        description: "Gracias por contactarnos. Te responderemos a la brevedad.",
+        description: response.message || "Gracias por contactarnos. Te responderemos a la brevedad.",
       });
+      reset();
+    }
 
-      reset(); // Limpiar formulario
-    } catch (err) {
+    if (error) {
       toast({
         title: "Error",
-        description: "Error enviando el mensaje. Intenta nuevamente.",
+        description: error,
         variant: "destructive",
       });
     }
@@ -71,9 +80,7 @@ export default function ContactForm() {
             {...register("name")}
             disabled={isSubmitting}
           />
-          {errors.name && (
-            <p className="text-red-500 text-sm">{errors.name.message}</p>
-          )}
+          <FormError message={errors.name?.message} />
         </div>
 
         {/* Email */}
@@ -84,9 +91,7 @@ export default function ContactForm() {
             {...register("email")}
             disabled={isSubmitting}
           />
-          {errors.email && (
-            <p className="text-red-500 text-sm">{errors.email.message}</p>
-          )}
+          <FormError message={errors.email?.message} />
         </div>
 
         {/* Teléfono */}
@@ -97,24 +102,20 @@ export default function ContactForm() {
             {...register("phone")}
             disabled={isSubmitting}
           />
-          {errors.phone && (
-            <p className="text-red-500 text-sm">{errors.phone.message}</p>
-          )}
+          <FormError message={errors.phone?.message} />
         </div>
 
         {/* Captcha */}
         <div className="border rounded-md p-3 flex items-center space-x-3">
           <Checkbox
             id="captcha"
+            // de momento deje register(captcha) en lo que se obtengo el componente de recaptcha
             {...register("captcha")}
             disabled={isSubmitting}
           />
           <Label htmlFor="captcha">No soy un robot</Label>
         </div>
-        {errors.captcha && (
-          <p className="text-red-500 text-sm">{errors.captcha.message}</p>
-        )}
-
+        <FormError message={errors.captcha?.message} />
         {/* Botón */}
         <Button
           type="submit"
