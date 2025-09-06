@@ -1,97 +1,57 @@
 "use client";
-
-import React, { useState } from "react";
+import React from "react";
+import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { FormError } from "@/components/form/form-error";
 import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ContactUsSchema } from "@/app/zod/contact";
+import { ContactResponse, ContactUsSchemaType } from "@/types/contact";
+import { useAxios } from "@/hooks/use-axios";
 
 export default function ContactForm() {
+
   const { toast } = useToast();
-  const router = useRouter();
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [isCaptchaChecked, setIsCaptchaChecked] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  const form = useForm<ContactUsSchemaType>({
+    resolver: zodResolver(ContactUsSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      phone: "",
+      captcha: false as any,
+    },
+  });
 
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
+  const { register, handleSubmit, formState: { errors, isSubmitting }, reset, watch } = form;
+  const axios = useAxios<ContactResponse>();
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError("");
+  const isCaptchaChecked = watch("captcha");
 
-    if (!name.trim() || !email.trim() || !phone.trim()) {
-      setError("Por favor, completa todos los campos.");
-      toast({
-        title: "Error",
-        description: "Por favor, completa todos los campos.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!validateEmail(email)) {
-      setError("Por favor, ingresa un correo electrónico válido.");
-      toast({
-        title: "Error",
-        description: "Por favor, ingresa un correo electrónico válido.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!isCaptchaChecked) {
-      setError("Por favor, marca la casilla 'No soy un robot'.");
-      toast({
-        title: "Error de validación",
-        description: "Por favor, marca la casilla 'No soy un robot'.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    const data = {};
+  // Funcion de submit 
+  const onSubmit = async (data: ContactUsSchemaType) => {
+    ///contacto/almaia
     try {
-      fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/contacto/almaia`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nombre: name,
-          email: email,
-          telefono: phone,
-        }),
-      });
-
+      await axios.execute(() => window.axios.post<ContactResponse>("/contacto/almaia", {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        captcha: true,
+      }));
       toast({
         title: "Mensaje enviado",
-        description:
-          "Gracias por contactarnos. Te responderemos a la brevedad.",
+        description: axios.data?.message || "Gracias por contactarnos. Te responderemos a la brevedad.",
       });
-
-      // Reset form
-      setName("");
-      setEmail("");
-      setPhone("");
-      setIsCaptchaChecked(false);
-      setError("");
-    } catch (err) {
-      setError("Error enviando el mensaje. Intenta nuevamente.");
+      reset();
+    } catch (error) {
       toast({
         title: "Error",
-        description: "Error enviando el mensaje. Intenta nuevamente.",
+        description: axios.error,
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -99,100 +59,58 @@ export default function ContactForm() {
     <div className="bg-white rounded-lg p-8 shadow-md max-w-md mx-auto">
       <h1 className="text-2xl font-bold text-center mb-6">Contáctanos</h1>
 
-      {/* Botón para volver a la ventana anterior
-      <div className="mb-6">
-        <Button
-          variant="outline"
-          onClick={() => router.back()}
-          disabled={isLoading}
-          className="w-full"
-        >
-          ← Volver
-        </Button>
-      </div> */}
-
-      {error && (
-        <div className="bg-red-50 text-red-500 p-4 rounded-md mb-4 text-sm">
-          <p className="font-medium mb-1">Error</p>
-          <p>{error}</p>
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+        {/* Nombre */}
         <div className="space-y-2">
           <Input
             type="text"
             placeholder="Nombre"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            disabled={isLoading}
+            {...register("name")}
+            disabled={isSubmitting}
           />
+          <FormError message={errors.name?.message} />
         </div>
 
+        {/* Email */}
         <div className="space-y-2">
           <Input
             type="email"
             placeholder="Correo electrónico"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            disabled={isLoading}
+            {...register("email")}
+            disabled={isSubmitting}
           />
+          <FormError message={errors.email?.message} />
         </div>
 
+        {/* Teléfono */}
         <div className="space-y-2">
           <Input
             type="tel"
             placeholder="Teléfono"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            required
-            disabled={isLoading}
+            {...register("phone")}
+            disabled={isSubmitting}
           />
+          <FormError message={errors.phone?.message} />
         </div>
 
+        {/* Captcha */}
         <div className="border rounded-md p-3 flex items-center space-x-3">
           <Checkbox
             id="captcha"
-            checked={isCaptchaChecked}
-            onCheckedChange={(checked) =>
-              setIsCaptchaChecked(checked as boolean)
-            }
-            disabled={isLoading}
+            // de momento deje register(captcha) en lo que se obtengo el componente de recaptcha
+            {...register("captcha")}
+            disabled={isSubmitting}
           />
           <Label htmlFor="captcha">No soy un robot</Label>
-          <div className="ml-auto">
-            <svg
-              width="30"
-              height="30"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <rect width="24" height="24" rx="4" fill="#F0F0F0" />
-              <path
-                d="M12 6V18"
-                stroke="#A0A0A0"
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-              <path
-                d="M6 12H18"
-                stroke="#A0A0A0"
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-            </svg>
-          </div>
         </div>
-
+        <FormError message={errors.captcha?.message} />
+        {/* Botón */}
         <Button
           type="submit"
           className="w-full bg-blue-500 hover:bg-blue-600"
-          disabled={isLoading}
+          disabled={isSubmitting}
         >
-          {isLoading ? "Enviando..." : "Enviar mensaje"}
+          {isSubmitting ? "Enviando..." : "Enviar mensaje"}
         </Button>
       </form>
     </div>
