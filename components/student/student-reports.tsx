@@ -1,6 +1,11 @@
-import { Button } from "@/components/ui/button";
+'use client'
+import { useMemo } from "react";
 import { Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/data-table";
+import { formatDate } from "@/lib/utils";
+import { formatDateMensual } from "@/lib/dates";
+import type { StudentReport } from "@/types/student";
 
 interface Report {
   fecha: string;
@@ -11,10 +16,21 @@ interface Report {
 }
 
 interface StudentReportsProps {
-  reports: Report[];
+  reports: StudentReport[];
 }
 
-export function StudentReports({ reports }: StudentReportsProps) {
+export function StudentReports({ reports: initials }: StudentReportsProps) {
+
+  const reports: Report[] = useMemo(() => {
+    return initials.map((informe) => ({
+      fecha: formatDate(informe.fecha),
+      tipo: informe.tipo_informe,
+      resumen: `${formatDateMensual(informe.fecha)}`,
+      url_reporte: informe.url_reporte,
+      activo: informe.activo,
+    }));
+  }, [initials]);
+
   const columns = [
     { key: "fecha", title: "Fecha Generación", className: "text-left" },
     { key: "tipo", title: "Tipo Informe", className: "text-left" },
@@ -41,11 +57,10 @@ export function StudentReports({ reports }: StudentReportsProps) {
       case "activo":
         return (
           <span
-            className={`${
-              report.activo
-                ? "text-green-500 border-green-500"
-                : "text-red-500 border-red-500"
-            } bg-white px-2 py-1 rounded-full text-xs font-medium border`}
+            className={`${report.activo
+              ? "text-green-500 border-green-500"
+              : "text-red-500 border-red-500"
+              } bg-white px-2 py-1 rounded-full text-xs font-medium border`}
           >
             {report.activo ? "Activo" : "Inactivo"}
           </span>
@@ -74,16 +89,23 @@ export function StudentReports({ reports }: StudentReportsProps) {
   return (
     <div>
       <h3 className="text-xl font-semibold text-gray-800 mb-6">Informes</h3>
-
-      <div className="bg-white rounded-lg shadow-sm overflow-x-auto border border-gray-100">
-        <DataTable
-          columns={columns}
-          data={reports}
-          renderCell={renderCell}
-          className="min-w-[640px]"
-          pageSize={25}
-        />
-      </div>
+      {!Boolean(reports.length) ? (
+        <div className="bg-blue-500 rounded-md p-2">
+          <h1 className="font-medium text-white">
+            Informes no disponibles
+          </h1>
+        </div>
+      ) : (
+        <div className="bg-white rounded-lg shadow-sm overflow-x-auto border border-gray-100">
+          <DataTable
+            columns={columns}
+            data={reports}
+            renderCell={renderCell}
+            className="min-w-[640px]"
+            pageSize={25}
+          />
+        </div>
+      )}
     </div>
   );
 }

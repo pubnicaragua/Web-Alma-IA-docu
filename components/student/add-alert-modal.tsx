@@ -52,16 +52,6 @@ interface AlertState {
 import type { PowerUser } from "@/services/alerts-service";
 interface AddAlertModalProps {
   onRefresh: () => void;
-  onAddAlert: (alert: {
-    alumno_alerta_id?: number;
-    tipo: string;
-    descripcion: string;
-    fecha: string;
-    hora: string;
-    prioridad: string;
-    severidad: string;
-    responsable: string;
-  }) => void;
 }
 
 const generarFechaISOUsuario = (fecha: string, hora: string) => {

@@ -45,7 +45,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
       {/* Overlay */}
       <div
         className={cn(
-          "fixed inset-0 bg-black/50 z-50 transition-opacity duration-300",
+          "print:hidden fixed inset-0 bg-black/50 z-50 transition-opacity duration-300",
           isOpen ? "opacity-100" : "opacity-0 pointer-events-none",
         )}
         onClick={onClose}
@@ -56,7 +56,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
       <div
         ref={sidebarRef}
         className={cn(
-          "fixed inset-y-0 z-50 w-72 bg-white shadow-xl transition-transform duration-300 ease-in-out right-0",
+          "print:hidden fixed inset-y-0 z-50 w-72 bg-white shadow-xl transition-transform duration-300 ease-in-out right-0",
           isOpen ? "transform-none" : "translate-x-full",
         )}
       >
