@@ -226,7 +226,7 @@ export function Header({ toggleSidebar }: HeaderProps) {
   };
 
   return (
-    <header className="w-full relative h-[100px]">
+    <header className="print:hidden w-full relative h-[100px]">
       {/* Fondo SVG */}
       <div className="absolute inset-0 w-full h-full overflow-hidden">
         <svg

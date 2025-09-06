@@ -1,9 +1,18 @@
 "use client";
-
-import { useState, useEffect } from "react";
+import { useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { AddAlertModal } from "@/components/student/add-alert-modal";
 import { useRouter } from "next/navigation";
+import { usePagination } from "@/hooks/use-pagination";
+import { StudentAlert } from "@/types/student";
+import {
+  ALERT_PRIORITIES,
+  ALERT_PRIORITIES_CLASS,
+  ALERT_SEVERITY_CLASS,
+  ALERT_TYPES
+} from "@/constants/alerts";
+import { formatDate } from "@/lib/utils";
+import { formatTime, parseDateTime } from "@/lib/dates";
 
 interface Alert {
   alumno_alerta_id: number;
@@ -16,166 +25,62 @@ interface Alert {
   severidad_name: string;
 }
 
-interface Priority {
-  alerta_prioridad_id: number;
-  nombre: string;
-}
-
-interface State {
-  alerta_estado_id: number;
-  nombre_alerta_estado: string;
-}
-
 interface StudentAlertsProps {
-  alerts: Alert[];
+  alerts: StudentAlert[];
   setRefresh: () => void;
+}
+
+const getTipoAlerta = (tipoId: number) => {
+  return ALERT_TYPES[tipoId as keyof typeof ALERT_TYPES] || "Desconocido";
+};
+
+const getPrioridad = (prioridadId: number) => {
+  return ALERT_PRIORITIES[prioridadId as keyof typeof ALERT_PRIORITIES] || "Desconocido";
+};
+
+const getPrioridadClass = (prioridad: string) => {
+  const cleaned = prioridad.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  return ALERT_PRIORITIES_CLASS[cleaned.toLowerCase() as keyof typeof ALERT_PRIORITIES_CLASS] || "";
+}
+
+const getEstadoClass = (estado: string) => {
+  const cleaned = estado.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  return ALERT_SEVERITY_CLASS[cleaned.toLowerCase() as keyof typeof ALERT_SEVERITY_CLASS] || "";
 }
 
 export function StudentAlerts({
   alerts: initialAlerts,
   setRefresh,
 }: StudentAlertsProps) {
-  const [alerts, setAlerts] = useState<Alert[]>(initialAlerts);
-  const [priorities, setPriorities] = useState<Priority[]>([]);
-  const [states, setStates] = useState<State[]>([]);
+
   const router = useRouter();
 
-  // Paginación
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const formatedAlerts: Alert[] = useMemo(() => {
+    const formatted = initialAlerts.map((alerta) => ({
+      alumno_alerta_id: alerta.alumno_alerta_id,
+      fecha: formatDate(alerta.fecha_generada),
+      hora: formatTime(alerta.fecha_generada),
+      tipo: getTipoAlerta(alerta.alertas_tipo_alerta_tipo_id),
+      estado: alerta.estado,
+      prioridad: getPrioridad(alerta.prioridad_id),
+      responsable:
+        alerta?.persona_responsable_actual?.nombres +
+        " " +
+        alerta?.persona_responsable_actual?.apellidos,
+      severidad_name: alerta.alertas_severidades.nombre,
+    }));
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const fetchedPriorities: Priority[] = [
-          { alerta_prioridad_id: 1, nombre: "Baja" },
-          { alerta_prioridad_id: 2, nombre: "Media" },
-          { alerta_prioridad_id: 3, nombre: "Alta" },
-          { alerta_prioridad_id: 4, nombre: "Crítica" },
-        ];
-        const fetchedStates: State[] = [
-          { alerta_estado_id: 1, nombre_alerta_estado: "Pendiente" },
-          { alerta_estado_id: 2, nombre_alerta_estado: "Asignada" },
-          { alerta_estado_id: 3, nombre_alerta_estado: "En proceso" },
-          { alerta_estado_id: 4, nombre_alerta_estado: "Resuelta" },
-          { alerta_estado_id: 5, nombre_alerta_estado: "Cerrada" },
-          { alerta_estado_id: 6, nombre_alerta_estado: "Anulada" },
-        ];
+    return formatted.sort((a, b) => {
+      const dateA = parseDateTime(a.fecha, a.hora);
+      const dateB = parseDateTime(b.fecha, b.hora);
+      return dateB.getTime() - dateA.getTime();
+    })
+  }, [initialAlerts]);
 
-        setPriorities(fetchedPriorities);
-        setStates(fetchedStates);
-      } catch (error) {}
-    }
-    loadData();
-  }, []);
-
-  const handleAddAlert = (newAlert: {
-    alumno_alerta_id: number;
-    tipo: string;
-    descripcion: string;
-    fecha: string;
-  }) => {
-    const currentDate = new Date();
-    const hora = `${currentDate
-      .getHours()
-      .toString()
-      .padStart(2, "0")}:${currentDate
-      .getMinutes()
-      .toString()
-      .padStart(2, "0")}`;
-
-    const alert: Alert = {
-      alumno_alerta_id: newAlert.alumno_alerta_id,
-      fecha: newAlert.fecha,
-      hora: hora,
-      tipo: newAlert.tipo,
-      estado: "Pendiente",
-      prioridad: "Alta",
-      responsable: "Enc. Convivencia",
-      severidad_name: "",
-    };
-    setAlerts((prev) => [alert, ...prev]);
-    setCurrentPage(1);
-  };
+  const pagination = usePagination<Alert>(formatedAlerts, 10)
 
   const handleAlertClick = (alertId: number) => {
     router.push(`/alertas/${alertId}`);
-  };
-
-  const getPriorityClass = (priorityName: string) => {
-    switch (priorityName.toLowerCase()) {
-      case "alta":
-        return "border-red-500 text-red-500";
-      case "media":
-        return "border-yellow-500 text-yellow-500";
-      case "baja":
-        return "border-green-500 text-green-500";
-      case "crítica":
-      case "critica": // para evitar problemas con mayúsculas/minúsculas
-        return "border-pink-600 text-pink-600";
-      default:
-        return "";
-    }
-  };
-
-  const getPrioritySeverity = (priorityName: string) => {
-    switch (priorityName.toLowerCase()) {
-      case "alta":
-        return "border-red-500 text-red-500";
-      case "media":
-        return "border-yellow-500 text-yellow-500";
-      case "baja":
-        return "border-green-500 text-green-500";
-      case "crítica":
-      case "critica": // para evitar problemas con mayúsculas/minúsculas
-        return "border-pink-600 text-pink-600";
-      default:
-        return "";
-    }
-  };
-
-  const getStateClass = (stateName: string) => {
-    switch (stateName.toLowerCase()) {
-      case "pendiente":
-        return "border-red-500 text-red-500";
-      case "asignada":
-        return "border-yellow-500 text-yellow-500";
-      case "en proceso":
-        return "border-blue-500 text-blue-500";
-      case "resuelta":
-        return "border-green-500 text-green-500";
-      case "cerrada":
-        return "border-gray-500 text-gray-500";
-      case "anulada":
-        return "border-gray-400 text-gray-400";
-      default:
-        return "";
-    }
-  };
-
-  // Función para convertir fecha y hora a Date
-  const parseDateTime = (fecha: string, hora: string): Date => {
-    const [day, month, year] = fecha.split("/").map(Number);
-    const [hours, minutes] = hora.split(":").map(Number);
-    return new Date(year, month - 1, day, hours, minutes);
-  };
-
-  // Ordenar alertas por fecha y hora descendente (más reciente primero)
-  const sortedAlerts = [...alerts].sort((a, b) => {
-    const dateA = parseDateTime(a.fecha, a.hora);
-    const dateB = parseDateTime(b.fecha, b.hora);
-    return dateB.getTime() - dateA.getTime();
-  });
-
-  // Calcular índices para paginación
-  const totalPages = Math.ceil(sortedAlerts.length / itemsPerPage);
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentAlerts = sortedAlerts.slice(indexOfFirstItem, indexOfLastItem);
-
-  const goToPage = (page: number) => {
-    if (page < 1 || page > totalPages) return;
-    setCurrentPage(page);
   };
 
   return (
@@ -184,7 +89,7 @@ export function StudentAlerts({
         <h3 className="text-xl font-semibold text-gray-800">
           Alertas del alumno
         </h3>
-        <AddAlertModal onAddAlert={handleAddAlert} onRefresh={setRefresh} />
+        <AddAlertModal onRefresh={setRefresh} />
       </div>
 
       <div className="bg-white rounded-lg shadow-sm overflow-x-auto border border-gray-100">
@@ -212,7 +117,7 @@ export function StudentAlerts({
             </tr>
           </thead>
           <tbody>
-            {currentAlerts.map((alert) => (
+            {pagination.paginated.map((alert) => (
               <tr
                 key={alert.alumno_alerta_id}
                 className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
@@ -228,7 +133,7 @@ export function StudentAlerts({
                 <td className="px-4 py-3 text-sm text-center">
                   <Badge
                     variant="outline"
-                    className={getStateClass(alert.estado)}
+                    className={getEstadoClass(alert.estado)}
                   >
                     {alert.estado}
                   </Badge>
@@ -236,7 +141,7 @@ export function StudentAlerts({
                 <td className="px-4 py-3 text-sm text-center">
                   <Badge
                     variant="outline"
-                    className={getPriorityClass(alert.prioridad)}
+                    className={getPrioridadClass(alert.prioridad)}
                   >
                     {alert.prioridad}
                   </Badge>
@@ -244,7 +149,7 @@ export function StudentAlerts({
                 <td className="px-4 py-3 text-sm text-center">
                   <Badge
                     variant="outline"
-                    className={getPrioritySeverity(alert.severidad_name)}
+                    className={getPrioridadClass(alert.severidad_name)}
                   >
                     {alert.severidad_name}
                   </Badge>
@@ -258,44 +163,41 @@ export function StudentAlerts({
       {/* Controles de paginación */}
       <div className="flex justify-center items-center space-x-2 mt-4">
         <button
-          onClick={() => goToPage(currentPage - 1)}
-          disabled={currentPage === 1}
-          className={`px-3 py-1 rounded border ${
-            currentPage === 1
-              ? "cursor-not-allowed border-gray-300 text-gray-300"
-              : "border-blue-500 text-blue-500 hover:bg-blue-100"
-          }`}
+          onClick={pagination.prev}
+          disabled={pagination.page === 0}
+          className={`px-3 py-1 rounded border ${pagination.page === 0
+            ? "cursor-not-allowed border-gray-300 text-gray-300"
+            : "border-blue-500 text-blue-500 hover:bg-blue-100"
+            }`}
         >
           Anterior
         </button>
 
-        {Array.from({ length: totalPages }, (_, i) => i + 1)
+        {Array.from({ length: pagination.lastPage }, (_, i) => i + 1)
           .slice(
-            Math.max(0, currentPage - 3),
-            Math.min(totalPages, currentPage + 2)
+            Math.max(0, pagination.page - 3),
+            Math.min(pagination.lastPage, pagination.page + 2)
           )
           .map((page) => (
             <button
               key={page}
-              onClick={() => goToPage(page)}
-              className={`px-3 py-1 rounded border ${
-                page === currentPage
-                  ? "bg-blue-500 text-white border-blue-500"
-                  : "border-blue-500 text-blue-500 hover:bg-blue-100"
-              }`}
+              onClick={() => pagination.setPage(page)}
+              className={`px-3 py-1 rounded border ${page === pagination.page
+                ? "bg-blue-500 text-white border-blue-500"
+                : "border-blue-500 text-blue-500 hover:bg-blue-100"
+                }`}
             >
               {page}
             </button>
           ))}
 
         <button
-          onClick={() => goToPage(currentPage + 1)}
-          disabled={currentPage === totalPages}
-          className={`px-3 py-1 rounded border ${
-            currentPage === totalPages || totalPages === 0
-              ? "cursor-not-allowed border-gray-300 text-gray-300"
-              : "border-blue-500 text-blue-500 hover:bg-blue-100"
-          }`}
+          onClick={pagination.next}
+          disabled={pagination.page == pagination.lastPage}
+          className={`px-3 py-1 rounded border ${pagination.page == pagination.lastPage || pagination.lastPage < 1
+            ? "cursor-not-allowed border-gray-300 text-gray-300"
+            : "border-blue-500 text-blue-500 hover:bg-blue-100"
+            }`}
         >
           Siguiente
         </button>

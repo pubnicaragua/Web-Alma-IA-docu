@@ -35,6 +35,7 @@ export function NavigationMenu({ onItemClick }: NavigationMenuProps) {
       ? [{ name: "Alertas", href: "/alertas", icon: Bell }]
       : []),
     { name: "Alumnos", href: "/alumnos", icon: Users },
+    { name: "Evaluación Asistida", href: "/evaluacion-asistida", icon: Users },
     { name: "Comparativo", href: "/comparativo", icon: BarChart2 },
     { name: "Informes", href: "/informes", icon: FileText },
     { name: "Perfil", href: "/perfil", icon: User },

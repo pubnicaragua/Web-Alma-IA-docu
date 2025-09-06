@@ -1,41 +1,42 @@
 "use client";
-
-import { AppLayout } from "@/components/layout/app-layout";
-import { StudentAlerts } from "@/components/student/student-alerts";
-import { StudentReports } from "@/components/student/student-reports";
-import { StudentSkeleton } from "@/components/student/student-skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  fetchStudentDetails,
-  type StudentDetailResponse,
-} from "@/services/students-service";
+import { useParams } from "next/navigation";
+import { useMemo, useState } from "react";
 import {
   AlertTriangle,
   Bell,
-  FileText,
-  Mail,
-  Phone,
-  Smile,
+  FileText, Smile,
   User,
-  Users,
 } from "lucide-react";
 import Image from "next/image";
-import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { AppLayout } from "@/components/layout/app-layout";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { StudentAlerts } from "@/components/student/student-alerts";
+import { StudentReports } from "@/components/student/student-reports";
+import { StudentSkeleton } from "@/components/student/student-skeleton";
+import { StudentDetailInfo } from "@/components/student/detail-sections/information";
 import { BarChartComparisonAlumno } from "@/components/bar-chart-comparison-alumno";
+import { VerifyAccess } from "@/components/authentication/verify-access";
 import { ComparisonChart } from "@/components/comparison-chart";
+import ErrorBoundary from "@/components/utils/error-bountdry";
+import { useAxios } from "@/hooks/use-axios";
 import { useUser } from "@/middleware/user-context";
-import { UnauthorizedMessage } from "@/components/unauthorized-message";
+import type { StudentDetailResponse } from "@/services/students-service";
+
+const generateNameFromEmail = (email: string) => {
+  if (!email) return "Estudiante";
+
+  const parts = email.split("@")[0].split(".");
+  if (parts.length > 1) {
+    return `${parts[0].charAt(0).toUpperCase() + parts[0].slice(1)} ${parts[1].charAt(0).toUpperCase() + parts[1].slice(1)
+      }`;
+  }
+  return parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+};
+
 
 export default function StudentDetailPage() {
-  const { getFuntions, userData, isLoading: userLoading } = useUser();
   const { id } = useParams();
-  const [studentDetails, setStudentDetails] =
-    useState<StudentDetailResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [haveAccess, setHaveAccess] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [refresh, setRefresh] = useState(false);
+  const { getFuntions } = useUser();
   const [selectedEmotions, setSelectedEmotions] = useState<string[]>([
     "Tristeza",
     "Felicidad",
@@ -45,43 +46,12 @@ export default function StudentDetailPage() {
     "Otros",
   ]);
 
-  // Verificar permisos solo cuando los datos del usuario estén cargados
-  useEffect(() => {
-    if (!userLoading && userData) {
-      // Solo verificar permisos cuando los datos del usuario estén disponibles
-      if (getFuntions("Ficha Alumno")) {
-        setHaveAccess(false);
-      } else {
-        setHaveAccess(true);
-      }
-    }
-  }, [userLoading, userData, getFuntions]);
-
-  // Cargar datos del estudiante
-  useEffect(() => {
-    const loadStudentDetails = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        const details = await fetchStudentDetails(id as string);
-        if (details) {
-          setStudentDetails(details);
-        } else {
-          setError("No se pudieron cargar los detalles del alumno");
-        }
-      } catch (err) {
-        setError("Error al cargar los detalles del alumno");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    // Solo cargar datos del estudiante si tenemos acceso y no estamos cargando datos del usuario
-    if (!userLoading && userData && !haveAccess) {
-      loadStudentDetails();
-    }
-  }, [id, refresh, userLoading, userData, haveAccess]);
+  const {
+    loading: isLoading,
+    data: studentDetails,
+    refetch,
+    error
+  } = useAxios<StudentDetailResponse>(() => window.axios.get(`/alumnos/detalle/${id}`), [id])
 
   const handleToggleEmotion = (emotion: string) => {
     if (selectedEmotions.includes(emotion)) {
@@ -91,503 +61,169 @@ export default function StudentDetailPage() {
     }
   };
 
-  const generateNameFromEmail = (email: string) => {
-    if (!email) return "Estudiante";
+  const emociones = useMemo(() => {
+    if (!studentDetails?.emociones) return []
+    return studentDetails.emociones.map((emocion) => ({
+      name: emocion.nombre,
+      value: emocion.valor,
+      color: "",
+    }));
+  }, [studentDetails?.emociones]);
 
-    const parts = email.split("@")[0].split(".");
-    if (parts.length > 1) {
-      return `${parts[0].charAt(0).toUpperCase() + parts[0].slice(1)} ${
-        parts[1].charAt(0).toUpperCase() + parts[1].slice(1)
-      }`;
-    }
-    return parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
-  };
 
-  // Mostrar skeleton mientras se cargan los datos del usuario o del estudiante
-  if (userLoading || isLoading) {
-    return (
-      <AppLayout>
-        <div className="container mx-auto px-2 sm:px-6 py-4 sm:py-8">
-          <StudentSkeleton />
-        </div>
-      </AppLayout>
-    );
-  }
+  const comparativa = useMemo(() => {
+    if (!studentDetails?.datosComparativa) return [];
+    return studentDetails.datosComparativa.map((data) => ({
+      name: data.name,
+      alumno: data.alumno,
+      promedio: data.promedio,
+    }));
+  }, [studentDetails?.datosComparativa]);
 
-  // Mostrar mensaje de acceso no autorizado solo después de verificar permisos
-  if (!userLoading && userData && haveAccess) {
-    return (
-      <AppLayout>
-        <div className="flex w-full h-full justify-center items-center">
-          <UnauthorizedMessage />
-        </div>
-      </AppLayout>
-    );
-  }
-
-  if (error || !studentDetails) {
-    return (
-      <AppLayout>
-        <div className="container mx-auto px-2 sm:px-6 py-4 sm:py-8">
-          <div className="flex flex-col items-center justify-center h-64 bg-white rounded-lg shadow-sm p-6 border border-red-200">
-            <AlertTriangle className="h-12 w-12 text-red-500 mb-4" />
-            <p className="text-xl text-gray-700 mb-2">
-              No se encontró información del alumno
-            </p>
-            <p className="text-sm text-gray-500">
-              {error || "Intente nuevamente más tarde"}
-            </p>
-          </div>
-        </div>
-      </AppLayout>
-    );
-  }
-
-  // Resto del componente permanece igual...
-  const {
-    alumno,
-    ficha,
-    alertas,
-    informes,
-    emociones,
-    apoderados,
-    datosComparativa,
-  } = studentDetails;
-
-  const studentName =
-    alumno.personas.nombres || generateNameFromEmail(alumno.email);
-  const studentLastName = alumno.personas.apellidos;
-
-  const comparisonData = datosComparativa.map((data) => ({
-    name: data.name,
-    alumno: data.alumno,
-    promedio: data.promedio,
-  }));
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("es-ES", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
-  };
-
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString("es-ES", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const formatDateMensual = (dateString: string) => {
-    const date = new Date(dateString);
-    const month = date.toLocaleDateString("es-ES", { month: "long" });
-    const year = date.getFullYear();
-    return `${month.charAt(0).toUpperCase() + month.slice(1)} ${year}`;
-  };
-
-  const getTipoAlerta = (tipoId: number) => {
-    const tipos: { [key: number]: string } = {
-      1: "SOS Alma",
-      2: "Alerta amarilla",
-      3: "Alerta Naranja",
-      4: "Denuncia",
-      5: "Alerta General",
-    };
-    return tipos[tipoId] || "Desconocido";
-  };
-
-  const getPrioridad = (prioridadId: number) => {
-    const prioridades: { [key: number]: string } = {
-      1: "Baja",
-      2: "Media",
-      3: "Alta",
-      4: "Critica",
-    };
-    return prioridades[prioridadId] || "Desconocida";
-  };
-
-  const alertsData = alertas.map((alerta) => ({
-    alumno_alerta_id: alerta.alumno_alerta_id,
-    fecha: formatDate(alerta.fecha_generada),
-    hora: formatTime(alerta.fecha_generada),
-    tipo: getTipoAlerta(alerta.alertas_tipo_alerta_tipo_id),
-    estado: alerta.estado,
-    prioridad: getPrioridad(alerta.prioridad_id),
-    responsable:
-      alerta?.persona_responsable_actual?.nombres +
-      " " +
-      alerta?.persona_responsable_actual?.apellidos,
-    severidad_name: alerta.alertas_severidades.nombre,
-  }));
-
-  const reportsData = informes.map((informe) => ({
-    fecha: formatDate(informe.fecha),
-    tipo: informe.tipo_informe,
-    resumen: `${formatDateMensual(informe.fecha)}`,
-    url_reporte: informe.url_reporte,
-    activo: informe.activo,
-  }));
 
   return (
-    <AppLayout>
-      <div className="container mx-auto px-2 sm:px-6 py-4 sm:py-8">
-        {/* Zona 1: Información principal del estudiante */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6 border border-blue-200">
-          <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-            <div className="relative w-32 h-32 rounded-full overflow-hidden flex-shrink-0 border-4 border-blue-100">
-              <Image
-                src={alumno.url_foto_perfil || "/placeholder.svg"}
-                alt={studentName}
-                width={128}
-                height={128}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="flex flex-col items-center md:items-start">
-              <h1 className="text-3xl font-bold text-gray-800">{`${studentName}  ${studentLastName}`}</h1>
-              <div className="flex flex-wrap gap-4">
-                <div className="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-                  Colegio:{" "}
-                  <span className="font-bold">{alumno.colegios.nombre}</span>
-                </div>
-                <div className="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                  Email: {alumno.email}
+    <ErrorBoundary>
+      <VerifyAccess permission="Ficha Alumno">
+        <AppLayout>
+          <>
+            {isLoading && <StudentSkeleton />}
+            {!studentDetails && !isLoading && (
+              <div className="container mx-auto px-2 sm:px-6 py-4 sm:py-8">
+                <div className="flex flex-col items-center justify-center h-64 bg-white rounded-lg shadow-sm p-6 border border-red-200">
+                  <AlertTriangle className="h-12 w-12 text-red-500 mb-4" />
+                  <p className="text-xl text-gray-700 mb-2">
+                    No se encontró información del alumno
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {error || "Intente nuevamente más tarde"}
+                  </p>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Zona 2: Pestañas de navegación */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6 border border-blue-200">
-          <Tabs defaultValue="ficha" className="w-full">
-            <TabsList className="bg-blue-100 w-full justify-start overflow-x-auto flex-nowrap whitespace-nowrap">
-              <TabsTrigger
-                value="ficha"
-                className="data-[state=active]:bg-blue-500 data-[state=active]:text-white flex items-center text-xs sm:text-sm px-2 sm:px-4"
-              >
-                <User className="h-4 w-4 mr-2" />
-                Ficha
-              </TabsTrigger>
-              {getFuntions("Ficha Alumno->Alertas") &&
-              getFuntions("Alertas") ? (
-                <TabsTrigger
-                  value="alertas"
-                  className="data-[state=active]:bg-blue-500 data-[state=active]:text-white flex items-center text-xs sm:text-sm px-2 sm:px-4"
-                >
-                  <Bell className="h-4 w-4 mr-2" />
-                  Alertas
-                </TabsTrigger>
-              ) : null}
-
-              {getFuntions("Ficha Alumno->Informes") ? (
-                <TabsTrigger
-                  value="informes"
-                  className="data-[state=active]:bg-blue-500 data-[state=active]:text-white flex items-center text-xs sm:text-sm px-2 sm:px-4"
-                >
-                  <FileText className="h-4 w-4 mr-2" />
-                  Informes
-                </TabsTrigger>
-              ) : null}
-
-              {getFuntions("Ficha Alumno->Emociones") ? (
-                <TabsTrigger
-                  value="emociones"
-                  className="data-[state=active]:bg-blue-500 data-[state=active]:text-white flex items-center text-xs sm:text-sm px-2 sm:px-4"
-                >
-                  <Smile className="h-4 w-4 mr-2" />
-                  Emociones
-                </TabsTrigger>
-              ) : null}
-            </TabsList>
-
-            {/* Zona 3: Contenido de las pestañas */}
-            <div className="mt-6 bg-white rounded-lg p-4 border border-blue-100">
-              <TabsContent value="ficha">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                  {/* Datos personales */}
-                  <div className="bg-white rounded-lg shadow-sm p-6 border border-blue-200">
-                    <h3 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200 flex items-center">
-                      <User className="mr-2 h-5 w-5 text-blue-500" />
-                      Datos personales
-                    </h3>
-                    <div className="space-y-3">
-                      <div className="flex flex-col">
-                        <span className="text-sm text-gray-500">
-                          ID del alumno:
-                        </span>
-                        <span className="text-gray-800 font-medium">
-                          {alumno.alumno_id}
-                        </span>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-sm text-gray-500">
-                          Tipo de documento:
-                        </span>
-                        <span className="text-gray-800 font-medium">
-                          {alumno.personas.tipo_documento}
-                        </span>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-sm text-gray-500">
-                          Numero de documento:
-                        </span>
-                        <span className="text-gray-800 font-medium">
-                          {alumno.personas.numero_documento}
-                        </span>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-sm text-gray-500">
-                          Fecha de nacimiento:
-                        </span>
-                        <span className="text-gray-800 font-medium">
-                          {alumno.personas.fecha_nacimiento
-                            .toString()
-                            .split("-")
-                            .reverse()
-                            .join("/")}
-                        </span>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-sm text-gray-500">Genero:</span>
-                        <span className="text-gray-800 font-medium">
-                          {alumno.personas.generos.nombre}
-                        </span>
-                      </div>
+            )}
+            {studentDetails && !isLoading && (
+              <div className="container mx-auto px-2 sm:px-6 py-4 sm:py-8">
+                {/* Zona 1: Información principal del estudiante */}
+                <div className="bg-white rounded-lg shadow-sm p-6 mb-6 border border-blue-200">
+                  <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+                    <div className="relative w-32 h-32 rounded-full overflow-hidden flex-shrink-0 border-4 border-blue-100">
+                      <Image
+                        src={studentDetails.alumno.url_foto_perfil || "/placeholder.svg"}
+                        alt={studentDetails.alumno.personas.nombres || generateNameFromEmail(studentDetails.alumno.email)}
+                        width={128}
+                        height={128}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
-                  </div>
-
-                  {/* Información de contacto */}
-                  <div className="bg-white rounded-lg shadow-sm p-6 border border-blue-200">
-                    <h3 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200 flex items-center">
-                      <Mail className="mr-2 h-5 w-5 text-blue-500" />
-                      Información de contacto
-                    </h3>
-                    <div className="space-y-3">
-                      <div className="flex items-center p-3 bg-gray-50 rounded-lg border border-gray-100">
-                        <Phone className="h-5 w-5 text-blue-500 mr-3" />
-                        <div className="flex flex-col">
-                          <span className="text-sm text-gray-500">
-                            Teléfono principal:
-                          </span>
-                          <span className="text-gray-800 font-medium">
-                            {alumno.telefono_contacto1 || "No disponible"}
-                          </span>
+                    <div className="flex flex-col items-center md:items-start">
+                      <h1 className="text-3xl font-bold text-gray-800">{`${studentDetails.alumno.personas.nombres || generateNameFromEmail(studentDetails.alumno.email)}  ${studentDetails.alumno.personas.apellidos}`}</h1>
+                      <div className="flex flex-wrap gap-4">
+                        <div className="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                          Colegio:{" "}
+                          <span className="font-bold">{studentDetails.alumno.colegios.nombre}</span>
                         </div>
-                      </div>
-                      <div className="flex items-center p-3 bg-gray-50 rounded-lg border border-gray-100">
-                        <Phone className="h-5 w-5 text-blue-500 mr-3" />
-                        <div className="flex flex-col">
-                          <span className="text-sm text-gray-500">
-                            Teléfono secundario:
-                          </span>
-                          <span className="text-gray-800 font-medium">
-                            {alumno.telefono_contacto2 || "No disponible"}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex items-center p-3 bg-gray-50 rounded-lg border border-gray-100">
-                        <Mail className="h-5 w-5 text-blue-500 mr-3" />
-                        <div className="flex flex-col">
-                          <span className="text-sm text-gray-500">Correo:</span>
-                          <span className="text-gray-800 font-medium">
-                            {alumno.email}
-                          </span>
+                        <div className="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                          Email: {studentDetails.alumno.email}
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Ficha médica */}
-                {getFuntions("Ficha Alumno->Antecedentes Clinicos") ? (
-                  <div className="bg-white rounded-lg shadow-sm p-6 mb-8 border border-blue-200">
-                    <h3 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200 flex items-center">
-                      <AlertTriangle className="mr-2 h-5 w-5 text-blue-500" />
-                      Antecedentes clínicos
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
-                        <h4 className="font-medium text-gray-700 mb-2">
-                          Historial médico
-                        </h4>
-                        <p className="text-gray-600">
-                          {ficha[0]?.historial_medico.trim() || "No disponible"}
-                        </p>
-                      </div>
-                      <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
-                        <h4 className="font-medium text-gray-700 mb-2">
-                          Alergias conocidas
-                        </h4>
-                        <p className="text-gray-600">
-                          {ficha[0]?.alergias.trim() || "No disponible"}
-                        </p>
-                      </div>
-                      <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
-                        <h4 className="font-medium text-gray-700 mb-2">
-                          Condiciones médicas actuales
-                        </h4>
-                        {ficha[0]?.condiciones_medicas_relevantes.trim() ||
-                          "No disponible"}
-                      </div>
-                      <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
-                        <h4 className="font-medium text-gray-700 mb-2">
-                          Medicamentos actuales
-                        </h4>
-                        <p className="text-gray-600">
-                          {ficha[0]?.medicamentos_actuales.trim() ||
-                            "No disponible"}
-                        </p>
-                      </div>
-                      <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
-                        <h4 className="font-medium text-gray-700 mb-2">
-                          Diagnósticos previos
-                        </h4>
-                        <p className="text-gray-600">
-                          {ficha[0]?.diagnosticos_previos.trim() ||
-                            "No disponible"}
-                        </p>
-                      </div>
-                      <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 md:col-span-2">
-                        <h4 className="font-medium text-gray-700 mb-2">
-                          Terapias y tratamientos en curso
-                        </h4>
-                        <p className="text-gray-600">
-                          {ficha[0]?.terapias_tratamiento_curso.trim() ||
-                            "No disponible"}
-                        </p>
-                      </div>
+                {/* Zona 2: Pestañas de navegación */}
+                <div className="bg-white rounded-lg shadow-sm p-4 mb-6 border border-blue-200">
+                  <Tabs defaultValue="ficha" className="w-full">
+                    <TabsList className="bg-blue-100 w-full justify-start overflow-x-auto flex-nowrap whitespace-nowrap">
+                      <TabsTrigger
+                        value="ficha"
+                        className="data-[state=active]:bg-blue-500 data-[state=active]:text-white flex items-center text-xs sm:text-sm px-2 sm:px-4"
+                      >
+                        <User className="h-4 w-4 mr-2" />
+                        Ficha
+                      </TabsTrigger>
+                      {getFuntions("Ficha Alumno->Alertas") &&
+                        getFuntions("Alertas") ? (
+                        <TabsTrigger
+                          value="alertas"
+                          className="data-[state=active]:bg-blue-500 data-[state=active]:text-white flex items-center text-xs sm:text-sm px-2 sm:px-4"
+                        >
+                          <Bell className="h-4 w-4 mr-2" />
+                          Alertas
+                        </TabsTrigger>
+                      ) : null}
+
+                      {getFuntions("Ficha Alumno->Informes") ? (
+                        <TabsTrigger
+                          value="informes"
+                          className="data-[state=active]:bg-blue-500 data-[state=active]:text-white flex items-center text-xs sm:text-sm px-2 sm:px-4"
+                        >
+                          <FileText className="h-4 w-4 mr-2" />
+                          Informes
+                        </TabsTrigger>
+                      ) : null}
+
+                      {getFuntions("Ficha Alumno->Emociones") ? (
+                        <TabsTrigger
+                          value="emociones"
+                          className="data-[state=active]:bg-blue-500 data-[state=active]:text-white flex items-center text-xs sm:text-sm px-2 sm:px-4"
+                        >
+                          <Smile className="h-4 w-4 mr-2" />
+                          Emociones
+                        </TabsTrigger>
+                      ) : null}
+                    </TabsList>
+
+                    {/* Zona 3: Contenido de las pestañas */}
+                    <div className="mt-6 bg-white rounded-lg p-4 border border-blue-100">
+                      <TabsContent value="ficha">
+                        <StudentDetailInfo
+                          alumno={studentDetails?.alumno}
+                          ficha={studentDetails?.ficha[0] ?? null}
+                          apoderados={studentDetails.apoderados}
+                        />
+                      </TabsContent>
+
+                      <TabsContent value="alertas">
+                        <div className="bg-white rounded-lg shadow-sm p-6 border border-blue-200">
+                          <StudentAlerts
+                            alerts={studentDetails.alertas}
+                            setRefresh={() => refetch()}
+                          />
+                        </div>
+                      </TabsContent>
+
+                      <TabsContent value="informes">
+                        <div className="bg-white rounded-lg shadow-sm p-6 border border-blue-200">
+                          <StudentReports reports={studentDetails.informes} />
+                        </div>
+                      </TabsContent>
+
+                      <TabsContent value="emociones">
+                        <div className="bg-white rounded-lg shadow-sm p-6 border border-blue-200">
+                          <h3 className="text-xl font-semibold text-gray-800 mb-6">
+                            Registro emocional del alumno
+                          </h3>
+
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <BarChartComparisonAlumno
+                              title="Emociones"
+                              selectedEmotions={selectedEmotions}
+                              onToggleEmotion={handleToggleEmotion}
+                              apiEmotions={emociones}
+                              setSelectedEmotions={setSelectedEmotions}
+                            />
+
+                            <ComparisonChart comparisonData={comparativa} />
+                          </div>
+                        </div>
+                      </TabsContent>
                     </div>
-                  </div>
-                ) : null}
-
-                {/* Apoderados */}
-                {getFuntions("Ficha Alumno->Apoderados") ? (
-                  <div className="bg-white rounded-lg shadow-sm p-6 mb-8 border border-blue-200">
-                    <h3 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200 flex items-center">
-                      <Users className="mr-2 h-5 w-5 text-blue-500" />
-                      Apoderados
-                    </h3>
-                    {apoderados.length ? (
-                      <div className="overflow-x-auto">
-                        <table className="w-full min-w-[640px]">
-                          <thead>
-                            <tr className="bg-blue-300">
-                              <th className="px-4 py-3 text-left font-medium text-white">
-                                Nombre
-                              </th>
-                              <th className="px-4 py-3 text-left font-medium text-white">
-                                Tipo
-                              </th>
-                              <th className="px-4 py-3 text-left font-medium text-white">
-                                Observaciones
-                              </th>
-                              <th className="px-4 py-3 text-left font-medium text-white">
-                                Estado
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {apoderados.map((apoderado, index) => (
-                              <tr
-                                key={index}
-                                className="border-b-2 border-gray-100 hover:bg-gray-50"
-                              >
-                                <td className="px-4 py-3 text-sm font-medium">
-                                  {apoderado.apoderados.personas.nombres}{" "}
-                                  {apoderado.apoderados.personas.apellidos}
-                                </td>
-                                <td className="px-4 py-3 text-sm">
-                                  <span
-                                    className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                      apoderado.tipo_apoderado === "Padre" ||
-                                      apoderado.tipo_apoderado === "Madre"
-                                        ? "bg-green-100 text-green-800"
-                                        : "bg-blue-100 text-blue-800"
-                                    }`}
-                                  >
-                                    {apoderado.tipo_apoderado}
-                                  </span>
-                                </td>
-                                <td className="px-4 py-3 text-sm">
-                                  {apoderado.observaciones}
-                                </td>
-                                <td className="px-4 py-3 text-sm">
-                                  <span
-                                    className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                      apoderado.estado_usuario === "activo"
-                                        ? "bg-green-100 text-green-800"
-                                        : "bg-red-100 text-red-800"
-                                    }`}
-                                  >
-                                    {apoderado.estado_usuario}
-                                  </span>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    ) : (
-                      <div className="bg-blue-500 rounded-md p-2">
-                        <h1 className="font-medium text-white">
-                          Apoderados no disponibles
-                        </h1>
-                      </div>
-                    )}
-                  </div>
-                ) : null}
-              </TabsContent>
-
-              <TabsContent value="alertas">
-                <div className="bg-white rounded-lg shadow-sm p-6 border border-blue-200">
-                  <StudentAlerts
-                    alerts={alertsData}
-                    setRefresh={() => setRefresh(!refresh)}
-                  />
+                  </Tabs>
                 </div>
-              </TabsContent>
-
-              <TabsContent value="informes">
-                <div className="bg-white rounded-lg shadow-sm p-6 border border-blue-200">
-                  {reportsData.length ? (
-                    <StudentReports reports={reportsData} />
-                  ) : (
-                    <div className="bg-blue-500 rounded-md p-2">
-                      <h1 className="font-medium text-white">
-                        Informes no disponibles
-                      </h1>
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
-
-              <TabsContent value="emociones">
-                <div className="bg-white rounded-lg shadow-sm p-6 border border-blue-200">
-                  <h3 className="text-xl font-semibold text-gray-800 mb-6">
-                    Registro emocional del alumno
-                  </h3>
-
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <BarChartComparisonAlumno
-                      title="Emociones"
-                      selectedEmotions={selectedEmotions}
-                      onToggleEmotion={handleToggleEmotion}
-                      apiEmotions={emociones}
-                      setSelectedEmotions={setSelectedEmotions}
-                    />
-
-                    <ComparisonChart comparisonData={comparisonData} />
-                  </div>
-                </div>
-              </TabsContent>
-            </div>
-          </Tabs>
-        </div>
-      </div>
-    </AppLayout>
+              </div>
+            )}
+          </>
+        </AppLayout>
+      </VerifyAccess>
+    </ErrorBoundary>
   );
 }
