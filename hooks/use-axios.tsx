@@ -9,7 +9,7 @@ type UseAxiosResult<T> = {
     loading: boolean;
     error: string | null;
     refetch: () => void;
-    execute: (fn?: () => Promise<AxiosResponse<T>>) => void;
+    execute: <U = T>(customFn?: () => Promise<AxiosResponse<U>>) => Promise<AxiosResponse<U> | undefined>;
 };
 
 export function useAxios<T>(
@@ -27,7 +27,7 @@ export function useAxios<T>(
 
     const fetchData = useCallback((customFn?: () => Promise<AxiosResponse<T>>) => {
         const fn = customFn || requestRef.current;
-        if (!fn) return; // Si no hay función, no ejecuta nada
+        if (!fn) return;
 
         setLoading(true);
         setError(null);
@@ -44,16 +44,20 @@ export function useAxios<T>(
             .finally(() => setLoading(false));
     }, []);
 
-    const execute = useCallback(async (customFn?: () => Promise<AxiosResponse<T>>) => {
-        const fn = customFn || requestRef.current;
-        if (!fn) return;
+    // 👇 Aquí el truco: `U` es un tipo específico para cada ejecución
+    const execute = async <U = T>(
+        customFn?: () => Promise<AxiosResponse<U>>
+    ): Promise<AxiosResponse<U> | undefined> => {
+        const fn = customFn as (() => Promise<AxiosResponse<U>>) | undefined;
+        if (!fn) return Promise.resolve(undefined);
 
         setLoading(true);
         setError(null);
 
         try {
             const res = await fn();
-            setData(res.data);
+            // solo casteamos si el tipo coincide con T
+            setData(res.data as unknown as T);
             return res;
         } catch (err) {
             if (axios.isAxiosError(err)) {
@@ -65,7 +69,7 @@ export function useAxios<T>(
         } finally {
             setLoading(false);
         }
-    }, []);
+    };
 
     useEffect(() => {
         if (requestFn) {
