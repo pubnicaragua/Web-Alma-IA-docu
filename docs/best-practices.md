@@ -52,36 +52,56 @@ const form = useForm({
 
 [Ver Mala Práctica](bad-practices.md#formularios-mal-controlados)
 
---- 
+---
 
 ## Control de Peticiones al Servidor
 
 Las peticiones al servidor deben realizarse a través de una instancia de Axios.
-Esto permite:
+Esto ofrece varias ventajas:
 
-- Centralizar la gestión de peticiones.
-- Reducir código repetitivo en solicitudes genéricas.
-- Mejorar el rendimiento al reutilizar una única instancia por ventana del navegador.
+- Centraliza la gestión de solicitudes.
+- Reduce la repetición de código en llamadas genéricas.
+- Mejora el rendimiento al reutilizar una única instancia por ventana del navegador.
 
-La instancia principal debe asociarse al objeto window del navegador.
-Además, el token de autenticación debe enviarse automáticamente mediante un interceptor de Axios.
+La instancia principal se asocia al objeto window del navegador.
+Además, el token de autenticación se envía automáticamente mediante un interceptor de Axios.
+
+```ts
+// Instancia creada mediante la función createAxiosInstance en src/lib/axios.ts
+// Posteriormente, se asigna al objeto window en src/lib/bootstrap.ts
+window.axios = axios;
+```
+
+La forma recomendada de usar esta instancia es junto con el Hook useAxios, el cual recibe un callback que debe retornar una respuesta de Axios.
+
+El Hook expone los siguientes valores:
+
+- data
+- loading
+- error
+- refetch
 
 ```jsx
-import axios from "axios";
+import { useAxios } from "@/hooks/use-axios";
 
-axios = axios.create({
-  baseURL: `${process.env.REACT_APP_API_URL}`,
-});
+const { data, loading, error, refetch } = useAxios(() =>
+  windows.axios.get("/endpoint")
+);
+```
 
-axios.interceptors.request.use((config) => {
-  const token = window.localStorage.getItem("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+También es posible especificar el tipo (Type) de la respuesta, lo que permite tipar adecuadamente el valor de **data**.
 
-window.axios = axios;
+```tsx
+import { useAxios } from "@/hooks/use-axios";
+
+interface Example {
+  title: string;
+  description: string;
+}
+
+const { data, loading, error, refetch } = useAxios<Example[]>(() =>
+  windows.axios.get("/endpoint")
+);
 ```
 
 ---
@@ -100,28 +120,28 @@ const [items, setItems] = useState([]);
 const [filters, setFilters] = useState({});
 
 // Se ejecutara una unica vez
-useEffect(()=>{
-    (async function(){
-        const response = await axios.get('/endpoint')
-    })()
+useEffect(() => {
+  (async function () {
+    const response = await axios.get("/endpoint");
+  })();
 }, []);
 
 // Se ejecutara una únicamente cuando cambie el cliente
 const filtered = useMemo(() => {
-    return items
+  return items;
 }, [filters]);
 ```
+
 ## Optimización de Renders
 
-No se cortara el ciclo de vida del componente haciendo un return prematuro en base a un valor, sino únicamente mediante su cambio de estados. 
+No se cortara el ciclo de vida del componente haciendo un return prematuro en base a un valor, sino únicamente mediante su cambio de estados.
 
 ```jsx
-const [loading, setLoading] = useState(false); 
+const [loading, setLoading] = useState(false);
 
 return (
-    <>
-        {loading} ? null : <h1>Cargado</h1>
-    </>
-)
+  <>
+    {loading} ? null : <h1>Cargado</h1>
+  </>
+);
 ```
-
