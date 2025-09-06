@@ -65,22 +65,7 @@ export default function LoginPage() {
     localStorage.setItem("isAuthenticated", "true");
 
     try {
-      const profile = await fetchUserProfile();
-      if (!profile) return;
-      if (
-        profile.rol.nombre === "Alumno" ||
-        profile.rol.nombre === "Apoderado"
-      ) {
-        toast({
-          title: "Acceso denegado",
-          description: "No tienes permiso para acceder a esta sección.",
-          variant: "destructive",
-        });
-        removeAuthToken();
-        localStorage.setItem("isAuthenticated", "false");
-        // form reset
-        return;
-      }
+      await fetchUserProfile();
     } catch (error) {
       removeAuthToken();
       localStorage.setItem("isAuthenticated", "false");
@@ -95,7 +80,6 @@ export default function LoginPage() {
 
     // Redirección a la página de selección de colegio
     router.push("/select-school");
-
   }, []);
 
   return (
@@ -118,20 +102,22 @@ export default function LoginPage() {
           />
         </div>
 
-        <div className="space-y-2 relative">
-          <Input
-            type={showPassword ? "text" : "password"}
-            placeholder="Contraseña"
-            {...form.register("password", { required: true })}
-            required
-          />
-          <button
-            type="button"
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
-            onClick={() => setShowPassword(!showPassword)}
-          >
-            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-          </button>
+        <div className="space-y-2 ">
+          <div className="relative">
+            <Input
+              type={showPassword ? "text" : "password"}
+              placeholder="Contraseña"
+              {...form.register("password", { required: true })}
+              required
+            />
+            <button
+              type="button"
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
         </div>
 
         <ReCaptchaInput
