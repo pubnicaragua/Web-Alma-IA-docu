@@ -13,7 +13,5 @@ export const ContactUsSchema = z.object({
         .regex(/^[0-9]{10}$/, {
             message: "El teléfono debe tener exactamente 10 dígitos.",
         }),
-    captcha: z.literal(true, {
-        errorMap: () => ({ message: "Debes confirmar que no eres un robot." }),
-    }),
+    captcha: z.string().optional(),
 });

@@ -1,20 +1,21 @@
 "use client";
-import React from "react";
+import React, { useRef } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import { FormError } from "@/components/form/form-error";
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ContactUsSchema } from "@/app/zod/contact";
-import { ContactResponse, ContactUsSchemaType } from "@/types/contact";
-import { useAxios } from "@/hooks/use-axios";
+import { ContactUsSchema } from "@/zod/contact";
+import { ContactUsSchemaType } from "@/types/contact";
+import { ActionSendContact } from "@/actions/contact";
+import ReCAPTCHA from "react-google-recaptcha";
+import { ReCaptchaInput } from "@/components/ui/recaptcha";
 
 export default function ContactForm() {
 
   const { toast } = useToast();
+  const captchRef = useRef<ReCAPTCHA>(null);
 
   const form = useForm<ContactUsSchemaType>({
     resolver: zodResolver(ContactUsSchema),
@@ -22,34 +23,24 @@ export default function ContactForm() {
       name: "",
       email: "",
       phone: "",
-      captcha: false as any,
+      captcha: "",
     },
   });
 
-  const { register, handleSubmit, formState: { errors, isSubmitting }, reset, watch } = form;
-  const axios = useAxios<ContactResponse>();
+  const { register, handleSubmit, formState: { errors, isSubmitting }, reset, setValue } = form;
 
-  const isCaptchaChecked = watch("captcha");
-
-  // Funcion de submit 
   const onSubmit = async (data: ContactUsSchemaType) => {
-    ///contacto/almaia
     try {
-      await axios.execute(() => window.axios.post<ContactResponse>("/contacto/almaia", {
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
-        captcha: true,
-      }));
+      const response = await ActionSendContact(data);
       toast({
         title: "Mensaje enviado",
-        description: axios.data?.message || "Gracias por contactarnos. Te responderemos a la brevedad.",
+        description: response.message || "Gracias por contactarnos. Te responderemos a la brevedad.",
       });
       reset();
     } catch (error) {
       toast({
         title: "Error",
-        description: axios.error,
+        description: (error as Error)?.message || "Ha ocurrido un error al enviar el mensaje.",
         variant: "destructive",
       });
     }
@@ -94,15 +85,11 @@ export default function ContactForm() {
         </div>
 
         {/* Captcha */}
-        <div className="border rounded-md p-3 flex items-center space-x-3">
-          <Checkbox
-            id="captcha"
-            // de momento deje register(captcha) en lo que se obtengo el componente de recaptcha
-            {...register("captcha")}
-            disabled={isSubmitting}
-          />
-          <Label htmlFor="captcha">No soy un robot</Label>
-        </div>
+        <ReCaptchaInput
+          ref={captchRef}
+          onChange={(token: string | null) => setValue("captcha", token ?? "")}
+        />
+
         <FormError message={errors.captcha?.message} />
         {/* Botón */}
         <Button

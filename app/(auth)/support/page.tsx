@@ -1,58 +1,51 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { EnvelopeIcon, PhoneIcon, InboxIcon } from "@heroicons/react/24/solid";
+import { EnvelopeIcon, InboxIcon } from "@heroicons/react/24/solid";
 import { useToast } from "@/hooks/use-toast";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { SupportFormSchema } from "@/zod/support";
+import type { SupportFormSchemaType } from "@/types/support";
+import { ReCaptchaInput } from "@/components/ui/recaptcha";
+import ReCAPTCHA from "react-google-recaptcha";
+import { ActionSendSupport } from "@/actions/support";
+import { FormError } from "@/components/form/form-error";
 
 export default function SupportContact() {
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    subject: "",
-    message: "",
-  });
-  const [sending, setSending] = useState(false);
+
   const [sent, setSent] = useState(false);
-  const [error, setError] = useState(null);
   const { toast } = useToast();
+  const captchRef = useRef<ReCAPTCHA>(null);
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const { register,
+    handleSubmit,
+    reset,
+    setValue,
+    formState: { errors, isSubmitting }
+  } = useForm({
+    resolver: zodResolver(SupportFormSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      subject: "",
+      message: "",
+      captcha: "",
+    },
+  });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError(null);
-    setSending(true);
-    setSent(false);
-
+  const onSubmit = async (data: SupportFormSchemaType) => {
     try {
-      await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/contacto/almaia/soporte`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: form.email,
-            nombre: form.name,
-            mensaje: form.message,
-            asunto: form.subject,
-          }),
-        }
-      );
-      await new Promise((r) => setTimeout(r, 1500));
+      await ActionSendSupport(data);
+      reset();
       setSent(true);
-      setForm({ name: "", email: "", subject: "", message: "" });
     } catch (err) {
       toast({
-        title: "Sesión expirada",
-        description: "Error al enviar el mensaje. Intenta nuevamente.",
+        title: "¡Atención!",
+        description: (err as Error)?.message,
         variant: "destructive",
       });
     }
-    setSending(false);
   };
 
   return (
@@ -66,7 +59,7 @@ export default function SupportContact() {
           Contacta con Soporte
         </h2>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div>
             <label
               htmlFor="name"
@@ -76,14 +69,12 @@ export default function SupportContact() {
             </label>
             <input
               id="name"
-              name="name"
               type="text"
-              required
-              value={form.name}
-              onChange={handleChange}
+              {...register("name")}
               className="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-indigo-500 focus:border-indigo-500"
               placeholder="Tu nombre completo"
             />
+            <FormError message={errors?.name?.message} />
           </div>
 
           <div>
@@ -95,14 +86,12 @@ export default function SupportContact() {
             </label>
             <input
               id="email"
-              name="email"
               type="email"
-              required
-              value={form.email}
-              onChange={handleChange}
+              {...register("email")}
               className="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-indigo-500 focus:border-indigo-500"
               placeholder="tu@mail.com"
             />
+            <FormError message={errors?.email?.message} />
           </div>
 
           <div>
@@ -114,14 +103,12 @@ export default function SupportContact() {
             </label>
             <input
               id="subject"
-              name="subject"
               type="text"
-              required
-              value={form.subject}
-              onChange={handleChange}
+              {...register("subject")}
               className="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-indigo-500 focus:border-indigo-500"
               placeholder="Asunto del mensaje"
             />
+            <FormError message={errors?.subject?.message} />
           </div>
 
           <div>
@@ -133,31 +120,33 @@ export default function SupportContact() {
             </label>
             <textarea
               id="message"
-              name="message"
-              required
-              value={form.message}
-              onChange={handleChange}
+              {...register("message")}
               rows={5}
               className="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
               placeholder="Escribe aquí tu mensaje de soporte..."
             />
+            <FormError message={errors?.message?.message} />
           </div>
 
-          {error && <p className="text-red-600 text-sm">{error}</p>}
+          <ReCaptchaInput
+            ref={captchRef}
+            onChange={(token: string | null) => setValue("captcha", token ?? "")}
+          />
+
           {sent && (
             <p className="text-green-600 text-sm">Mensaje enviado con éxito.</p>
           )}
 
           <motion.button
             type="submit"
-            disabled={sending}
+            disabled={isSubmitting}
             whileHover={{ scale: 1.05, backgroundColor: "#4f46e5" }}
             whileTap={{ scale: 0.95 }}
-            className={`w-full flex items-center justify-center gap-2 px-6 py-3 font-semibold text-white rounded-full shadow-lg transition ${sending ? "bg-indigo-400 cursor-not-allowed" : "bg-indigo-600"
+            className={`w-full flex items-center justify-center gap-2 px-6 py-3 font-semibold text-white rounded-full shadow-lg transition ${isSubmitting ? "bg-indigo-400 cursor-not-allowed" : "bg-indigo-600"
               }`}
           >
             <InboxIcon className="w-5 h-5" />
-            {sending ? "Enviando..." : "Enviar Mensaje"}
+            {isSubmitting ? "Enviando..." : "Enviar Mensaje"}
           </motion.button>
         </form>
 

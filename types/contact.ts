@@ -1,4 +1,4 @@
-import { ContactUsSchema } from '@/app/zod/contact'
+import { ContactUsSchema } from '@/zod/contact'
 import { z } from 'zod'
 
 export type ContactUsSchemaType = z.infer<typeof ContactUsSchema>
