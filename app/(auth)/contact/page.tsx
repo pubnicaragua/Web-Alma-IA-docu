@@ -1,22 +1,21 @@
 "use client";
-
 import React from "react";
+import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { FormError } from "@/components/form/form-error";
 import { useToast } from "@/hooks/use-toast";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ContactUsSchema } from "@/app/zod/contact";
-import { ContactUsSchemaType } from "@/types/contact";
-import { useAxiosPost } from "@/hooks/use-axios";
-import { FormError } from "@/components/form/form-error";
+import { ContactResponse, ContactUsSchemaType } from "@/types/contact";
+import { useAxios } from "@/hooks/use-axios";
 
 export default function ContactForm() {
+
   const { toast } = useToast();
 
-  // useForm usando zod
   const form = useForm<ContactUsSchemaType>({
     resolver: zodResolver(ContactUsSchema),
     defaultValues: {
@@ -27,41 +26,30 @@ export default function ContactForm() {
     },
   });
 
-  // Desestructuracion del form
-  const { register, handleSubmit, formState: { errors, isSubmitting }, reset, watch, setValue } = form;
-
-  const {
-    data: response,
-    loading,
-    error,
-    postData: sendContactMessage,
-  } = useAxiosPost<any, ContactUsSchemaType>(
-    `${process.env.NEXT_PUBLIC_API_BASE_URL}/contacto/almaia`
-  );
+  const { register, handleSubmit, formState: { errors, isSubmitting }, reset, watch } = form;
+  const axios = useAxios<ContactResponse>();
 
   const isCaptchaChecked = watch("captcha");
 
   // Funcion de submit 
   const onSubmit = async (data: ContactUsSchemaType) => {
-    await sendContactMessage({
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
-      captcha: true,
-    });
-
-    if (!loading && !error) {
+    ///contacto/almaia
+    try {
+      await axios.execute(() => window.axios.post<ContactResponse>("/contacto/almaia", {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        captcha: true,
+      }));
       toast({
         title: "Mensaje enviado",
-        description: response.message || "Gracias por contactarnos. Te responderemos a la brevedad.",
+        description: axios.data?.message || "Gracias por contactarnos. Te responderemos a la brevedad.",
       });
       reset();
-    }
-
-    if (error) {
+    } catch (error) {
       toast({
         title: "Error",
-        description: error,
+        description: axios.error,
         variant: "destructive",
       });
     }
