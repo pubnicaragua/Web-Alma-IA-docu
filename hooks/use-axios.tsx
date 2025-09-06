@@ -9,7 +9,7 @@ type UseAxiosResult<T> = {
     loading: boolean;
     error: string | null;
     refetch: () => void;
-    execute: (fn?: () => Promise<AxiosResponse<T>>) => void;
+    execute: (fn?: () => Promise<AxiosResponse<T>>) => Promise<AxiosResponse<T> | undefined>;
 };
 
 export function useAxios<T>(
@@ -44,16 +44,18 @@ export function useAxios<T>(
             .finally(() => setLoading(false));
     }, []);
 
-    const execute = useCallback(async (customFn?: () => Promise<AxiosResponse<T>>) => {
-        const fn = customFn || requestRef.current;
-        if (!fn) return;
+    const execute = async <U = T>(
+        customFn?: () => Promise<AxiosResponse<U>>
+    ): Promise<AxiosResponse<U> | undefined> => {
+        const fn = customFn as (() => Promise<AxiosResponse<U>>) | undefined;
+        if (!fn) return Promise.resolve(undefined);
 
         setLoading(true);
         setError(null);
 
         try {
             const res = await fn();
-            setData(res.data);
+            setData(res.data as unknown as T);
             return res;
         } catch (err) {
             if (axios.isAxiosError(err)) {
@@ -65,7 +67,7 @@ export function useAxios<T>(
         } finally {
             setLoading(false);
         }
-    }, []);
+    };
 
     useEffect(() => {
         if (requestFn) {
@@ -74,35 +76,4 @@ export function useAxios<T>(
     }, [fetchData, ...deps]);
 
     return { data, loading, error, refetch: fetchData, execute };
-}
-
-export function useAxiosPost<T, V>(
-    url: string,
-    config?: Record<string, any>
-): UseAxiosPostResult<T, V> {
-    const [data, setData] = useState<T | null>(null);
-    const [loading, setLoading] = useState<boolean>(false);
-    const [error, setError] = useState<string | null>(null);
-
-    const postData = useCallback(
-        async (body: V) => {
-            setLoading(true);
-            setError(null);
-            try {
-                const res: AxiosResponse<T> = await axios.post(url, body, config);
-                setData(res.data);
-            } catch (err: unknown) {
-                if (axios.isAxiosError(err)) {
-                    setError(err.response?.data?.message || err.message);
-                } else {
-                    setError("Ocurrió un error inesperado");
-                }
-            } finally {
-                setLoading(false);
-            }
-        },
-        [url, config]
-    );
-
-    return { data, loading, error, postData };
 }
