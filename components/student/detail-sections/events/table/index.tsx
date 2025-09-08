@@ -27,8 +27,8 @@ export function StudentDetailEventsTable({
                         <TableHead className="text-white text-center">Fecha</TableHead>
                         <TableHead className="text-white text-center">Hora</TableHead>
                         <TableHead className="text-white text-center">Usuario Responsable</TableHead>
-                        <TableHead className="w-[30%] text-white text-center">Tipo Evento</TableHead>
-                        <TableHead className="w-[30%] text-white text-center">Observaciones</TableHead>
+                        <TableHead className="w-[30%] text-white text-left">Tipo Evento</TableHead>
+                        <TableHead className="w-[30%] text-white text-left">Observaciones</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>

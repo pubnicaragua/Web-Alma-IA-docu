@@ -22,6 +22,7 @@ import {
 import { DatePicker } from "@/components/ui/date-picker";
 import { format } from "date-fns";
 import { Textarea } from "@/components/ui/textarea";
+import { FormError } from "@/components/form/form-error";
 
 interface PropTypes {
     alumno_id: number;
@@ -157,6 +158,7 @@ export function StudentDetailAddEventModal(
                                             </Select>
                                         )}
                                     />
+                                    <FormError message={form.formState.errors.evento_id?.message} />
                                 </div>
                             </div>
                         </div>
@@ -189,6 +191,8 @@ export function StudentDetailAddEventModal(
                                             </Select>
                                         )}
                                     />
+                                    <FormError message={form.formState.errors.evento_respuesta_posible_id?.message} />
+
                                 </div>
                             </div>
                         </div>
@@ -211,6 +215,7 @@ export function StudentDetailAddEventModal(
                                             />
                                         )}
                                     />
+                                    <FormError message={form.formState.errors.fecha?.message} />
                                 </div>
                             </div>
                         </div>
@@ -233,6 +238,7 @@ export function StudentDetailAddEventModal(
                                             />
                                         )}
                                     />
+                                    <FormError message={form.formState.errors.hora?.message} />
                                 </div>
                             </div>
                         </div>
@@ -254,6 +260,7 @@ export function StudentDetailAddEventModal(
                                             />
                                         )}
                                     />
+                                    <FormError message={form.formState.errors.observacion?.message} />
                                 </div>
                             </div>
                         </div>

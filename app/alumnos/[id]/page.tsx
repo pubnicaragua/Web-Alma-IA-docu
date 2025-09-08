@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import {
   AlertTriangle,
   Bell,
+  Calendar,
   FileText, Smile,
   User,
 } from "lucide-react";
@@ -21,6 +22,7 @@ import ErrorBoundary from "@/components/utils/error-bountdry";
 import { useAxios } from "@/hooks/use-axios";
 import { useUser } from "@/middleware/user-context";
 import type { StudentDetailResponse } from "@/services/students-service";
+import { StudentDetailEvents } from "@/components/student/detail-sections/events";
 
 const generateNameFromEmail = (email: string) => {
   if (!email) return "Estudiante";
@@ -170,6 +172,17 @@ export default function StudentDetailPage() {
                           Emociones
                         </TabsTrigger>
                       ) : null}
+
+                      {getFuntions("Ficha Alumno->Alertas") ? (
+                        <TabsTrigger
+                          value="eventos"
+                          className="data-[state=active]:bg-blue-500 data-[state=active]:text-white flex items-center text-xs sm:text-sm px-2 sm:px-4"
+                        >
+                          <Calendar className="h-4 w-4 mr-2" />
+                          Eventos
+                        </TabsTrigger>
+                      ) : null}
+
                     </TabsList>
 
                     {/* Zona 3: Contenido de las pestañas */}
@@ -216,6 +229,14 @@ export default function StudentDetailPage() {
                           </div>
                         </div>
                       </TabsContent>
+
+                      <TabsContent value="eventos">
+                        <StudentDetailEvents
+                          alumno_id={studentDetails.alumno.alumno_id}
+                          curso_id={studentDetails.alumno.cursos[0].curso_id}
+                        />
+                      </TabsContent>
+
                     </div>
                   </Tabs>
                 </div>

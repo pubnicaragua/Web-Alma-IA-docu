@@ -19,8 +19,8 @@ export const AssitedEvaluationObservationSchema = z.object({
 
 export const AssitedEvaluationManualSchema = z.object({
     alumno_id: z.number().positive(),
-    evento_id: z.number().positive(),
-    evento_respuesta_posible_id: z.number().positive(),
+    evento_id: z.number().positive('¡Debe seleccionar el tipo de evento!'),
+    evento_respuesta_posible_id: z.number().positive('¡Debe seleccionar una respuesta!'),
     fecha: z.date(),
     hora: z.string().nonempty(),
     observacion: z.string().optional(),

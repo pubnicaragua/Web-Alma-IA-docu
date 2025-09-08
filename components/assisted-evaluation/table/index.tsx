@@ -40,7 +40,11 @@ export function AssitedEvaluationTable({
     const handleClickCheckbox = useCallback(
         (alumnoId: number, opcion: number | null) => {
             setAlumnos((prevAlumnos) => prevAlumnos.map((alumno) =>
-                alumno.alumno_id === alumnoId ? { ...alumno, respuesta_id: opcion } : alumno
+                alumno.alumno_id === alumnoId ? { 
+                    ...alumno, 
+                    respuesta_id: opcion,
+                    observacion: (opcion) ? alumno?.observacion : '',
+                } : alumno
             ));
         },
         [alumnos]

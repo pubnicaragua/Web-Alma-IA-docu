@@ -47,6 +47,7 @@ export interface StudentGeneral {
     colegio_id: number;
   };
   cursos: {
+    curso_id: number;
     grados: {
       nombre: string;
       grado_id: number;
