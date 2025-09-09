@@ -1,6 +1,6 @@
 import { fetchApi, fetchWithAuth } from "@/lib/api-config";
 import { DataPoint } from "@/components/line-chart-comparison";
-import { Persona } from "./teachers-service";
+import { Persona } from "../teachers-service";
 
 // Interfaces para los datos de la API según la estructura real
 interface ApiPerson {
@@ -160,7 +160,7 @@ export interface Alert {
 
 // ...existing code...
 
-function mapApiAlertsToAlerts(apiAlerts: ApiAlert[]): Alert[] {
+export function mapApiAlertsToAlerts(apiAlerts: ApiAlert[]): Alert[] {
   return apiAlerts.map((apiAlert) => {
     try {
       if (!apiAlert) throw new Error("Alert object is undefined");
@@ -322,14 +322,17 @@ export async function fetchAlertsByType(type: string, colegio_id: string): Promi
 }
 
 // Función para obtener todas las alertas
-export async function fetchAlerts(): Promise<Alert[]> {
+export async function fetchAlerts() {
   try {
-    const response = await fetchWithAuth("/alumnos/alertas", {
+    const response = await window.axios.get("/alumnos/alertas", {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
       },
     });
+
+    return response;
+
 
     if (!response.ok) {
       // Intentar leer el mensaje de error
@@ -339,6 +342,7 @@ export async function fetchAlerts(): Promise<Alert[]> {
         `Error al obtener alertas: ${response.status} - ${errorText}`
       );
     }
+
 
     // Intentar parsear la respuesta como JSON
     const apiAlerts: ApiAlert[] = await response.json();
@@ -1089,3 +1093,32 @@ export async function fetchBitacoraUsers(): Promise<PowerUser[]> {
     return [];
   }
 }
+
+
+export function parseAlertDateTime(dateString: string, timeString?: string): Date | null {
+  if (!dateString) return null;
+  const [day, month, year] = dateString.split("/").map(Number);
+  if (
+    !day ||
+    !month ||
+    !year ||
+    year < 1900 ||
+    year > 2100 ||
+    month < 1 ||
+    month > 12 ||
+    day < 1 ||
+    day > 31
+  ) {
+    console.warn(
+      `Fecha con formato inválido o año fuera de rango: ${dateString}`
+    );
+    return null;
+  }
+  let hours = 0,
+    minutes = 0;
+  if (timeString) {
+    [hours, minutes] = timeString.split(":").map((t) => parseInt(t, 10) || 0);
+  }
+  // Construye fecha local (no UTC)
+  return new Date(year, month - 1, day, hours, minutes);
+};
