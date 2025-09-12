@@ -1,16 +1,16 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { RefreshCw } from "lucide-react";
 import { fetchStudents, type Student } from "@/services/students-service";
 import { searchStudents } from "@/services/header-service";
 import { useToast } from "@/hooks/use-toast";
 import { DataTable } from "@/components/data-table";
 import { FilterDropdown } from "@/components/filter-dropdown";
-import { useUser } from "@/middleware/user-context";
+import { RefreshCw } from "lucide-react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { AgeRangeFilter } from "../agerangefilter";
+import { useUser } from "@/middleware/user-context";
 
 export function StudentsContent() {
   const { selectedSchoolId } = useUser();
@@ -25,12 +25,12 @@ export function StudentsContent() {
   const [levelFilter, setLevelFilter] = useState<string>("Todos");
   const [courseFilter, setCourseFilter] = useState<string>("Todos");
   const [statusFilter, setStatusFilter] = useState<string>("Todos");
-  const [minAge, setMinAge] = useState<number>();
-  const [maxAge, setMaxAge] = useState<number>();
 
   const [levelOptions, setLevelOptions] = useState<string[]>(["Todos"]);
   const [courseOptions, setCourseOptions] = useState<string[]>(["Todos"]);
   const [statusOptions, setStatusOptions] = useState<string[]>(["Todos"]);
+  const [minAge, setMinAge] = useState<number>();
+  const [maxAge, setMaxAge] = useState<number>();
 
   const [currentPage, setCurrentPage] = useState(1);
 

@@ -14,7 +14,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StudentAlerts } from "@/components/student/student-alerts";
 import { StudentReports } from "@/components/student/student-reports";
 import { StudentSkeleton } from "@/components/student/student-skeleton";
-import { StudentDetailInfo } from "@/components/student/detail-sections/information";
 import { BarChartComparisonAlumno } from "@/components/bar-chart-comparison-alumno";
 import { VerifyAccess } from "@/components/authentication/verify-access";
 import { ComparisonChart } from "@/components/comparison-chart";
@@ -23,6 +22,8 @@ import { useAxios } from "@/hooks/use-axios";
 import { useUser } from "@/middleware/user-context";
 import type { StudentDetailResponse } from "@/services/students-service";
 import { StudentDetailEvents } from "@/components/student/detail-sections/events";
+import { StudentDetailAlerts } from "@/components/student/detail-sections/alerts";
+import { StudentDetailInfo } from "@/components/student/detail-sections/information";
 
 const generateNameFromEmail = (email: string) => {
   if (!email) return "Estudiante";
@@ -197,7 +198,7 @@ export default function StudentDetailPage() {
 
                       <TabsContent value="alertas">
                         <div className="bg-white rounded-lg shadow-sm p-6 border border-blue-200">
-                          <StudentAlerts
+                          <StudentDetailAlerts
                             alerts={studentDetails.alertas}
                             setRefresh={() => refetch()}
                           />
