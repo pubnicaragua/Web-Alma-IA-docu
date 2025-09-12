@@ -147,7 +147,7 @@ export function ImportantDates({
       <CardHeader>
         <CardTitle>{title}</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="overflow-y-scroll max-h-[480px]">
         <div className="space-y-0">
           {limitedDates.map((date, index) => (
             <div key={date.calendario_fecha_importante_id || index}>
