@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import SplashScreen from "./SplashScreen";
+import { DevelopmentMode } from "./utils/app-mode";
 
 export default function ClientWrapper({
   children,
@@ -29,6 +30,7 @@ export default function ClientWrapper({
         }
       >
         {children}
+        <DevelopmentMode />
       </div>
     </>
   );
