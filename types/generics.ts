@@ -7,3 +7,10 @@ export interface ServerActionResponse {
     status: "success" | "error"
     [x: string]: unknown
 }
+
+export interface PaginationResponse<T> {
+    data: T[];
+    totalItems: number;
+    currentPage: number;
+    totalPages: number;
+}
