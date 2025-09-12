@@ -3,11 +3,13 @@ import { Alert, parseAlertDateTime } from "@/services/alerts-service";
 import { AlertBadge } from "@/components/alerts/alert-badge";
 import { StudentCell } from "@/components/alerts/student-cell";
 import { useRouter } from "next/navigation";
+import { CircleSlash, FileAudio, FileImage, FileX } from "lucide-react";
+import { Popover, PopoverTrigger } from "@/components/ui/popover";
+import { PopoverContent } from "@radix-ui/react-popover";
 
 export function AlertTableItem(alert: Alert, column: { key: string; title: string }) {
 
     const router = useRouter();
-
 
     const handleAlertClick = (alert: Alert) => {
         router.push(`/alertas/${alert.id}`);
@@ -63,6 +65,21 @@ export function AlertTableItem(alert: Alert, column: { key: string; title: strin
                         : "N/A"}
                 </div>
             );
+        }
+        case "resource": {
+            return (
+                <div className="flex items-center w-full gap-3">
+                    {alert.url_audio && (
+                        <FileAudio />
+                    )}
+                    {alert.url_imagen && (
+                        <FileImage />
+                    )}
+                    {(!alert.url_imagen && !alert.url_audio) && (
+                        <FileX />
+                    )}
+                </div>
+            )
         }
         default:
             return (

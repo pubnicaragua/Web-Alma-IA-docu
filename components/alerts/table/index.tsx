@@ -1,18 +1,20 @@
-'use client';
-import { useMemo, useState } from "react";
+"use client";
+import { useMemo } from "react";
 import { DataTable } from "@/components/data-table";
-import { useAxios } from "@/hooks/use-axios";
-import { AlertFilterBuilder } from "@/services/alerts-service/filter-builder";
-import { ApiAlert, fetchAlerts } from "@/services/alerts-service";
+import { ApiAlert, mapApiAlertsToAlerts } from "@/services/alerts-service";
 import { NoResults } from "../no-results";
 import { AlertTableItem } from "./item";
 import { LoadingState } from "../loading-state";
+import { usePaginationSR } from "@/hooks/use-pagination-sr";
+import { SSRPagination } from "@/components/utils/pagination-sr";
+import { useUser } from "@/middleware/user-context";
 
 const columns = [
     { key: "student", title: "Alumno" },
     { key: "type", title: "Tipo de Alerta" },
     { key: "priority", title: "Prioridad" },
     { key: "status", title: "Estado" },
+    { key: "resource", title: "Archivos" },
     { key: "date", title: "Fecha" },
     { key: "time", title: "Hora" },
 ];
@@ -22,39 +24,43 @@ interface PropTypes {
 }
 
 export function AlertsTable({ filters }: Readonly<PropTypes>) {
+    const { selectedSchoolId } = useUser();
 
-    const axios = useAxios<ApiAlert[]>(fetchAlerts);
-    const [currentPage, setCurrentPage] = useState(1);
+    const computedFilters = useMemo(
+        () => ({
+            ...filters,
+            colegio_id: selectedSchoolId,
+        }),
+        [filters, selectedSchoolId]
+    );
 
-    const filtered = useMemo(() => {
-        if (!axios.data) return null;
-        const builder = new AlertFilterBuilder(axios.data);
-        builder
-            .getByType(filters?.typeFilter ?? '')
-            .getByPriority(filters?.priorityFilter ?? '')
-            .getByStatus(filters?.statusFilter ?? '')
-            .getByDate(filters?.dateFilter ?? '', filters?.selectedDate ?? '');
-        return builder.build();
-    }, [axios.data, filters]);
+    const pagination = usePaginationSR<ApiAlert>({
+        route: "/alumnos/alertas",
+        filters: computedFilters,
+        perPage: 25,
+    });
+
+    const formatted = useMemo(
+        () => mapApiAlertsToAlerts(pagination.data) ?? [],
+        [pagination.data]
+    );
 
     return (
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-            {axios.loading && !filtered && (
-                <LoadingState />
-            )}
-            {(!axios.loading && filtered) ? (
-                <DataTable
-                    columns={columns}
-                    data={filtered ?? []}
-                    renderCell={AlertTableItem}
-                    currentPage={currentPage}
-                    onPageChange={setCurrentPage}
-                    pageSize={25}
-                    className="mt-4"
-                />
-            ) : (
-                <NoResults />
+            {pagination.loading && <LoadingState />}
+            {!pagination.loading && formatted.length === 0 && <NoResults />}
+            {!pagination.loading && formatted.length > 0 && (
+                <>
+                    <DataTable
+                        columns={columns}
+                        data={formatted}
+                        renderCell={AlertTableItem}
+                        pageSize={pagination.perPage}
+                        className="mt-4"
+                    />
+                    <SSRPagination pagination={pagination} />
+                </>
             )}
         </div>
-    )
+    );
 }

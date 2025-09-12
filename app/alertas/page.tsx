@@ -2,14 +2,10 @@
 import { AppLayout } from "@/components/layout/app-layout";
 import { useState } from "react";
 import ErrorBoundary from "@/components/utils/error-bountdry";
-import { AlertTableFilters } from "@/components/alerts/filters";
+import { AlertTableFilters } from "@/components/alerts/table/filters";
 import { AlertsTable } from "@/components/alerts/table";
 
-export default function AlertsPage({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined };
-}) {
+export default function AlertsPage() {
 
   const [filters, setFilters] = useState(null);
 

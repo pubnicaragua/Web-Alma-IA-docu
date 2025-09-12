@@ -56,6 +56,8 @@ interface ApiAlertType {
 
 export interface AlertPage {
   alumno_alerta_id: number;
+  url_image: string | null;
+  url_audio: string | null;
   responsable_actual_id: string;
   alumno: {
     alumno_id: number;
@@ -83,6 +85,8 @@ export interface AlertPage {
 
 export interface AlertPagev1 {
   alumno_alerta_id: number;
+  url_image: string | null;
+  url_audio: string | null;
   alumno: {
     alumno_id: number;
     nombre: string;
@@ -92,6 +96,7 @@ export interface AlertPagev1 {
   fecha_generada: string;
   responsable: {
     nombre: string;
+    rol: string;
     imagen: string;
   };
   anonimo: boolean;
@@ -109,6 +114,8 @@ export interface AlertPagev1 {
 
 export interface ApiAlert {
   anonimo: boolean;
+  url_image: string | null;
+  url_audio: string | null;
   alumno_alerta_id: number;
   alumno_id: number;
   alerta_regla_id: number;
@@ -156,6 +163,8 @@ export interface Alert {
   };
   // nuevo campo obligatorio: id numérico del tipo
   alertTypeId: number;
+  url_imagen: string | null;
+  url_audio: string | null;
 }
 
 // ...existing code...
@@ -276,6 +285,8 @@ export function mapApiAlertsToAlerts(apiAlerts: ApiAlert[]): Alert[] {
         creationDate: apiAlert.fecha_creacion,
         updateDate: apiAlert.fecha_actualizacion,
         isActive: apiAlert.activo || false,
+        url_imagen: apiAlert.url_image || "",
+        url_audio: apiAlert.url_audio || "",
         // exportar id numérico para uso en UI
         alertTypeId,
       };
@@ -329,6 +340,10 @@ export async function fetchAlerts() {
       headers: {
         "Content-Type": "application/json",
       },
+      params: {
+        page: 1,
+        perPage: 10
+      }
     });
 
     return response;
