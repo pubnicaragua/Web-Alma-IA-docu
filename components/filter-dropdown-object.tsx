@@ -1,27 +1,28 @@
-"use client"
+"use client";
 
-import { Check, ChevronDown } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Check, ChevronDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { cn } from "@/lib/utils"
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
-interface FilterDropdownObjectProps<T> {
-  label: string
-  options: T[]
-  value: T
-  onChange: (value: T) => void
-  labelKey: keyof T
-  idKey?: keyof T
-  isEqual?: (a: T, b: T) => boolean
-  className?: string
+interface FilterDropdownObjectProps {
+  label: string;
+  options: any[];
+  value: any;
+  onChange: (value: any) => void;
+  labelKey: string;
+  idKey?: string;
+  isEqual?: (a: any, b: any) => boolean;
+  className?: string;
+  disabled?: boolean;
 }
 
-export function FilterDropdownObject<T>({
+export function FilterDropdownObject({
   label,
   options,
   value,
@@ -30,14 +31,14 @@ export function FilterDropdownObject<T>({
   idKey,
   isEqual = (a, b) => a === b,
   className,
-}: FilterDropdownObjectProps<T>) {
-  const getLabel = (item: T) => String(item[labelKey])
-  const getKey = (item: T) => idKey ? item[idKey] : item[labelKey]
+  disabled = false,
+}: FilterDropdownObjectProps) {
+  const getLabel = (item: any) => String(item?.[labelKey]);
+  const getKey = (item: any) => (idKey ? String(item?.[idKey]) : String(item?.[labelKey]));
 
-const labelValue = value ? getLabel(value) : null
-const displayValue = !labelValue || labelValue === "Todos"
-  ? label
-  : `${label}: ${labelValue}`
+  const labelValue = value ? getLabel(value) : "Todos";
+  const displayValue =
+    !labelValue || labelValue === "Todos" ? label : `${label}: ${labelValue}`;
 
   return (
     <div className={cn("w-full", className)}>
@@ -46,20 +47,27 @@ const displayValue = !labelValue || labelValue === "Todos"
           <Button
             variant="outline"
             className="w-full justify-between overflow-hidden"
-            aria-label={`Filtrar por ${label.toLowerCase()}`}
+            disabled={disabled}
+            aria-label={`Filtrar por ${label?.toString()?.toLowerCase() || "filtro"}`}
           >
             <span className="truncate">{displayValue}</span>
             <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-[200px] p-1">
+        <DropdownMenuContent
+          align="start"
+          className="overflow-y-scroll lg:max-h-[320px] w-[250px] p-1"
+        >
           {options.map((option) => {
-            const selected = isEqual(option, value)
-            const key = String(getKey(option))
+            const selected = isEqual(option, value);
+            const key = getKey(option);
             return (
               <DropdownMenuItem
                 key={key}
-                onSelect={() => onChange(option)}
+                onSelect={() => {
+                  onChange(option);
+                  localStorage.removeItem("selectedTab");
+                }}
                 className={cn(
                   "flex cursor-pointer items-center justify-between rounded-sm px-2 py-1.5 text-sm",
                   selected && "bg-accent font-medium"
@@ -70,10 +78,10 @@ const displayValue = !labelValue || labelValue === "Todos"
                 </span>
                 {selected && <Check className="ml-2 h-4 w-4" />}
               </DropdownMenuItem>
-            )
+            );
           })}
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
-  )
+  );
 }
