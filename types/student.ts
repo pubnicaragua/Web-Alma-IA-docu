@@ -149,3 +149,14 @@ export interface StudentReport {
   activo: boolean;
   tipo_informe: string;
 }
+
+export interface AlertItemFormatted {
+  alumno_alerta_id: number;
+  fecha: string; // formato "DD/MM/YYYY"
+  hora: string; // formato "HH:mm"
+  tipo: string;
+  estado: string;
+  prioridad: string;
+  responsable: string | null;
+  severidad_name: string;
+}
