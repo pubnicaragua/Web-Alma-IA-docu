@@ -237,7 +237,7 @@ export default function AndroidDownload() {
                 className="flex items-center gap-2 px-6 py-3 text-white rounded-full font-semibold bg-blue-500 transition-all shadow-lg hover:bg-blue-600"
               >
                 <ArrowDownTrayIcon className="w-5 h-5" />
-                Descargar
+                Descargar 
               </a>
             </div>
           </div>
