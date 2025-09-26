@@ -230,7 +230,7 @@ export default function AndroidDownload() {
             <p className="text-xs text-gray-500 text-center">
               Compatible con iOS 13 o superior
             </p>
-            <div>
+            <div> 
               <a
                 target="_blank"
                 href="https://expo.dev/accounts/dxgabalt/projects/almaia/builds/edd21127-961d-4e9c-8918-cc53eaea0455"
