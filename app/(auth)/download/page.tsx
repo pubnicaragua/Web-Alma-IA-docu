@@ -233,7 +233,7 @@ export default function AndroidDownload() {
             <div>
               <a
                 target="_blank"
-                href="https://expo.dev/accounts/dxgabalt/projects/almaia/builds/78ea88b5-8380-4cc5-bfad-79c75bade5e8"
+                href="https://expo.dev/accounts/dxgabalt/projects/almaia/builds/edd21127-961d-4e9c-8918-cc53eaea0455"
                 className="flex items-center gap-2 px-6 py-3 text-white rounded-full font-semibold bg-blue-500 transition-all shadow-lg hover:bg-blue-600"
               >
                 <ArrowDownTrayIcon className="w-5 h-5" />
@@ -267,7 +267,7 @@ export default function AndroidDownload() {
             <div>
               <a
                 target="_blank"
-                href="https://expo.dev/accounts/dxgabalt/projects/almaia/builds/3abf1105-ea60-42bf-9698-c688ed97972b"
+                href="https://expo.dev/accounts/dxgabalt/projects/almaia/builds/7a3f07c6-f44d-44fd-bcc7-635987fd20e6"
                 className="flex items-center gap-2 px-6 py-3 text-white rounded-full font-semibold bg-blue-500 transition-all shadow-lg hover:bg-blue-600"
               >
                 <ArrowDownTrayIcon className="w-5 h-5" />
