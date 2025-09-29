@@ -1,0 +1,301 @@
+import { FormError } from "@/components/form/form-error"
+import { Label } from "@/components/ui/label"
+import { Controller } from "react-hook-form"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { useEffect, useMemo, useState } from "react";
+import { useUser } from "@/middleware/user-context";
+import { usePaginationSR } from "@/hooks/use-pagination-sr";
+import { ApiStudent } from "@/services/students-service";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
+import { SSRPagination } from "@/components/utils/pagination-sr";
+
+const DESTINY_TYPES = ["alumno", "apoderado"]
+const NOTICE_TYPES = [
+    {
+        id: 1,
+        nombre: 'Colegio'
+    },
+    {
+        id: 2,
+        nombre: 'Grado'
+    },
+    {
+        id: 3,
+        nombre: 'Curso'
+    },
+    {
+        id: 4,
+        nombre: 'Alumno'
+    }
+]
+
+export function NoticeFormDestiny({ form }: any) {
+    const { selectedSchoolId } = useUser();
+    const [isCatalogLoading, setCatalogLoading] = useState(false);
+
+    const [courses, setCourses] = useState<any[]>([]);
+    const [grades, setGrades] = useState<any[]>([]);
+
+    const [selectAlumnos, setSelectAlumnos] = useState<any[]>([]);
+    const [filters, setFilters] = useState({
+        colegio_id: '',
+        curso_id: '',
+        grado_id: ''
+    });
+
+    const noticeTypeId = form.watch('destinatarios.aviso_tipo_id');
+
+    const pagination = usePaginationSR<ApiStudent>({
+        route: "/alumnos",
+        filters: filters,
+        perPage: 10,
+        enabled: Boolean(filters.curso_id) && noticeTypeId == 4 && Boolean(selectedSchoolId)
+    });
+
+    useEffect(() => {
+        if (!noticeTypeId) return;
+        setFilters({
+            colegio_id: selectedSchoolId ?? '',
+            curso_id: '',
+            grado_id: ''
+        });
+        setSelectAlumnos([]);
+    }, [noticeTypeId]);
+
+    useEffect(() => {
+        const { colegio_id } = filters;
+        if (!colegio_id) return;
+        setCatalogLoading(true);
+        (async function () {
+            const response = await window.axios.get(`/colegios/cursos`,
+                {
+                    params: { colegio_id }
+                });
+            const { data: courses } = response;
+            const grades = [...new Map(courses.map((c: any) => [c.grados.grado_id, c.grados])).values()] as { grado_id: number | null, nombre: string }[];
+            setCourses(courses);
+            setGrades(grades);
+            setCatalogLoading(false);
+        })();
+    }, [filters.colegio_id]);
+
+    useEffect(() => {
+        const fieldName = 'destinatarios.destinatarios'
+        let fieldValue: number[] = [];
+        switch (noticeTypeId) {
+            case 1:
+                fieldValue = [Number(filters.colegio_id)];
+                break;
+            case 2:
+                fieldValue = [Number(filters.curso_id)];
+                break;
+            case 3:
+                fieldValue = [Number(filters.grado_id)];
+                break;
+            case 4:
+                fieldValue = selectAlumnos.map((i) => Number(i));
+                break;
+            default:
+                fieldValue = [];
+                break;
+        }
+        form.setValue(fieldName, fieldValue);
+    }, [noticeTypeId, filters, selectAlumnos]);
+
+    const alumnos = useMemo(() => {
+        return pagination.data.map((student) => ({
+            alumno_id: student.alumno_id,
+            nombre_completo: `${student.personas.nombres} ${student.personas.apellidos}`,
+        })) || []
+    }, [pagination.data]);
+
+    const filteredCourses = useMemo(() => {
+        if (!courses.length) return [];
+        return courses.filter((course) => course.grados.grado_id == filters.grado_id);
+    }, [courses, filters.grado_id]);
+
+    return (
+        <div className="grid grid-cols-2 gap-4">
+            <div>
+                <Label className="text-sm text-gray-500">Tipo Persona</Label>
+                <Controller
+                    name="destinatarios.aviso_destinatario_tipo"
+                    control={form.control}
+                    render={({ field }) => (
+                        <Select {...field}
+                            onValueChange={field.onChange}
+                        >
+                            <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Seleccione el Tipo de Destinatario" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {DESTINY_TYPES.map((tipo) => (
+                                    <SelectItem key={tipo} value={tipo} className="text-capitalize">
+                                        {tipo}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    )}
+                />
+                <FormError message={form.formState.errors.destinatarios?.aviso_destinatario_tipo?.message} />
+            </div>
+            <div>
+                <Label className="text-sm text-gray-500">Tipo Aviso</Label>
+                <Controller
+                    name="destinatarios.aviso_tipo_id"
+                    control={form.control}
+                    render={({ field }) => (
+                        <Select {...field}
+                            onValueChange={(val: string) => field.onChange(Number(val))}
+                            value={field.value ? String(field.value) : ""}
+                        >
+                            <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Seleccione el Tipo de Aviso" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {NOTICE_TYPES.map((tipo) => (
+                                    <SelectItem key={tipo.id} value={String(tipo.id)}>
+                                        {tipo.nombre}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    )}
+                />
+                <FormError message={form.formState.errors.destinatarios?.aviso_tipo_id?.message} />
+            </div>
+
+            {noticeTypeId >= 2 && (
+                <div className={`col-span-${noticeTypeId > 2 ? 1 : 2}`}>
+                    <Label className="text-sm text-gray-500">Grado</Label>
+                    <Select
+                        onValueChange={(val: string) => setFilters({ ...filters, grado_id: val })}
+                        value={filters.grado_id}
+                        disabled={isCatalogLoading}
+                    >
+                        <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Seleccione el Grado" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {grades.map((tipo: any) => (
+                                <SelectItem key={tipo.grado_id} value={String(tipo.grado_id)}>
+                                    {tipo.nombre}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            )}
+
+            {noticeTypeId >= 3 && (
+                <div className={`col-span-1`}>
+                    <Label className="text-sm text-gray-500">Curso</Label>
+                    <Select
+                        onValueChange={(val: string) => setFilters({ ...filters, curso_id: val })}
+                        value={filters.curso_id}
+                        disabled={isCatalogLoading || !filters.grado_id}
+                    >
+                        <SelectTrigger className="w-full">
+                            <SelectValue placeholder={`${!filters.grado_id ? 'Seleccione Primero el Grado' : 'Seleccione el Curso'}`} />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {filteredCourses.map((tipo: any) => (
+                                <SelectItem key={tipo.curso_id} value={String(tipo.curso_id)}>
+                                    {tipo.nombre_curso}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            )}
+
+            {noticeTypeId == 4 && (
+                <div className="col-span-2">
+                    <div className="w-full">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="w-1/12">Selección</TableHead>
+                                    <TableHead>Nombre Alumno</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {!Boolean(filters.curso_id) ? (
+                                    <TableRow>
+                                        <TableCell colSpan={2}>
+                                            <div className="text-center">
+                                                Favor Seleccione un Curso
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    <>
+                                        {pagination.loading && (
+                                            <TableRow>
+                                                <TableCell colSpan={2}>
+                                                    <div className="flex justify-center">
+                                                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
+                                        {!pagination.loading && !alumnos.length && (
+                                            <TableRow>
+                                                <TableCell colSpan={2}>
+                                                    <div className="flex justify-center">
+                                                        No se encontraron alumnos
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
+                                        {!pagination.loading && alumnos.length > 0 && (
+                                            <>
+                                                {alumnos.map((alumno) => (
+                                                    <TableRow key={alumno.alumno_id}>
+                                                        <TableCell className="flex justify-center">
+                                                            <Checkbox
+                                                                checked={selectAlumnos.includes(alumno.alumno_id)}
+                                                                onClick={() => {
+                                                                    const newSelectedAlumnos = selectAlumnos.includes(alumno.alumno_id)
+                                                                        ? selectAlumnos.filter((id) => id !== alumno.alumno_id)
+                                                                        : [...selectAlumnos, alumno.alumno_id];
+                                                                    setSelectAlumnos(newSelectedAlumnos);
+                                                                }}
+                                                            />
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {alumno.nombre_completo}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </>
+                                        )}
+                                    </>
+                                )}
+
+                            </TableBody>
+                        </Table>
+                        {Boolean(alumnos.length) && (
+                            <SSRPagination pagination={pagination} />
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
+    )
+}
