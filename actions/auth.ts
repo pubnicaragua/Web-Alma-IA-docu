@@ -11,7 +11,7 @@ export async function ActionMakeLogin(values: AuthLoginSchemaType): Promise<Serv
 
     try {
         // ToDo: Crear una instancia de axios del lado del servidor
-        await validateRecaptch(values.captcha ?? '');
+        //await validateRecaptch(values.captcha ?? '');
         data = await validateCredentials(values);
         await validateProfileType(data.token);
     } catch (error) {
