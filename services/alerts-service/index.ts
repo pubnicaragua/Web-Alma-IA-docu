@@ -1,6 +1,7 @@
 import { fetchApi, fetchWithAuth } from "@/lib/api-config";
 import { DataPoint } from "@/components/line-chart-comparison";
 import { Persona } from "../teachers-service";
+import { parse, format, parseISO } from 'date-fns';
 
 // Interfaces para los datos de la API según la estructura real
 interface ApiPerson {
@@ -180,18 +181,9 @@ export function mapApiAlertsToAlerts(apiAlerts: ApiAlert[]): Alert[] {
       let formattedTime = "";
       try {
         if (apiAlert.fecha_generada) {
-          const generatedDate = new Date(apiAlert.fecha_generada);
-          if (!isNaN(generatedDate.getTime())) {
-            formattedDate = generatedDate.toLocaleDateString("es-ES", {
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
-            });
-            formattedTime = generatedDate.toLocaleTimeString("es-ES", {
-              hour: "2-digit",
-              minute: "2-digit",
-            });
-          }
+          const d = new Date(apiAlert.fecha_generada);
+          formattedDate = format(d, 'dd-MM-yyyy');
+          formattedTime = format(d, 'hh:mm a');
         }
       } catch { }
 

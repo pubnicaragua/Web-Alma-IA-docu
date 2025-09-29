@@ -11,7 +11,7 @@ import { useUser } from "@/middleware/user-context";
 
 const columns = [
     { key: "student", title: "Alumno" },
-    { key: "type", title: "Tipo de Alerta" },
+    { key: "type", title: "Tipo de Alerta", className: "text-center" },
     { key: "priority", title: "Prioridad" },
     { key: "status", title: "Estado" },
     { key: "resource", title: "Archivos" },

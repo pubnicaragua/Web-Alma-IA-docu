@@ -1,7 +1,9 @@
 
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useLightbox } from "@/hooks/use-lightbox";
 import { AlertPagev1 } from "@/services/alerts-service";
-import { Lock } from "lucide-react";
+import { FileImage, Lock } from "lucide-react";
 import Image from "next/image";
 
 
@@ -10,6 +12,10 @@ interface PropTypes {
 }
 
 export function AlertInfoSection({ alert }: Readonly<PropTypes>) {
+
+    const lightbox = useLightbox();
+    const { Lightbox } = lightbox;
+
     return (
         <Card className="mb-6">
             <CardHeader className="flex justify-end w-full space-y-0 pb-2"></CardHeader>
@@ -65,13 +71,16 @@ export function AlertInfoSection({ alert }: Readonly<PropTypes>) {
                             <div className="bg-gray-50 rounded-lg border border-gray-100 py-2 px-4">
                                 <p className="text-sm text-gray-500 mb-1">Imagen</p>
                                 {alert.url_image ? (
-                                    <div className="relative w-full h-64">
-                                        <Image
-                                            className="object-cover rounded-md"
-                                            alt="Sin Imagen de referencía"
-                                            src={alert.url_image}
-                                            fill
-                                        />
+                                    <div>
+                                        <Button
+                                            className="bg-blue-500 hover:bg-blue-600"
+                                            onClick={() => lightbox.open(alert.url_image || '')}
+                                            aria-label="Visualizar Imagen Alerta"
+                                        >
+                                            <FileImage />
+                                            <span>Visualizar Imagen</span>
+                                        </Button>
+                                        <Lightbox />
                                     </div>
                                 ) : (
                                     <p className="text-base font-medium text-gray-800">

@@ -38,7 +38,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertAddBinnacleSchema } from "@/zod/alerts";
 import { FormError } from "@/components/form/form-error";
 import { AlertAddBinnacleSchemaType } from "@/types/alerts";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 
 interface AddActionModalProps {
   alertData: AlertPagev1;
@@ -369,7 +369,10 @@ export function AddActionModal({ alertData, setRefresh }: AddActionModalProps) {
                             {...field}
                             type="date"
                             value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
-                            onChange={(e) => field.onChange(new Date(e.target.value))}
+                            onChange={(e) => {
+                              const val = e.target.value ? parseISO(e.target.value) : null;
+                              field.onChange(val);
+                            }}
                           />
                         )}
                       />
@@ -387,8 +390,10 @@ export function AddActionModal({ alertData, setRefresh }: AddActionModalProps) {
                             {...field}
                             type="date"
                             value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
-                            onChange={(e) => field.onChange(new Date(e.target.value))}
-
+                            onChange={(e) => {
+                              const val = e.target.value ? parseISO(e.target.value) : null;
+                              field.onChange(val);
+                            }}
                           />
                         )}
                       />

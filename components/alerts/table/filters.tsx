@@ -17,6 +17,7 @@ interface AlertFilters {
     dateFilter: string;
     selectedDate: Date | null;
     horaFilter: string | undefined;
+    motores: boolean;
 }
 
 export function AlertTableFilters({ setFilters }: Readonly<PropTypes>) {
@@ -31,6 +32,7 @@ export function AlertTableFilters({ setFilters }: Readonly<PropTypes>) {
             estado: null,
             dateFilter: "Todos",
             selectedDate: null as Date | null,
+            motores: false,
             horaFilter: undefined as string | undefined,
         },
         mode: "onChange",
@@ -58,6 +60,38 @@ export function AlertTableFilters({ setFilters }: Readonly<PropTypes>) {
     }, []);
 
     useEffect(() => {
+        if (!Object.keys(catalogs).length) return;
+
+        let filters: any = localStorage.getItem("selectedTab");
+
+        if (!filters) return;
+
+        filters = JSON.parse(filters);
+
+        if (filters?.tipo) {
+            const tipo = (catalogs as any)?.types.find((t: any) => t.alerta_tipo_id == filters.tipo)
+            form.setValue('tipo', tipo)
+        }
+
+        if (filters?.prioridad) {
+            const prioridad = (catalogs as any)?.priorities.find((t: any) => t.alerta_prioridad_id == filters.prioridad)
+            form.setValue('prioridad', prioridad)
+        }
+
+        if (filters?.estado) {
+            form.setValue('estado', filters.estado)
+        }
+
+        if (filters?.motores) {
+            form.setValue('motores', filters.motores)
+        }
+
+        localStorage.removeItem("selectedTab");
+
+    }, [catalogs]);
+
+
+    useEffect(() => {
         const subscription = form.watch((values) => {
             setFilters({
                 alertas_tipo_alerta_tipo_id: values.tipo?.alerta_tipo_id,
@@ -66,100 +100,117 @@ export function AlertTableFilters({ setFilters }: Readonly<PropTypes>) {
                 dateFilter: values.dateFilter,
                 selectedDate: values.selectedDate,
                 horaFilter: values.horaFilter,
+                motores: values.motores ? 1 : 0,
             });
         });
         return () => subscription.unsubscribe();
     }, [form]);
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <Controller
-                name="tipo"
-                control={form.control}
-                render={({ field }) => (
-                    <FilterDropdownObject
-                        label="Tipo"
-                        labelKey={"nombre"}
-                        idKey={"alerta_tipo_id"}
-                        options={(catalogs as any).types ?? []}
-                        disabled={filtersLoading}
-                        onChange={field.onChange}
-                        value={field.value}
-                    />
-                )}
-            />
+        <div>
+            <div className="flex items-center gap-2 mb-4">
 
-            <Controller
-                name="prioridad"
-                control={form.control}
-                render={({ field }) => (
-                    <FilterDropdownObject
-                        label="Prioridad"
-                        labelKey={"nombre"}
-                        idKey={"alerta_prioridad_id"}
-                        options={(catalogs as any).priorities ?? []}
-                        disabled={filtersLoading}
-                        onChange={field.onChange}
-                        value={field.value}
-                    />
-                )}
-            />
+                <button
+                    onClick={() => form.reset()}
+                    aria-label="Eliminar filtros"
+                    className="px-3 py-1 border border-gray-300 rounded text-gray-600 hover:bg-gray-100 transition text-sm"
+                    type="button"
+                >
+                    Eliminar filtros
+                </button>
+            </div>
 
-            <Controller
-                name="estado"
-                control={form.control}
-                render={({ field }) => (
-                    <FilterDropdown
-                        label="Estado"
-                        options={filtersLoading ? ["Cargando..."] : (catalogs as any).states}
-                        disabled={filtersLoading}
-                        onChange={field.onChange}
-                        value={field.value ?? ""}
-                    />
-                )}
-            />
-
-            <div className="flex flex-col">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <Controller
-                    name="dateFilter"
+                    name="tipo"
                     control={form.control}
                     render={({ field }) => (
-                        <FilterDropdown
-                            label="Fecha"
-                            options={filtersLoading ? ["Cargando..."] : ["Todos", "Hoy", "Hasta..."]}
-                            value={field.value}
-                            onChange={(value) => {
-                                field.onChange(value);
-                                if (value === "Hoy") {
-                                    form.setValue("selectedDate", new Date());
-                                    return;
-                                }
-                                if (value === "Todos" || !value) {
-                                    form.setValue("selectedDate", null);
-                                    return;
-                                }
-                            }}
+                        <FilterDropdownObject
+                            label="Tipo"
+                            labelKey={"nombre"}
+                            idKey={"alerta_tipo_id"}
+                            options={(catalogs as any).types ?? []}
                             disabled={filtersLoading}
+                            onChange={field.onChange}
+                            value={field.value}
                         />
                     )}
                 />
-                {form.watch("dateFilter") === "Hasta..." && (
-                    <div className="mt-2">
-                        <Controller
-                            name="selectedDate"
-                            control={form.control}
-                            render={({ field }) => (
-                                <DatePicker
-                                    selected={field.value}
-                                    onChange={field.onChange}
-                                    placeholderText="Seleccione una fecha"
-                                    className="w-full p-2 border rounded-md"
-                                />
-                            )}
+
+                <Controller
+                    name="prioridad"
+                    control={form.control}
+                    render={({ field }) => (
+                        <FilterDropdownObject
+                            label="Prioridad"
+                            labelKey={"nombre"}
+                            idKey={"alerta_prioridad_id"}
+                            options={(catalogs as any).priorities ?? []}
+                            disabled={filtersLoading}
+                            onChange={field.onChange}
+                            value={field.value}
                         />
-                    </div>
-                )}
+                    )}
+                />
+
+                <Controller
+                    name="estado"
+                    control={form.control}
+                    render={({ field }) => (
+                        <FilterDropdown
+                            label="Estado"
+                            options={filtersLoading ? ["Cargando..."] : (catalogs as any).states}
+                            disabled={filtersLoading}
+                            onChange={field.onChange}
+                            value={field.value ?? ""}
+                        />
+                    )}
+                />
+
+                <div className="flex flex-col">
+                    <Controller
+                        name="dateFilter"
+                        control={form.control}
+                        render={({ field }) => (
+                            <FilterDropdown
+                                label="Fecha"
+                                options={filtersLoading ? ["Cargando..."] : ["Todos", "Hoy", "Hasta..."]}
+                                value={field.value}
+                                onChange={(value) => {
+                                    field.onChange(value);
+                                    if (value === "Hoy") {
+                                        form.setValue("selectedDate", new Date());
+                                        return;
+                                    }
+                                    if (value === "Todos" || !value) {
+                                        form.setValue("selectedDate", null);
+                                        return;
+                                    }
+                                }}
+                                disabled={filtersLoading}
+                            />
+                        )}
+                    />
+                    {form.watch("dateFilter") === "Hasta..." && (
+                        <div className="mt-2">
+                            <Controller
+                                name="selectedDate"
+                                control={form.control}
+                                render={({ field }) => (
+                                    <DatePicker
+                                        selected={field.value}
+                                        onChange={field.onChange}
+                                        placeholderText="Seleccione una fecha"
+                                        className="w-full p-2 border rounded-md"
+                                    />
+                                )}
+                            />
+                        </div>
+                    )}
+                </div>
             </div>
+
         </div>
+
     )
 }

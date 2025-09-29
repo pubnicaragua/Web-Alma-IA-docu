@@ -1,11 +1,9 @@
 'use client';
-import { Alert, parseAlertDateTime } from "@/services/alerts-service";
+import { useRouter } from "next/navigation";
+import { FileAudio, FileImage, FileX } from "lucide-react";
+import { Alert } from "@/services/alerts-service";
 import { AlertBadge } from "@/components/alerts/alert-badge";
 import { StudentCell } from "@/components/alerts/student-cell";
-import { useRouter } from "next/navigation";
-import { CircleSlash, FileAudio, FileImage, FileX } from "lucide-react";
-import { Popover, PopoverTrigger } from "@/components/ui/popover";
-import { PopoverContent } from "@radix-ui/react-popover";
 
 export function AlertTableItem(alert: Alert, column: { key: string; title: string }) {
 
@@ -22,7 +20,7 @@ export function AlertTableItem(alert: Alert, column: { key: string; title: strin
             );
         case "type":
             return (
-                <div className="flex justify-start w-full">
+                <div className="flex justify-center w-full">
                     <AlertBadge
                         type="type"
                         value={
@@ -46,23 +44,16 @@ export function AlertTableItem(alert: Alert, column: { key: string; title: strin
                 </div>
             );
         case "date": {
-            const localDate = parseAlertDateTime(alert.date || "", alert.time);
             return (
                 <div className="text-left">
-                    {localDate ? localDate.toLocaleDateString() : "N/A"}
+                    {alert.date || "N/A"}
                 </div>
             );
         }
         case "time": {
-            const localDate = parseAlertDateTime(alert.date || "", alert.time);
             return (
                 <div className="text-left">
-                    {localDate
-                        ? localDate.toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                        })
-                        : "N/A"}
+                    {alert.time || "N/A"}
                 </div>
             );
         }
@@ -70,13 +61,13 @@ export function AlertTableItem(alert: Alert, column: { key: string; title: strin
             return (
                 <div className="flex items-center w-full gap-3">
                     {alert.url_audio && (
-                        <FileAudio />
+                        <FileAudio className="text-green-500" />
                     )}
                     {alert.url_imagen && (
-                        <FileImage />
+                        <FileImage className="text-blue-500" />
                     )}
                     {(!alert.url_imagen && !alert.url_audio) && (
-                        <FileX />
+                        <FileX className="text-red-500" />
                     )}
                 </div>
             )

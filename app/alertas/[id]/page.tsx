@@ -22,6 +22,7 @@ export default function AlertDetailPage() {
   const searchParams = useSearchParams();
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [refresh, setRefresh] = useState(false);
 
   const axios = useAxios<AlertPagev1 | AlertPagev1[]>(() => window.axios.get(`/alumnos/alertas/${id}`));
   const alert = useMemo(() => Array.isArray(axios.data) ? axios.data[0] : axios.data, [axios.data]);
@@ -36,6 +37,10 @@ export default function AlertDetailPage() {
       }
     })();
   }, []);
+
+  useEffect(() => {
+    axios.refetch();
+  }, [refresh])
 
   const handleSaveChanges = async (data: any) => {
     if (!alert) return;
@@ -70,7 +75,11 @@ export default function AlertDetailPage() {
 
               <AlertStudentSection alert={alert} />
               <AlertInfoSection alert={alert} />
-              <AlertBinnacleSection alertData={alert} />
+              <AlertBinnacleSection
+                alertData={alert}
+                setRefresh={() => setRefresh(prev => !prev)}
+                refresh={refresh}
+              />
             </div>
 
             <EditAlertModal
