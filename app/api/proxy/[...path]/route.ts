@@ -122,33 +122,26 @@ export async function POST(
   try {
     const resolvedParams = await params;
     const path = resolvedParams.path.join("/");
-
-    // Verificar si es una solicitud de login
-    const isLoginRequest = path === "auth/login";
-
-    // Obtener el cuerpo de la solicitud
-    const body = await request.json().catch((e) => {
-      return {};
-    });
-
     const apiUrl = getApiUrl(resolvedParams.path);
 
-    // Obtener el token de autorización de la solicitud (excepto para login)
-    const headers: HeadersInit = {
-      "Content-Type": "application/json",
-    };
+    // Determinar si la petición tiene cuerpo para evitar errores
+    const hasBody = request.bodyUsed === false && request.headers.has("content-length");
+    const body = hasBody ? await request.blob() : null;
 
+    // Copiar headers
+    const headers = new Headers();
+    request.headers.forEach((value, key) => {
+      // El host del proxy no debe ser el mismo que el de la API de destino
+      if (key.toLowerCase() !== "host") {
+        headers.set(key, value);
+      }
+    });
+
+    // Lógica de autenticación (sin cambios)
+    const isLoginRequest = path === "auth/login";
     if (!isLoginRequest) {
       const authHeader = request.headers.get("authorization");
-      if (authHeader) {
-        headers["Authorization"] = authHeader;
-      } else {
-        console.warn(
-          "No se proporcionó token de autorización para la solicitud POST a:",
-          path
-        );
-
-        // Si no hay token y no es login, rechazar la solicitud
+      if (!authHeader) {
         return NextResponse.json(
           { error: "Se requiere autenticación" },
           { status: 401 }
@@ -156,40 +149,23 @@ export async function POST(
       }
     }
 
-    // Hacer la solicitud a la API real
+    // Reenviar la petición usando el cuerpo leído (Blob)
     const response = await fetch(apiUrl, {
-      method: "POST",
+      method: request.method,
       headers,
-      body: JSON.stringify(body),
-      // Añadir un timeout para evitar que la solicitud se quede colgada
-      signal: AbortSignal.timeout(10000), // 10 segundos de timeout
+      body: body, // Pasamos el Blob directamente. Ya no se necesita duplex.
     });
 
-    // Verificar si la respuesta es exitosa
-    if (!response.ok) {
-      // Intentar leer el cuerpo de la respuesta como texto
-      const errorText = await response.text();
+    // Devolver la respuesta al cliente
+    // El cuerpo de la respuesta de fetch también es un stream, pero NextResponse lo maneja bien.
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: response.headers,
+    });
 
-      // Devolver el error
-      return NextResponse.json(
-        { error: errorText || response.statusText || "Error en la solicitud" },
-        { status: response.status }
-      );
-    }
-
-    // Intentar parsear la respuesta como JSON
-    try {
-      const data = await response.json();
-      return NextResponse.json(data, { status: response.status });
-    } catch (error) {
-      // Si no es JSON, devolver el texto
-      const textData = await response.text();
-      return new NextResponse(textData, {
-        status: response.status,
-        headers: { "Content-Type": "text/plain" },
-      });
-    }
   } catch (error) {
+    console.error("Error en el proxy:", error);
     const resolvedParams = await params;
     return handleApiError(error, resolvedParams.path.join("/"));
   }
