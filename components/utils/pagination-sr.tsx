@@ -36,6 +36,7 @@ export function SSRPagination({ pagination }: Readonly<PropTypes>) {
             {/* Controles */}
             <div className="flex space-x-2">
                 <button
+                    type="button"
                     onClick={prev}
                     disabled={page === 1}
                     className="px-3 py-1 text-sm border rounded disabled:opacity-50"
@@ -43,6 +44,7 @@ export function SSRPagination({ pagination }: Readonly<PropTypes>) {
                     Anterior
                 </button>
                 <button
+                    type="button"
                     onClick={next}
                     disabled={page === lastPage}
                     className="px-3 py-1 text-sm border rounded disabled:opacity-50"

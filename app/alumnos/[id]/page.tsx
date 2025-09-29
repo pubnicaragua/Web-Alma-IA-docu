@@ -1,6 +1,6 @@
 "use client";
 import { useParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   AlertTriangle,
   Bell,
@@ -39,7 +39,7 @@ const generateNameFromEmail = (email: string) => {
 
 export default function StudentDetailPage() {
   const { id } = useParams();
-  const { getFuntions } = useUser();
+  const { getFuntions, selectedSchoolId } = useUser();
   const [selectedEmotions, setSelectedEmotions] = useState<string[]>([
     "Tristeza",
     "Felicidad",
@@ -49,12 +49,21 @@ export default function StudentDetailPage() {
     "Otros",
   ]);
 
+  const fetchStudentValue = useCallback(async () => {
+    if (!selectedSchoolId) return;
+    return window.axios.get(`/alumnos/detalle/${id}`, {
+      params: {
+        colegio_id: selectedSchoolId
+      }
+    })
+  }, [id, selectedSchoolId]);
+
   const {
     loading: isLoading,
     data: studentDetails,
     refetch,
     error
-  } = useAxios<StudentDetailResponse>(() => window.axios.get(`/alumnos/detalle/${id}`), [id])
+  } = useAxios<StudentDetailResponse>(fetchStudentValue, [id, selectedSchoolId])
 
   const handleToggleEmotion = (emotion: string) => {
     if (selectedEmotions.includes(emotion)) {

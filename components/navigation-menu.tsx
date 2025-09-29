@@ -12,6 +12,7 @@ import {
   Settings,
   ChevronDown,
   School,
+  BellElectric,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/middleware/user-context";
@@ -35,10 +36,15 @@ export function NavigationMenu({ onItemClick }: NavigationMenuProps) {
       ? [{ name: "Alertas", href: "/alertas", icon: Bell }]
       : []),
     { name: "Alumnos", href: "/alumnos", icon: Users },
-    { name: "Evaluación Asistida", href: "/evaluacion-asistida", icon: Users },
+    ...(getFuntions("Evaluacion Asistida")
+      ? [{ name: "Evaluacion Asistida", href: "/evaluacion-asistida", icon: Bell }]
+      : []),
     { name: "Comparativo", href: "/comparativo", icon: BarChart2 },
     { name: "Informes", href: "/informes", icon: FileText },
     { name: "Perfil", href: "/perfil", icon: User },
+    ...(getFuntions("Avisos")
+      ? [{ name: "Avisos", href: "/avisos", icon: BellElectric }]
+      : []),
   ];
 
   return (

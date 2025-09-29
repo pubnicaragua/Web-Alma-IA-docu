@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { removeAuthToken } from "@/lib/api-config";
 import { useAuth } from "@/middleware/auth-provider";
 
-const WARNING_AFTER = 1 * 60 * 1000 + 30 * 1000; // 2 minutos en milisegundos
+const WARNING_AFTER = 2.5 * 60 * 1000; // 2 minutos 30 segundos en milisegundos
 const LOGOUT_AFTER_WARNING = 30 * 1000; // 20 segundos en milisegundos
 
 export function useSessionTimeout() {
