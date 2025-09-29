@@ -13,6 +13,7 @@ interface StatCardProps {
   className?: string;
   textColor?: string;
   isPress: boolean;
+  search?: any;
 }
 
 export function StatCard({
@@ -23,14 +24,19 @@ export function StatCard({
   className,
   textColor = "text-white",
   isPress,
+  search
 }: StatCardProps) {
   const router = useRouter();
 
   const handleClick = () => {
     if (index !== 0 && isPress) {
+      if (search) {
+        localStorage.setItem("selectedTab", JSON.stringify(search));
+      }
       router.push(`/alertas`);
+    } else {
+      localStorage.setItem("selectedTab", title);
     }
-    localStorage.setItem("selectedTab", title);
   };
 
   return (

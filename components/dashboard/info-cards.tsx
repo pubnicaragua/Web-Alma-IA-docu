@@ -34,6 +34,7 @@ export function DashboardInfoCards() {
             },
             {
                 title: "SOS Alma",
+                search: { tipo: 1 },
                 count: cardData.sos_alma.activos,
                 stats: [
                     { label: "Vencidos", value: cardData.sos_alma.vencidos.toString() },
@@ -48,6 +49,7 @@ export function DashboardInfoCards() {
             },
             {
                 title: "Denuncias",
+                search: { tipo: 2 },
                 count: cardData.denuncias.activos,
                 stats: [
                     { label: "Vencidos", value: cardData.denuncias.vencidos.toString() },
@@ -63,6 +65,7 @@ export function DashboardInfoCards() {
             {
                 title: "Alertas Alma",
                 count: cardData.alertas_alma.activos,
+                search: { motores: true },
                 stats: [
                     {
                         label: "Vencidos",
@@ -98,6 +101,7 @@ export function DashboardInfoCards() {
                             title={card.title}
                             count={card.count}
                             stats={card.stats}
+                            search={card.search}
                             className={card.className}
                             textColor={card.textColor}
                             isPress={getFuntions("Alertas")}
