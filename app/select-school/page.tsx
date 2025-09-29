@@ -21,6 +21,7 @@ interface School {
   alerts: number;
   students: number;
   color: string;
+  fantasyName: string;
 }
 
 export default function SelectSchoolPage() {
@@ -119,7 +120,7 @@ export default function SelectSchoolPage() {
                         <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600" />
                       </div>
                       <span className="font-medium text-gray-800">
-                        {school.name}
+                        {school.fantasyName}
                       </span>
                     </div>
 

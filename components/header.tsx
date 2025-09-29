@@ -284,7 +284,7 @@ export function Header({ toggleSidebar }: HeaderProps) {
         {pathname !== "/select-school" && (
           <div className="flex items-center justify-between w-full max-w-2xl mx-4">
             <h2 className="hidden md:block text-xl font-semibold text-white mr-4 min-w-[180px] max-w-[220px] leading-tight">
-              {dataSchool.name}
+              {dataSchool.fantasyName}
             </h2>
 
             <form
