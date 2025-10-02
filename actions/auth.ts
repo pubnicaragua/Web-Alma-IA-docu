@@ -36,7 +36,7 @@ async function validateCredentials(values: AuthLoginSchemaType) {
             "Content-Type": "application/json",
         },
         body: JSON.stringify({
-            identifier: values.email,
+            identifier: values.email.toLowerCase().trim(),
             password: values.password,
         }),
     });
