@@ -183,7 +183,7 @@ export default function StudentDetailPage() {
                         </TabsTrigger>
                       ) : null}
 
-                      {getFuntions("Ficha Alumno->Alertas") ? (
+                      {getFuntions("Ficha Alumno->Eventos") ? (
                         <TabsTrigger
                           value="eventos"
                           className="data-[state=active]:bg-blue-500 data-[state=active]:text-white flex items-center text-xs sm:text-sm px-2 sm:px-4"
