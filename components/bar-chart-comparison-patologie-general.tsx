@@ -11,7 +11,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import { Smile } from "lucide-react";
+import { LoaderCircle, Smile, TriangleAlert } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   fetchPatologieGeneral,
@@ -39,8 +39,8 @@ export function BarChartComparisonPatologieGeneral({
   const initialNames = initialData
     ? initialData.map((e) => e.name)
     : apiEmotions
-    ? apiEmotions.map((e) => e.nombre)
-    : [];
+      ? apiEmotions.map((e) => e.nombre)
+      : [];
 
   const [data, setData] = useState<Emotion[]>(initialData || []);
   const [selectedEmotions, setSelectedEmotions] =
@@ -56,8 +56,8 @@ export function BarChartComparisonPatologieGeneral({
     dateMode === "today"
       ? "today"
       : selectedDate
-      ? selectedDate.toISOString().slice(0, 10)
-      : "today";
+        ? selectedDate.toISOString().slice(0, 10)
+        : "today";
 
   function formatDateToYYYYMMDD(date: Date): string {
     const year = date.getFullYear();
@@ -148,32 +148,11 @@ export function BarChartComparisonPatologieGeneral({
       ? data.filter((emotion) => selectedEmotions.includes(emotion.name))
       : [];
 
-  if (isLoading) {
-    return (
-      <div className="bg-white rounded-lg p-3 sm:p-6 shadow-sm border border-blue-200 animate-pulse">
-        Cargando datos...
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="bg-white rounded-lg p-3 sm:p-6 shadow-sm border border-red-200">
-        <p className="text-red-600">{error}</p>
-      </div>
-    );
-  }
-
-  if (!data || data.length === 0) {
-    return (
-      <div className="bg-white rounded-lg p-3 sm:p-6 shadow-sm border border-blue-200">
-        No hay datos disponibles
-      </div>
-    );
-  }
 
   return (
     <div className="bg-white rounded-lg p-3 sm:p-6 shadow-sm border border-blue-200">
+
+      {/* Nombre del grafico y filtro */}
       <div className="flex justify-between items-start mb-4">
         <div className="flex items-center">
           <Smile className="mr-2 text-gray-700" />
@@ -195,65 +174,91 @@ export function BarChartComparisonPatologieGeneral({
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-4">
-        {data.map((emotion) => (
-          <Badge
-            key={emotion.name}
-            variant={
-              selectedEmotions.includes(emotion.name) ? "default" : "outline"
-            }
-            className={`cursor-pointer ${
-              selectedEmotions.includes(emotion.name)
-                ? ""
-                : "bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700"
-            }`}
-            style={{
-              backgroundColor: selectedEmotions.includes(emotion.name)
-                ? emotion.color
-                : "",
-              borderColor: emotion.color,
-              color: selectedEmotions.includes(emotion.name) ? "white" : "",
-            }}
-            onClick={() => handleToggleEmotion(emotion.name)}
-          >
-            {emotion.name}
-          </Badge>
-        ))}
-      </div>
+      {/* Grafico */}
+      {(isLoading) ? (
+        <div className="p-4 animate-pulse text-center">
+          <LoaderCircle className="animate-spin inline" />
+          <p>Cargando datos...</p>
+        </div>
+      ) : (
+        <>
+          {(error) && (
+            <p className="p-4 text-sm text-red-800 text-center rounded-lg bg-red-50">
+              {error}
+            </p>
+          )}
 
-      <div className="h-64 w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={filteredData}
-            margin={{ top: 5, right: 5, left: 0, bottom: 20 }}
-            maxBarSize={50}
-          >
-            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-            <XAxis
-              dataKey="name"
-              tick={{ fontSize: 12 }}
-              tickFormatter={(value) =>
-                value.length > 6 ? `${value.substring(0, 6)}...` : value
-              }
-            />
-            <YAxis />
-            <Tooltip
-              formatter={(value) => [`${value}`, "Cantidad"]}
-              labelFormatter={(name) => `${name}`}
-              contentStyle={{
-                borderRadius: "8px",
-                border: "none",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-              }}
-            />
-            <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-              {filteredData.map((entry) => (
-                <Cell key={`cell-${entry.name}`} fill={entry.color} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+          {(!data || !data.length) && (
+            <div className="p-4 text-sm text-red-800 text-center rounded-lg bg-red-50">
+              <TriangleAlert className="inline" />
+              <p>No hay datos disponibles</p>
+            </div>
+          )}
+
+          {data && Boolean(data.length) && (
+            <>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {data.map((emotion) => (
+                  <Badge
+                    key={emotion.name}
+                    variant={
+                      selectedEmotions.includes(emotion.name) ? "default" : "outline"
+                    }
+                    className={`cursor-pointer ${selectedEmotions.includes(emotion.name)
+                      ? ""
+                      : "bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700"
+                      }`}
+                    style={{
+                      backgroundColor: selectedEmotions.includes(emotion.name)
+                        ? emotion.color
+                        : "",
+                      borderColor: emotion.color,
+                      color: selectedEmotions.includes(emotion.name) ? "white" : "",
+                    }}
+                    onClick={() => handleToggleEmotion(emotion.name)}
+                  >
+                    {emotion.name}
+                  </Badge>
+                ))}
+              </div>
+
+              <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={filteredData}
+                    margin={{ top: 5, right: 5, left: 0, bottom: 20 }}
+                    maxBarSize={50}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis
+                      dataKey="name"
+                      tick={{ fontSize: 12 }}
+                      tickFormatter={(value) =>
+                        value.length > 6 ? `${value.substring(0, 6)}...` : value
+                      }
+                    />
+                    <YAxis />
+                    <Tooltip
+                      formatter={(value) => [`${value}`, "Cantidad"]}
+                      labelFormatter={(name) => `${name}`}
+                      contentStyle={{
+                        borderRadius: "8px",
+                        border: "none",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                      }}
+                    />
+                    <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                      {filteredData.map((entry) => (
+                        <Cell key={`cell-${entry.name}`} fill={entry.color} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </>
+          )}
+        </>
+      )}
     </div>
   );
 }
