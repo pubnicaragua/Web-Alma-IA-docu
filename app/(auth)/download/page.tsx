@@ -233,7 +233,7 @@ export default function AndroidDownload() {
             <div> 
               <a
                 target="_blank"
-                href="https://expo.dev/accounts/dxgabalt/projects/almaia/builds/b5d10287-cac3-4dff-b649-1aa202d001b4"
+                href="https://expo.dev/accounts/dxgabalt/projects/almaia/builds/a62eeb8c-1338-46e9-af8d-97594bf2b977"
                 className="flex items-center gap-2 px-6 py-3 text-white rounded-full font-semibold bg-blue-500 transition-all shadow-lg hover:bg-blue-600"
               >
                 <ArrowDownTrayIcon className="w-5 h-5" />
