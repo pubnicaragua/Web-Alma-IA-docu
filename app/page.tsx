@@ -19,6 +19,8 @@ import { BarChartComparisonNeurodivergences } from "@/components/bar-chart-compa
 import { useUser } from "@/middleware/user-context";
 import { DashboardInfoCards } from "@/components/dashboard/info-cards";
 import ErrorBoundary from "@/components/utils/error-bountdry";
+import { BarNegativeEmotionsChart } from "@/components/dashboard/emotions/negative-chart";
+import { BarPositiveEmotionsChart } from "@/components/dashboard/emotions/positive-chart";
 
 const EMOTIONS = ["Tristeza", "Felicidad", "Estrés", "Ansiedad", "Enojo", "Otros"];
 
@@ -124,14 +126,14 @@ export default function Home() {
           <DashboardInfoCards />
           {/* Media emocional General */}
           {getFuntions("Grafico Emociones") ? (
-            <div className="mb-8">
-              <BarChartComparison
-                title="Media emocional General"
-                selectedEmotions={selectedEmotionsGeneral}
-                onToggleEmotion={(emotion: string) => toggleEmotion(emotion, selectedEmotionsGeneral, setSelectedEmotionsGeneral)}
-                setSelectedEmotions={setSelectedEmotionsGeneral}
-              />
-            </div>
+            <>
+              <div className="mb-8">
+                <BarNegativeEmotionsChart />
+              </div>
+              <div className="mb-8">
+                <BarPositiveEmotionsChart />
+              </div>
+            </>
           ) : null}
           {/* Gráficos y datos */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
