@@ -127,7 +127,7 @@ export default function Home() {
           {/* Media emocional General */}
           {getFuntions("Grafico Emociones") ? (
             <>
-              <div className="mb-8">
+              <div className="mb-8"> 
                 <BarNegativeEmotionsChart />
               </div>
               <div className="mb-8">
