@@ -1,3 +1,4 @@
+import { getAuthToken } from "@/lib/api-config";
 import axios from "axios";
 
 // Interfaces del backend (coinciden con la API)
@@ -71,8 +72,16 @@ export const getBeneficios = async (): Promise<Beneficio[] | null> => {
 export const getBeneficioDetalle = async (
   beneficioId: number
 ): Promise<BeneficioHttp | null> => {
+  const token = getAuthToken();
+  console.log(token);
   try {
-    const response = await fetch(`${API_BASE_URL}/beneficios/${beneficioId}`);
+    const token = getAuthToken();
+    const response = await fetch(`${API_BASE_URL}/beneficios/${beneficioId}`, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
     if (!response.ok) {
       throw new Error("Error al obtener el detalle del beneficio");
     }
@@ -86,18 +95,20 @@ export const getBeneficioDetalle = async (
 
 export const getBeneficiosID = async (
   id: number
-): Promise<Beneficio  | null> => {
+): Promise<Beneficio | null> => {
   try {
+    const token = getAuthToken();
     const response = await axios.get(
       `${API_BASE_URL}/beneficios/${id}`,
 
       {
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
       }
     );
-    const data = response.data[0] as Beneficio ;
+    const data = response.data[0] as Beneficio;
     return data;
   } catch (error) {
     console.error("Error en getBeneficiosID:", error);
