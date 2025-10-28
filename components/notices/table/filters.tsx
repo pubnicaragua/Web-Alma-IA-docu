@@ -4,6 +4,7 @@ import { FilterDropdown } from "@/components/filter-dropdown";
 import { FilterDropdownObject } from "@/components/filter-dropdown-object";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
+import { DESTINY_TYPES, NOTICE_TYPES } from "@/constants/notices";
 
 interface PropTypes {
     setFilters: (values: any) => void;
@@ -36,7 +37,7 @@ export function NoticeTableFilters({ setFilters }: Readonly<PropTypes>) {
                     <FilterDropdown
                         {...field}
                         label="Tipo Persona"
-                        options={["alumno", "apoderado"]}
+                        options={DESTINY_TYPES}
                     />
                 )}
             />
@@ -50,7 +51,7 @@ export function NoticeTableFilters({ setFilters }: Readonly<PropTypes>) {
                         label="Tipo de Aviso"
                         labelKey="nombre"
                         idKey="id"
-                        options={[]}
+                        options={DESTINY_TYPES}
                     />
                 )}
             />

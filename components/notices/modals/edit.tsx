@@ -13,6 +13,8 @@ import { NoticeForm } from "../form";
 export function NoticeModalEdit({ notice }: any) {
     const { isOpen, onOpen, onClose } = useModal();
 
+    console.log(notice)
+
     return (
         <>
             <Button size={'sm'} variant={'link'} onClick={onOpen}>
@@ -31,7 +33,24 @@ export function NoticeModalEdit({ notice }: any) {
                             </DialogClose>
                         </div>
                     </DialogHeader>
-                    <NoticeForm />
+                    <NoticeForm
+                        avisoId={notice.id}
+                        initialData={{
+                            aviso: {
+                                titulo: notice.aviso_titulo || "",
+                                descripcion: notice.aviso_contenido || "",
+                                palabras_clave: (notice.palabras_clave || []).join(", "),
+                                archivo: notice.aviso_ruta_archivo || undefined,
+                                fecha_programacion: notice.aviso_fecha_programacion || "",
+                                tipo_programacion: 'Programada'
+                            },
+                            destinatarios: {
+                                aviso_tipo_id: notice.tipo_aviso || 0,
+                                aviso_destinatario_tipo: notice.destinatario_tipo || "",
+                                destinatarios: notice.destino || [],
+                            },
+                        }}
+                    />
                 </DialogContent>
             </Dialog>
         </>

@@ -31,10 +31,15 @@ const NoticeSchema = z.object({
     })
 })
 
-type NoticeSchema = z.infer<typeof NoticeSchema>
+type NoticeSchema = z.infer<typeof NoticeSchema> & {
+    aviso: {
+        tipo_programacion: string;
+    }
+}
 
 interface PropTypes {
-    initialData?: NoticeSchema
+    initialData?: NoticeSchema;
+    avisoId?: number;
 }
 
 const defaultValues: NoticeSchema = {
@@ -44,6 +49,7 @@ const defaultValues: NoticeSchema = {
         palabras_clave: "",
         archivo: undefined,
         fecha_programacion: "",
+        tipo_programacion: ""
     },
     destinatarios: {
         aviso_tipo_id: 0,
@@ -52,7 +58,10 @@ const defaultValues: NoticeSchema = {
     }
 }
 
-export function NoticeForm({ initialData }: Readonly<PropTypes>) {
+export function NoticeForm({
+    initialData,
+    avisoId
+}: Readonly<PropTypes>) {
 
     const form = useForm({
         defaultValues: initialData ?? defaultValues,
@@ -74,17 +83,21 @@ export function NoticeForm({ initialData }: Readonly<PropTypes>) {
         formData.append('aviso_destinatario_tipo', values.destinatarios.aviso_destinatario_tipo);
         formData.append('aviso_tipo_id', values.destinatarios.aviso_tipo_id.toString());
         formData.append("destinario", values.destinatarios.destinatarios.toString());
-        axios.execute(() => window.axios.post('/avisosApp/avisos/crear', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
-        }));
+        axios.execute(() =>
+            avisoId
+                ? window.axios.put(`/avisosApp/avisos/${avisoId}`, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                })
+                : window.axios.post('/avisosApp/avisos/crear', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                })
+        );
     }, []);
 
     return (
         <form onSubmit={form.handleSubmit(onSubmit)}>
             <div className="grid grid-cols-1 gap-4 mt-2">
-                <NoticeFormNotice form={form} />
+                <NoticeFormNotice form={form} programacion={initialData?.aviso.tipo_programacion ?? ''} />
                 <NoticeFormDestiny form={form} />
             </div>
             <div className="flex justify-end mt-4">

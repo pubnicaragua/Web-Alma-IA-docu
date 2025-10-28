@@ -13,14 +13,15 @@ import { useEffect, useState } from "react";
 import { Controller, UseFormReturn } from "react-hook-form";
 
 interface PropTypes {
-    form: UseFormReturn<any>
+    form: UseFormReturn<any>;
+    programacion?: string;
 }
 
 const PROGRAMATION_TYPES = ['Ahora', 'Programada']
 
-export function NoticeFormNotice({ form }: Readonly<PropTypes>) {
+export function NoticeFormNotice({ form, programacion = '' }: Readonly<PropTypes>) {
 
-    const [programation, setProgramation] = useState('');
+    const [programation, setProgramation] = useState(programacion);
 
     useEffect(() => {
         if (!programation) return;

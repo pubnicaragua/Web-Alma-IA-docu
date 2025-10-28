@@ -22,26 +22,7 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SSRPagination } from "@/components/utils/pagination-sr";
-
-const DESTINY_TYPES = ["alumno", "apoderado"]
-const NOTICE_TYPES = [
-    {
-        id: 1,
-        nombre: 'Colegio'
-    },
-    {
-        id: 2,
-        nombre: 'Grado'
-    },
-    {
-        id: 3,
-        nombre: 'Curso'
-    },
-    {
-        id: 4,
-        nombre: 'Alumno'
-    }
-]
+import { DESTINY_TYPES, NOTICE_TYPES } from "@/constants/notices";
 
 export function NoticeFormDestiny({ form }: any) {
     const { selectedSchoolId } = useUser();
