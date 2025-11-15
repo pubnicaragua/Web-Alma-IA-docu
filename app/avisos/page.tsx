@@ -7,6 +7,7 @@ import { NoticeTableFilters } from "@/components/notices/table/filters";
 import { NoticeModalNew } from "@/components/notices/modals/new";
 import { VerifyAccess } from "@/components/authentication/verify-access";
 import { NoticeModalView } from "@/components/notices/modals/view";
+import { RefreshProvider } from "@/stores/refresh";
 
 export default function NoticePage() {
 
@@ -18,14 +19,16 @@ export default function NoticePage() {
                 <AppLayout>
                     <div className="container mx-auto px-2 sm:px-6 py-8">
                         <h2 className="text-2xl font-bold text-gray-800 mb-6">Avisos</h2>
-                        <div className="flex flex-col gap-6">
-                            <div className="flex justify-between items-center gap-4 ">
-                                <NoticeModalNew />
-                                <NoticeModalView avisoId={null} table={false} />
+                        <RefreshProvider>
+                            <div className="flex flex-col gap-4">
+                                <div className="flex justify-between items-center">
+                                    <NoticeModalNew />
+                                    <NoticeModalView avisoId={null} table={false} />
+                                </div>
+                                <NoticeTableFilters setFilters={(values) => setFilters(values)} />
+                                <NoticeTable filters={filters} />
                             </div>
-                            <NoticeTableFilters setFilters={(values) => setFilters(values)} />
-                            <NoticeTable filters={filters} />
-                        </div>
+                        </RefreshProvider>
                     </div>
                 </AppLayout>
             </VerifyAccess>

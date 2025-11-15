@@ -1,3 +1,4 @@
+import { useEffect, useMemo } from "react";
 import {
     Table,
     TableBody,
@@ -5,9 +6,11 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { NoticeTableItem } from "./item";
 import { usePaginationSR } from "@/hooks/use-pagination-sr";
 import { SSRPagination } from "@/components/utils/pagination-sr";
+import { useRefresh } from "@/hooks/use-refresh";
+import { useUser } from "@/middleware/user-context";
+import { NoticeTableItem } from "./item";
 
 interface PropTypes {
     filters: any;
@@ -15,11 +18,26 @@ interface PropTypes {
 
 export function NoticeTable({ filters }: Readonly<PropTypes>) {
 
+    const { refresh } = useRefresh();
+    const { selectedSchoolId } = useUser();
+
+    const computedFilters = useMemo(
+        () => ({
+            ...filters,
+            colegio_id: selectedSchoolId,
+        }),
+        [filters, selectedSchoolId]
+    );
+
     const pagination = usePaginationSR({
         route: "/avisosApp/avisos/listar",
-        filters: filters,
+        filters: computedFilters,
         perPage: 10
     });
+
+    useEffect(() => {
+        pagination.refetch();
+    }, [refresh])
 
     return (
         <div>
@@ -46,12 +64,12 @@ export function NoticeTable({ filters }: Readonly<PropTypes>) {
                                     <TableHead className="text-white">Tipo Persona</TableHead>
                                     <TableHead className="text-white">Palabras Clave</TableHead>
                                     <TableHead className="text-white">Fecha Programación</TableHead>
-                                    <TableHead className="text-white text-center">Estado</TableHead>
+                                    <TableHead className="text-white text-center">Estado Envio</TableHead>
                                     <TableHead className="text-white text-center">Acciones</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {pagination.data.map((notice) => (
+                                {pagination.data.map((notice: any) => (
                                     <NoticeTableItem key={notice?.aviso_id} notice={notice} />
                                 ))}
                             </TableBody>

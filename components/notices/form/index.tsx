@@ -1,11 +1,16 @@
-import { zodResolver } from "@hookform/resolvers/zod"
 import { useCallback } from "react"
+import { AxiosError } from "axios"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import { NoticeFormNotice } from "./notice"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { ServerActionResponse } from "@/types/generics"
 import { Button } from "@/components/ui/button"
-import { NoticeFormDestiny } from "./destiny"
 import { useAxios } from "@/hooks/use-axios"
+import { useToast } from "@/hooks/use-toast"
+import { NoticeFormNotice } from "./notice"
+import { NoticeFormDestiny } from "./destiny"
+import { useUser } from "@/middleware/user-context"
+
 
 const NoticeSchema = z.object({
     aviso: z.object({
@@ -40,6 +45,8 @@ type NoticeSchema = z.infer<typeof NoticeSchema> & {
 interface PropTypes {
     initialData?: NoticeSchema;
     avisoId?: number;
+    meta?: any;
+    postSubmit: () => void
 }
 
 const defaultValues: NoticeSchema = {
@@ -60,16 +67,21 @@ const defaultValues: NoticeSchema = {
 
 export function NoticeForm({
     initialData,
-    avisoId
+    avisoId,
+    meta,
+    postSubmit
 }: Readonly<PropTypes>) {
+
+    const axios = useAxios();
+    const { toast } = useToast();
+    const { selectedSchoolId } = useUser();
 
     const form = useForm({
         defaultValues: initialData ?? defaultValues,
         resolver: zodResolver(NoticeSchema)
     });
-    const axios = useAxios();
 
-    const onSubmit = useCallback((values: NoticeSchema) => {
+    const onSubmit = useCallback(async (values: NoticeSchema) => {
         const formData = new FormData();
         formData.append('titulo', values.aviso.titulo);
         formData.append('descripcion', values.aviso.descripcion);
@@ -83,22 +95,41 @@ export function NoticeForm({
         formData.append('aviso_destinatario_tipo', values.destinatarios.aviso_destinatario_tipo);
         formData.append('aviso_tipo_id', values.destinatarios.aviso_tipo_id.toString());
         formData.append("destinario", values.destinatarios.destinatarios.toString());
-        axios.execute(() =>
-            avisoId
-                ? window.axios.put(`/avisosApp/avisos/${avisoId}`, formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' },
-                })
-                : window.axios.post('/avisosApp/avisos/crear', formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' },
-                })
-        );
-    }, []);
+        formData.append("colegio_id", selectedSchoolId ?? '');
+
+        try {
+            const response = await axios.execute<ServerActionResponse>(() =>
+                avisoId
+                    ? window.axios.put(`/avisosApp/avisos/actualizar/${avisoId}`, formData, {
+                        headers: { 'Content-Type': 'multipart/form-data' },
+                    })
+                    : window.axios.post('/avisosApp/avisos/crear', formData, {
+                        headers: { 'Content-Type': 'multipart/form-data' },
+                    })
+            );
+
+            toast({
+                title: "¡Atención",
+                description: response?.data.message
+            });
+
+            postSubmit()
+        } catch (error) {
+            if (error instanceof AxiosError) {
+                toast({
+                    title: "¡Atención",
+                    description: error.response?.data.message,
+                    variant: 'destructive'
+                });
+            }
+        }
+    }, [avisoId, selectedSchoolId]);
 
     return (
         <form onSubmit={form.handleSubmit(onSubmit)}>
             <div className="grid grid-cols-1 gap-4 mt-2">
                 <NoticeFormNotice form={form} programacion={initialData?.aviso.tipo_programacion ?? ''} />
-                <NoticeFormDestiny form={form} />
+                <NoticeFormDestiny form={form} metaInit={meta} />
             </div>
             <div className="flex justify-end mt-4">
                 <Button

@@ -24,7 +24,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { SSRPagination } from "@/components/utils/pagination-sr";
 import { DESTINY_TYPES, NOTICE_TYPES } from "@/constants/notices";
 
-export function NoticeFormDestiny({ form }: any) {
+export function NoticeFormDestiny({ form, metaInit = {
+    colegio_id: '',
+    curso_id: '',
+    grado_id: ''
+} }: any) {
+
     const { selectedSchoolId } = useUser();
     const [isCatalogLoading, setCatalogLoading] = useState(false);
 
@@ -32,13 +37,10 @@ export function NoticeFormDestiny({ form }: any) {
     const [grades, setGrades] = useState<any[]>([]);
 
     const [selectAlumnos, setSelectAlumnos] = useState<any[]>([]);
-    const [filters, setFilters] = useState({
-        colegio_id: '',
-        curso_id: '',
-        grado_id: ''
-    });
+    const [filters, setFilters] = useState(metaInit);
 
     const noticeTypeId = form.watch('destinatarios.aviso_tipo_id');
+    const destinyIds = form.watch('destinatarios.destinatarios');
 
     const pagination = usePaginationSR<ApiStudent>({
         route: "/alumnos",
@@ -49,6 +51,7 @@ export function NoticeFormDestiny({ form }: any) {
 
     useEffect(() => {
         if (!noticeTypeId) return;
+        if (!form.formState.isDirty) return;
         setFilters({
             colegio_id: selectedSchoolId ?? '',
             curso_id: '',
@@ -56,6 +59,12 @@ export function NoticeFormDestiny({ form }: any) {
         });
         setSelectAlumnos([]);
     }, [noticeTypeId]);
+
+    useEffect(() => {
+        if (form.formState.isDirty) return;
+        if (!destinyIds.length) return;
+        setSelectAlumnos(destinyIds);
+    }, [])
 
     useEffect(() => {
         const { colegio_id } = filters;
@@ -75,6 +84,7 @@ export function NoticeFormDestiny({ form }: any) {
     }, [filters.colegio_id]);
 
     useEffect(() => {
+        if (!form.formState.isDirty) return;
         const fieldName = 'destinatarios.destinatarios'
         let fieldValue: number[] = [];
         switch (noticeTypeId) {
@@ -166,7 +176,7 @@ export function NoticeFormDestiny({ form }: any) {
                     <Label className="text-sm text-gray-500">Grado</Label>
                     <Select
                         onValueChange={(val: string) => setFilters({ ...filters, grado_id: val })}
-                        value={filters.grado_id}
+                        value={filters.grado_id ? String(filters.grado_id) : ""}
                         disabled={isCatalogLoading}
                     >
                         <SelectTrigger className="w-full">
@@ -188,7 +198,7 @@ export function NoticeFormDestiny({ form }: any) {
                     <Label className="text-sm text-gray-500">Curso</Label>
                     <Select
                         onValueChange={(val: string) => setFilters({ ...filters, curso_id: val })}
-                        value={filters.curso_id}
+                        value={filters.curso_id ? String(filters.curso_id) : ""}
                         disabled={isCatalogLoading || !filters.grado_id}
                     >
                         <SelectTrigger className="w-full">

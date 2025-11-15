@@ -37,7 +37,7 @@ export function NoticeModalView({ avisoId, table = true }: any) {
                 .filter(([key]) => !['porcentaje_lectura', 'promedio_intentos'].includes(key))
                 .map(([key, value]) => ({
                     name: key.replace("_", " "),
-                    value: 5,
+                    value,
                 })),
         [axios.data]
     );
