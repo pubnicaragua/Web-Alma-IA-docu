@@ -17,24 +17,18 @@ const NoticeSchema = z.object({
         titulo: z.string().nonempty("El título es requerido"),
         descripcion: z.string().nonempty("La descripción es requerida"),
         palabras_clave: z.string().nonempty("Las palabras clave son requeridas"),
-        archivo: z.instanceof(File).nullable().optional(),
-        fecha_programacion: z.string()
-            .nonempty("La fecha de programación es requerida")
-            .refine((value) => {
-                if (value === "now") return true;
-                const date = new Date(value);
-                if (isNaN(date.getTime())) return false;
-                return date > new Date();
-            }, {
-                message: "¡La fecha programada debe ser mayor a la actual!",
-            }),
+        archivo: z.any().nullable().optional(),
+        fecha_programacion: z.string().nonempty("La fecha de programación es requerida")
     }),
     destinatarios: z.object({
         aviso_tipo_id: z.number().min(1, { message: "El tipo de aviso es requerido" }),
-        aviso_destinatario_tipo: z.nativeEnum({ alumno: "alumno", apoderado: "apoderado" }, { message: "El tipo de destinatario es requerido" }),
+        aviso_destinatario_tipo: z.nativeEnum(
+            { alumno: "alumno", apoderado: "apoderado" },
+            { message: "El tipo de destinatario es requerido" }
+        ),
         destinatarios: z.array(z.number()).min(1, { message: "Debe seleccionar al menos un destinatario" }),
     })
-})
+});
 
 type NoticeSchema = z.infer<typeof NoticeSchema> & {
     aviso: {
@@ -78,17 +72,47 @@ export function NoticeForm({
 
     const form = useForm({
         defaultValues: initialData ?? defaultValues,
-        resolver: zodResolver(NoticeSchema)
+        resolver: zodResolver(NoticeSchema),
+        context: { isCreate: !avisoId }
     });
 
     const onSubmit = useCallback(async (values: NoticeSchema) => {
+
+        if (!avisoId && values.aviso.fecha_programacion !== "now") {
+            const scheduledDate = new Date(values.aviso.fecha_programacion);
+            if (Number.isNaN(scheduledDate.getTime()) || scheduledDate <= new Date()) {
+                form.setError("aviso.fecha_programacion", {
+                    type: "manual",
+                    message: "¡La fecha programada debe ser mayor a la actual!"
+                });
+                return;
+            }
+        }
+
         const formData = new FormData();
         formData.append('titulo', values.aviso.titulo);
         formData.append('descripcion', values.aviso.descripcion);
         formData.append('palabras_claves', values.aviso.palabras_clave);
 
-        if (values.aviso.fecha_programacion != 'now') {
-            formData.append('fecha_programacion', `${values.aviso.fecha_programacion}:00`);
+        if (values.aviso.fecha_programacion === "now") {
+            const date = new Date(Date.now() + 60 * 1000);
+
+            const yyyy = date.getFullYear();
+            const mm = String(date.getMonth() + 1).padStart(2, "0");
+            const dd = String(date.getDate()).padStart(2, "0");
+            const hh = String(date.getHours()).padStart(2, "0");
+            const min = String(date.getMinutes()).padStart(2, "0");
+
+            const formatted = `${yyyy}-${mm}-${dd} ${hh}:${min}:00`;
+            formData.append("fecha_programacion", formatted);
+        } else {
+            let value = values.aviso.fecha_programacion.trim();
+
+            if (!/:\d{2}$/.test(value)) {
+                value = `${value}:00`;
+            }
+
+            formData.append("fecha_programacion", value);
         }
 
         formData.append('archivo', values.aviso.archivo ?? '');
@@ -100,7 +124,7 @@ export function NoticeForm({
         try {
             const response = await axios.execute<ServerActionResponse>(() =>
                 avisoId
-                    ? window.axios.put(`/avisosApp/avisos/actualizar/${avisoId}`, formData, {
+                    ? window.axios.patch(`/avisosApp/avisos/actualizar/${avisoId}`, formData, {
                         headers: { 'Content-Type': 'multipart/form-data' },
                     })
                     : window.axios.post('/avisosApp/avisos/crear', formData, {

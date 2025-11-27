@@ -31,8 +31,8 @@ export function SurveyFormGeneral({ form, catalogs }: Readonly<PropTypes>) {
                         control={form.control}
                         render={({ field }) => (
                             <Select
-                                value={field.value ? String(field.value) : ''}
-                                onValueChange={field.onChange}
+                                value={Number(field.value) ? String(field.value) : ''}
+                                onValueChange={(value) => field.onChange(Number(value))}
                             >
                                 <SelectTrigger value={''} className="w-full">
                                     <SelectValue placeholder="Seleccione..." />

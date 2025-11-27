@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { SurveyModalEdit } from "../modals/edit";
 import { SurveyModalView } from "../modals/view";
 import { SurveyModalDelete } from "../modals/delete";
+import { SurveyModalResponses } from "../modals/responses";
 
 export function SurveyTableItem({ survey }: any) {
     return (
@@ -34,6 +35,7 @@ export function SurveyTableItem({ survey }: any) {
                             </Button>
                         </Link>
                     )}
+                    <SurveyModalResponses survey={survey} />
                     <SurveyModalEdit survey={survey} />
                     <SurveyModalDelete survey={survey} />
                 </div>

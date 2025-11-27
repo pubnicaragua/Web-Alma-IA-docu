@@ -52,13 +52,14 @@ export function NoticeFormDestiny({ form, metaInit = {
     useEffect(() => {
         if (!noticeTypeId) return;
         if (!form.formState.isDirty) return;
+        if (selectedSchoolId === null) return;
         setFilters({
             colegio_id: selectedSchoolId ?? '',
             curso_id: '',
             grado_id: ''
         });
         setSelectAlumnos([]);
-    }, [noticeTypeId]);
+    }, [noticeTypeId, selectedSchoolId]);
 
     useEffect(() => {
         if (form.formState.isDirty) return;
@@ -68,12 +69,11 @@ export function NoticeFormDestiny({ form, metaInit = {
 
     useEffect(() => {
         const { colegio_id } = filters;
-        if (!colegio_id) return;
         setCatalogLoading(true);
         (async function () {
             const response = await window.axios.get(`/colegios/cursos`,
                 {
-                    params: { colegio_id }
+                    params: { colegio_id: colegio_id || selectedSchoolId }
                 });
             const { data: courses } = response;
             const grades = [...new Map(courses.map((c: any) => [c.grados.grado_id, c.grados])).values()] as { grado_id: number | null, nombre: string }[];
@@ -81,10 +81,9 @@ export function NoticeFormDestiny({ form, metaInit = {
             setGrades(grades);
             setCatalogLoading(false);
         })();
-    }, [filters.colegio_id]);
+    }, [filters.colegio_id, selectedSchoolId]);
 
     useEffect(() => {
-        if (!form.formState.isDirty) return;
         const fieldName = 'destinatarios.destinatarios'
         let fieldValue: number[] = [];
         switch (noticeTypeId) {
@@ -92,10 +91,10 @@ export function NoticeFormDestiny({ form, metaInit = {
                 fieldValue = [Number(filters.colegio_id)];
                 break;
             case 2:
-                fieldValue = [Number(filters.curso_id)];
+                fieldValue = [Number(filters.grado_id)];
                 break;
             case 3:
-                fieldValue = [Number(filters.grado_id)];
+                fieldValue = [Number(filters.curso_id)];
                 break;
             case 4:
                 fieldValue = selectAlumnos.map((i) => Number(i));

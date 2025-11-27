@@ -36,7 +36,7 @@ export function SurveyFormProgramming({ form }: Readonly<PropTypes>) {
         if (!form.formState.isDirty) return;
         form.setValue('programacion.valores_frecuencia', []);
         setSpecDate('');
-    }, [frecuency, form.formState.isDirty]);
+    }, [frecuency]);
 
     const handleAddSpecDate = useCallback(() => {
         if (!specDate) return;

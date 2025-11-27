@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { Trash, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useModal } from "@/lib/modal-utils"
@@ -9,9 +10,44 @@ import {
     DialogClose,
 } from "@/components/ui/dialog";
 import { Alert } from "@/components/ui/alert";
+import { useToast } from "@/hooks/use-toast";
+import { useAxios } from "@/hooks/use-axios";
+import { useRefresh } from "@/hooks/use-refresh";
+import { AxiosError } from "axios";
 
 export function SurveyModalDelete({ survey }: any) {
+
+    const { toggleRefresh } = useRefresh();
+    const { toast } = useToast();
     const { isOpen, onOpen, onClose } = useModal();
+    const axios = useAxios();
+
+    const handleDeleteClick = useCallback(async () => {
+        try {
+            const encuestaId = survey.encuesta_id;
+            const response = await axios.execute<{ mensaje: string }>(() =>
+                window.axios.delete(`/encuestas/eliminar-encuesta/${encuestaId}`)
+            );
+
+            toast({
+                title: "¡Atención",
+                description: response?.data.mensaje
+            });
+
+            onClose();
+            setTimeout(() => {
+                toggleRefresh();
+            }, 350);
+        } catch (error) {
+            if (error instanceof AxiosError) {
+                toast({
+                    title: "¡Atención",
+                    description: error.response?.data.mensaje ?? 'Error de Servidor',
+                    variant: 'destructive'
+                });
+            }
+        }
+    }, [survey.encuesta_id]);
 
     return (
         <>
@@ -38,10 +74,9 @@ export function SurveyModalDelete({ survey }: any) {
                         <Button variant={'destructive'} onClick={onClose}>
                             Cancelar
                         </Button>
-                        <Button variant={'default'}>
+                        <Button variant={'default'} onClick={handleDeleteClick}>
                             Guardar
                         </Button>
-
                     </div>
                 </DialogContent>
             </Dialog>

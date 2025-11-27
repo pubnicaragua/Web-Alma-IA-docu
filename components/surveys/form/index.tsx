@@ -3,11 +3,9 @@ import { useForm } from "react-hook-form"
 import { AxiosError } from "axios"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
-import { SURVEY_STATES } from "@/constants/surveys"
 import { SurveySchema } from "@/zod/surveys"
 import { useAxios } from "@/hooks/use-axios"
 import { useToast } from "@/hooks/use-toast"
-import { ServerActionResponse } from "@/types/generics"
 import { ISurveyCatalogs, ISurveySchema } from "@/types/surveys"
 import { useUser } from "@/middleware/user-context"
 import { SurveyFormGeneral } from "./general"
@@ -28,7 +26,7 @@ interface PropTypes {
 
 const defaultValues: any = {
     general: {
-        estado: SURVEY_STATES[0],
+        estado: '',
         titulo: '',
         descripcion: '',
         concepto_id: 0,
@@ -92,7 +90,7 @@ export function SurveyForm({
 
             const response = await axios.execute<{ mensaje: string }>(() =>
                 encuestaId
-                    ? window.axios.post(`/encuestas/actualizar-encuesta/${encuestaId}`, formData)
+                    ? window.axios.patch(`/encuestas/actualizar-encuesta/${encuestaId}`, formData)
                     : window.axios.post('/encuestas/crear-encuesta', formData)
             );
 

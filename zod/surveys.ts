@@ -1,18 +1,19 @@
 import { z } from "zod"
-import { SURVEY_FREQUENCIES, SURVEY_STATES } from "@/constants/surveys"
+import { SURVEY_FREQUENCIES } from "@/constants/surveys"
 
 const SurveyQuestionSchema = z.object({
+    pregunta_encuesta_id: z.number().nullable().optional(),
     titulo: z.string().nonempty("La pregunta es requerida"),
     tipo_id: z.number().min(1, { message: "El tipo de pregunta es requerido" }),
     posibles_respuestas: z.array(z.object({
         titulo: z.string().nonempty("La titulos de las respuestas requerido"),
-        tono: z.number().min(0, { message: "El tono de la respuesta es requerido" })
+        peso: z.number().min(0, { message: "El peso de la respuesta es requerido" })
     })).max(4)
 });
 
 export const SurveySchema = z.object({
     general: z.object({
-        estado: z.string().nonempty("El estado es requerido"),
+        estado: z.number().min(0, { message: "El estado es requerido" }),
         titulo: z.string().nonempty("El título es requerido"),
         descripcion: z.string().nonempty("La descripción es requerida"),
         concepto_id: z.number().min(1, { message: "El Concepto es requerido" }),

@@ -8,9 +8,9 @@ import {
     DialogTitle,
     DialogClose,
 } from "@/components/ui/dialog";
-import { SurveyForm } from "../form";
 import { useUser } from "@/middleware/user-context";
 import { useRefresh } from "@/hooks/use-refresh";
+import { SurveyForm } from "../form";
 
 export function SurveyModalEdit({ survey }: any) {
 
@@ -50,15 +50,16 @@ export function SurveyModalEdit({ survey }: any) {
                                 concepto_id: survey.concepto_asociado_id,
                                 tipo_id: survey.tipo_encuesta_id,
                                 obligatoria: survey.encuesta_obligatoria ? 'SI' : 'NO',
-                                estado: String(survey?.encuesta_estado_id),
+                                estado: survey?.encuesta_estado_id,
                                 plantilla_id: 0
                             },
                             preguntas: survey.preguntas.map((pregunta: any) => ({
+                                pregunta_encuesta_id: pregunta.pregunta_id || null,
                                 titulo: pregunta?.titulo,
                                 tipo_id: pregunta.tipo_id,
                                 posibles_respuestas: pregunta?.posibles_respuestas?.map((respuestas: any) => ({
                                     titulo: respuestas?.titulo ?? '',
-                                    tono: respuestas?.peso ?? 0
+                                    peso: respuestas?.peso ?? 0
                                 })) ?? []
                             })),
                             destinatarios: {

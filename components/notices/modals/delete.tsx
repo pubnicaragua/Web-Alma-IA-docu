@@ -9,9 +9,45 @@ import {
     DialogClose,
 } from "@/components/ui/dialog";
 import { Alert } from "@/components/ui/alert";
+import { useToast } from "@/hooks/use-toast";
+import { useAxios } from "@/hooks/use-axios";
+import { useRefresh } from "@/hooks/use-refresh";
+import { useCallback } from "react";
+import { AxiosError } from "axios";
 
 export function NoticeModalDelete({ notice }: any) {
+
+    const { toggleRefresh } = useRefresh();
+    const { toast } = useToast();
     const { isOpen, onOpen, onClose } = useModal();
+    const axios = useAxios();
+
+    const handleDeleteClick = useCallback(async () => {
+        try {
+            const noticeId = notice.aviso_id;
+            const response = await axios.execute<{ message: string }>(() =>
+                window.axios.delete(`/avisosApp/avisos/eliminar/${noticeId}`)
+            );
+
+            toast({
+                title: "¡Atención",
+                description: response?.data.message
+            });
+
+            onClose();
+            setTimeout(() => {
+                toggleRefresh();
+            }, 350);
+        } catch (error) {
+            if (error instanceof AxiosError) {
+                toast({
+                    title: "¡Atención",
+                    description: error.response?.data.message ?? 'Error de Servidor',
+                    variant: 'destructive'
+                });
+            }
+        }
+    }, [notice.aviso_id]);
 
     return (
         <>
@@ -35,10 +71,10 @@ export function NoticeModalDelete({ notice }: any) {
                         ¿Esta seguro que desea eliminar este aviso?
                     </Alert>
                     <div className="flex justify-between">
-                        <Button variant={'destructive'} onClick={onClose}>
+                        <Button variant={'destructive'} onClick={onClose} disabled={axios.loading}>
                             Cancelar
                         </Button>
-                        <Button variant={'default'}>
+                        <Button variant={'default'} onClick={handleDeleteClick} disabled={axios.loading}>
                             Guardar
                         </Button>
                     </div>

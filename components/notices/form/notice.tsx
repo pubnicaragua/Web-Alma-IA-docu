@@ -129,7 +129,6 @@ export function NoticeFormNotice({ form, programacion = '' }: Readonly<PropTypes
                         name="aviso.fecha_programacion"
                         control={form.control}
                         render={({ field }) => {
-                            console.log(field);
                             return (
                                 <Input
                                     {...field}

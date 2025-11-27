@@ -79,7 +79,7 @@ export function SurveyFormQuestions({ form, catalogs }: Readonly<PropTypes>) {
         if (!actuales || actuales.length === 0) {
             const initial = Array.from({ length: 4 }, () => ({
                 titulo: "",
-                tono_id: "",
+                peso: 0,
             }));
             setValue(`preguntas.${currentIndex}.posibles_respuestas`, initial as any);
         }
@@ -114,7 +114,7 @@ export function SurveyFormQuestions({ form, catalogs }: Readonly<PropTypes>) {
     const handleClickCleanResponse = (idx: number) => {
         setValue(`preguntas.${currentIndex}.posibles_respuestas.${idx}`, {
             titulo: "",
-            tono_id: "",
+            peso: 0,
         } as any);
     };
 
@@ -132,7 +132,7 @@ export function SurveyFormQuestions({ form, catalogs }: Readonly<PropTypes>) {
                         control={control}
                         render={({ field }) => (
                             <Select
-                                value={Number(field.value) ? String(field.value) : '0'}
+                                value={field.value ? String(field.value) : ''}
                                 onValueChange={(value) => field.onChange(Number(value))}
                             >
                                 <SelectTrigger className="w-full">
@@ -292,7 +292,7 @@ export function SurveyFormQuestions({ form, catalogs }: Readonly<PropTypes>) {
                                             <div className="grid grid-cols-4 gap-4">
                                                 <div className="col-span-1">
                                                     <Controller
-                                                        name={`preguntas.${currentIndex}.posibles_respuestas.${idx}.tono`}
+                                                        name={`preguntas.${currentIndex}.posibles_respuestas.${idx}.peso`}
                                                         control={control}
                                                         render={({ field }) => (
                                                             <Select
@@ -317,7 +317,7 @@ export function SurveyFormQuestions({ form, catalogs }: Readonly<PropTypes>) {
                                                         )}
                                                     />
                                                     <FormError
-                                                        message={formState.errors.preguntas?.[currentIndex]?.posibles_respuestas?.[idx]?.tono?.message}
+                                                        message={formState.errors.preguntas?.[currentIndex]?.posibles_respuestas?.[idx]?.peso?.message}
                                                     />
                                                 </div>
                                                 <div className="col-span-3">
