@@ -36,17 +36,13 @@ export default function LoginPage() {
   // Estados
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const captchRef = useRef<ReCAPTCHA>(null);
-
-  useEffect(() => {
-    if (form.formState.submitCount > 0) {
-      captchRef.current?.reset();
-    }
-  }, [form.formState.submitCount]);
+  const captchRef = useRef<HTMLDivElement>(null);
 
   const onSubmit = useCallback(async (values: AuthLoginSchemaType) => {
+    console.log('[LOGIN] Enviando credenciales:', { email: values.email, password: '***' });
 
     const response = await ActionMakeLogin(values);
+    console.log('[LOGIN] Respuesta del servidor:', response);
 
     if (response.status === 'error') {
       form.resetField('password');

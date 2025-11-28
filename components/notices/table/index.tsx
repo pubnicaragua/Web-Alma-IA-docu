@@ -50,7 +50,7 @@ export function NoticeTable({ filters }: Readonly<PropTypes>) {
                 )}
                 {!pagination.loading && pagination.data.length === 0 && (
                     <div className="p-8 text-center text-gray-500">
-                        No se encontraron alertas que coincidan con los filtros seleccionados.
+                        No se encontraron avisos que coincidan con los filtros seleccionados.
                     </div>
                 )}
                 {!pagination.loading && pagination.data.length > 0 && (

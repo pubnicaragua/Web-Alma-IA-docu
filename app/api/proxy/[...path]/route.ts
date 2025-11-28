@@ -72,6 +72,8 @@ export async function handleProxyRequest(
       body,
     });
 
+    console.log(`[PROXY] ${request.method} ${apiUrl} -> ${response.status}`);
+
     let data: any = {};
     const contentType = response.headers.get("content-type") || "";
 
