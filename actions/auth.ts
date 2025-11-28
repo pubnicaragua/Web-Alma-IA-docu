@@ -30,28 +30,59 @@ export async function ActionMakeLogin(values: AuthLoginSchemaType): Promise<Serv
 async function validateCredentials(values: AuthLoginSchemaType) {
     const loginUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login`
 
-    const response = await fetch(loginUrl, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-            identifier: values.email,
-            password: values.password,
-        }),
-    });
+    console.log('[AUTH] ========== INICIO LOGIN ==========');
+    console.log('[AUTH] URL:', loginUrl);
+    console.log('[AUTH] Email:', values.email);
 
-    if (!response.ok) {
-        throw new Error("Las credenciales ingresadas no son válidas. Por favor, verifica tu correo y contraseña.");
+    try {
+        const response = await fetch(loginUrl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                identifier: values.email,
+                password: values.password,
+            }),
+        });
+
+        console.log('[AUTH] Status HTTP:', response.status);
+        console.log('[AUTH] Status Text:', response.statusText);
+
+        const responseText = await response.text();
+        console.log('[AUTH] Response Body:', responseText);
+
+        if (!response.ok) {
+            console.error('[AUTH] ❌ ERROR - Login fallido');
+            console.error('[AUTH] Status:', response.status);
+            console.error('[AUTH] Body:', responseText);
+            throw new Error(`Error ${response.status}: ${responseText || response.statusText}`);
+        }
+
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (e) {
+            console.error('[AUTH] ❌ ERROR - No se pudo parsear JSON:', responseText);
+            throw new Error("Respuesta inválida del servidor");
+        }
+
+        console.log('[AUTH] ✅ Login exitoso');
+        console.log('[AUTH] Token recibido:', !!data.token);
+        console.log('[AUTH] Datos:', { token: !!data.token, user: data.user ? 'presente' : 'ausente' });
+
+        if (!data.token) {
+            console.error('[AUTH] ❌ ERROR - No hay token en la respuesta');
+            throw new Error("No se recibió un token válido");
+        }
+
+        console.log('[AUTH] ========== FIN LOGIN EXITOSO ==========');
+        return data;
+    } catch (error) {
+        console.error('[AUTH] ========== ERROR EN LOGIN ==========');
+        console.error('[AUTH] Error:', error);
+        throw error;
     }
-
-    const data = await response.json();
-
-    if (!data.token) {
-        throw new Error("No se recibió un token válido");
-    }
-
-    return data;
 }
 
 // Validar tipo de Perfil
