@@ -29,6 +29,9 @@ interface BarChartComparisonPatologieGeneralProps {
   apiEmotions?: Array<{ nombre: string; valor: number }>;
 }
 
+const getDefaultActivePathologies = (emotions: Emotion[]) =>
+  emotions.slice(0, 5).map((emotion) => emotion.name);
+
 export function BarChartComparisonPatologieGeneral({
   title,
   onEmotionsLoaded,
@@ -37,9 +40,9 @@ export function BarChartComparisonPatologieGeneral({
 }: BarChartComparisonPatologieGeneralProps) {
   // Inicializar selectedEmotions con datos disponibles para evitar parpadeo
   const initialNames = initialData
-    ? initialData.map((e) => e.name)
+    ? getDefaultActivePathologies(initialData)
     : apiEmotions
-      ? apiEmotions.map((e) => e.nombre)
+      ? apiEmotions.slice(0, 5).map((e) => e.nombre)
       : [];
 
   const [data, setData] = useState<Emotion[]>(initialData || []);
@@ -67,17 +70,16 @@ export function BarChartComparisonPatologieGeneral({
   }
 
   useEffect(() => {
-    if (!initialData && !apiEmotions) {
-      loadData(dateFilterValue);
-    } else if (apiEmotions) {
+    if (apiEmotions) {
       const transformedData = apiEmotions.map((emotion) => ({
         name: emotion.nombre,
         value: Math.round(emotion.valor / 100),
+        cantidad_respuestas: Math.round(emotion.valor / 100),
         color: getPatologieColor(emotion.nombre),
       }));
       setData(transformedData);
 
-      const names = transformedData.map((e) => e.name);
+      const names = getDefaultActivePathologies(transformedData);
       // Solo actualizar si cambian para evitar render extra
       if (
         names.length !== selectedEmotions.length ||
@@ -87,7 +89,7 @@ export function BarChartComparisonPatologieGeneral({
         if (onEmotionsLoaded) onEmotionsLoaded(names);
       }
     }
-  }, [initialData, apiEmotions, selectedDate]);
+  }, [apiEmotions, selectedDate]);
 
   useEffect(() => {
     if (!initialData && !apiEmotions) {
@@ -110,9 +112,16 @@ export function BarChartComparisonPatologieGeneral({
         );
       }
 
-      setData(emotionsData);
+      const normalizedData = emotionsData.map((emotion) => ({
+        ...emotion,
+        cantidad_respuestas: emotion.cantidad_respuestas ?? emotion.value,
+        cantidad_negativas: emotion.cantidad_negativas ?? 0,
+        cantidad_neutras: emotion.cantidad_neutras ?? 0,
+      }));
 
-      const names = emotionsData.map((e) => e.name);
+      setData(normalizedData);
+
+      const names = getDefaultActivePathologies(normalizedData);
       if (
         names.length !== selectedEmotions.length ||
         !names.every((name) => selectedEmotions.includes(name))
@@ -148,6 +157,15 @@ export function BarChartComparisonPatologieGeneral({
       ? data.filter((emotion) => selectedEmotions.includes(emotion.name))
       : [];
 
+  const maxYAxisValue = Math.max(
+    0.5,
+    Math.ceil(Math.max(...filteredData.map((emotion) => emotion.value), 0) * 2) / 2
+  );
+
+  const yAxisTicks = Array.from(
+    { length: Math.floor(maxYAxisValue / 0.5) + 1 },
+    (_, index) => Number((index * 0.5).toFixed(1))
+  );
 
   return (
     <div className="bg-white rounded-lg p-3 sm:p-6 shadow-sm border border-blue-200">
@@ -237,9 +255,59 @@ export function BarChartComparisonPatologieGeneral({
                         value.length > 6 ? `${value.substring(0, 6)}...` : value
                       }
                     />
-                    <YAxis />
+                    <YAxis
+                      domain={[0, maxYAxisValue]}
+                      ticks={yAxisTicks}
+                      tickFormatter={(value) => Number(value).toString()}
+                    />
                     <Tooltip
-                      formatter={(value) => [`${value}`, "Cantidad"]}
+                      content={({ active, payload, label }: any) => {
+                        if (!active || !payload?.length) return null;
+
+                        const item = payload[0].payload as Emotion;
+                        const positiveResponses = Math.max(
+                          (item.cantidad_respuestas ?? 0) -
+                          (item.cantidad_negativas ?? 0) -
+                          (item.cantidad_neutras ?? 0),
+                          0
+                        );
+
+                        return (
+                          <div className="rounded-lg border border-gray-100 bg-white p-3 text-sm shadow-md">
+                            <p className="font-medium text-gray-800">{label}</p>
+                            <p className="text-gray-600">
+                              Valor:{" "}
+                              <span className="font-medium">
+                                {item.value}
+                              </span>
+                            </p>
+                            <p className="text-gray-600">
+                              Cantidad de respuestas:{" "}
+                              <span className="font-medium">
+                                {item.cantidad_respuestas ?? 0}
+                              </span>
+                            </p>
+                            <p className="text-gray-600">
+                              Negativas:{" "}
+                              <span className="font-medium">
+                                {item.cantidad_negativas ?? 0}
+                              </span>
+                            </p>
+                            <p className="text-gray-600">
+                              Neutras:{" "}
+                              <span className="font-medium">
+                                {item.cantidad_neutras ?? 0}
+                              </span>
+                            </p>
+                            <p className="text-gray-600">
+                              Positivas:{" "}
+                              <span className="font-medium">
+                                {positiveResponses}
+                              </span>
+                            </p>
+                          </div>
+                        );
+                      }}
                       labelFormatter={(name) => `${name}`}
                       contentStyle={{
                         borderRadius: "8px",

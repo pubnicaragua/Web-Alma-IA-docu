@@ -81,6 +81,9 @@ export interface TotalAlert {
 export interface Emotion {
   name: string;
   value: number;
+  cantidad_respuestas?: number;
+  cantidad_negativas?: number;
+  cantidad_neutras?: number;
   color: string;
 }
 
