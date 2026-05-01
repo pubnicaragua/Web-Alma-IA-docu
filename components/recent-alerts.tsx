@@ -10,7 +10,7 @@ import { es } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, UserRound } from "lucide-react";
 
 export function RecentAlerts() {
   const [alerts, setAlerts] = useState<RecentAlert[]>([]);
@@ -18,6 +18,7 @@ export function RecentAlerts() {
   const [error, setError] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [failedImages, setFailedImages] = useState<Record<number, boolean>>({});
   const itemsPerPage = 7;
   const router = useRouter();
 
@@ -29,8 +30,6 @@ export function RecentAlerts() {
         setError(null);
 
         const data = await fetchRecentAlerts();
-
-        console.log(data)
 
         const sortedData = data.sort((a, b) => {
           const dateA = new Date(a.fecha_generada);
@@ -93,6 +92,13 @@ export function RecentAlerts() {
     router.push(`/alertas/${alertId}`);
   };
 
+  const handleImageError = (alertId: number) => {
+    setFailedImages((current) => ({
+      ...current,
+      [alertId]: true,
+    }));
+  };
+
   const getPriorityColor = (priority: string | undefined) => {
     if (!priority) return "bg-gray-200";
     switch (priority.toLowerCase()) {
@@ -106,6 +112,9 @@ export function RecentAlerts() {
         return "bg-gray-200 hover:bg-gray-300";
     }
   };
+
+  const shouldShowDefaultIcon = (alert: RecentAlert) =>
+    !alert.alumnos?.url_foto_perfil || failedImages[alert.alumno_alerta_id];
 
   return (
     <Card>
@@ -123,17 +132,25 @@ export function RecentAlerts() {
                 <div className="flex items-center gap-3 w-[45%]">
                   {isClient && (
                     <div className="relative h-10 w-10 overflow-hidden rounded-full flex-shrink-0 cursor-pointer">
-                      <Image
-                        src={
-                          alert.alumnos?.url_foto_perfil ||
-                          "/diverse-students-studying.png"
-                        }
-                        alt={`${alert.alumnos?.personas?.nombres || "Estudiante"
-                          }`}
-                        fill
-                        className={`object-cover ${alert.anonimo ? "blur-xl" : null
-                          }`}
-                      />
+                      {shouldShowDefaultIcon(alert) ? (
+                        <div
+                          className={`flex h-full w-full items-center justify-center bg-gray-100 text-gray-500 ${alert.anonimo ? "blur-xl" : ""
+                            }`}
+                          aria-label="Imagen de estudiante no disponible"
+                        >
+                          <UserRound className="h-6 w-6" />
+                        </div>
+                      ) : (
+                        <Image
+                          src={alert.alumnos!.url_foto_perfil!}
+                          alt={`${alert.alumnos?.personas?.nombres || "Estudiante"
+                            }`}
+                          fill
+                          className={`object-cover ${alert.anonimo ? "blur-xl" : ""
+                            }`}
+                          onError={() => handleImageError(alert.alumno_alerta_id)}
+                        />
+                      )}
                     </div>
                   )}
                   <div className="min-w-0 cursor-pointer">
