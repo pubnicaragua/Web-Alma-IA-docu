@@ -1,14 +1,6 @@
 "use client";
 
-import { Pagination } from "@/components/pagination";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -27,19 +19,17 @@ interface ReportsListProps {
 }
 
 const columns = [
-  { key: "informe_id", title: "ID" },
-  { key: "nivel", title: "Nivel" },
-  { key: "fecha_generacion", title: "Fecha de generación" },
-  { key: "creado_por", title: "Generado por" },
-  { key: "url_reporte", title: "Informe", className: "text-left" }, // 👈 Añadido
+  { key: "informe_id", title: "Informe ID" },
+  { key: "fecha_generacion", title: "Fecha de generacion" },
+  { key: "periodo", title: "Periodo" },
+  { key: "creado_por_nombre", title: "Generado por" },
+  { key: "url_reporte", title: "Informe", className: "text-left" },
 ];
 
 export function ReportsList({ reports = [] }: ReportsListProps) {
   const safeReports = Array.isArray(reports) ? reports : [];
 
-  const [filteredReports, setFilteredReports] = useState<APIReportGeneral[]>(
-    []
-  );
+  const [filteredReports, setFilteredReports] = useState<APIReportGeneral[]>([]);
   const [uniqueTypes, setUniqueTypes] = useState<string[]>([]);
   const [uniqueNiveles, setUniqueNiveles] = useState<string[]>([]);
   const [filterType, setFilterType] = useState<string>("all");
@@ -56,17 +46,20 @@ export function ReportsList({ reports = [] }: ReportsListProps) {
 
   const renderCell = (report: APIReportGeneral, column: Column) => {
     switch (column.key) {
-      case "fecha_generacion":
+      case "fecha_generacion": {
         const date = new Date(report.fecha_generacion);
-      const formatted = new Intl.DateTimeFormat("es-ES", {
-        month: "long",
-        year: "numeric",
-      })
-        .format(date)
-        .replace(" de ", " ");
-      const capitalized =
-        formatted.charAt(0).toUpperCase() + formatted.slice(1);
-      return <span>{capitalized}</span>;
+        return (
+          <span>
+            {new Intl.DateTimeFormat("es-ES", {
+              day: "2-digit",
+              month: "long",
+              year: "numeric",
+            }).format(date)}
+          </span>
+        );
+      }
+      case "creado_por_nombre":
+        return <span>{report.creado_por_nombre || "Sin nombre"}</span>;
       case "url_reporte":
         return (
           <Link
@@ -80,9 +73,7 @@ export function ReportsList({ reports = [] }: ReportsListProps) {
         );
       default:
         return (
-          <span>
-            {String(report[column.key as keyof APIReportGeneral] ?? "")}
-          </span>
+          <span>{String(report[column.key as keyof APIReportGeneral] ?? "")}</span>
         );
     }
   };
@@ -108,7 +99,7 @@ export function ReportsList({ reports = [] }: ReportsListProps) {
         const dateB = new Date(b.fecha_generacion).getTime();
 
         if (dateA === dateB) {
-          return a.nivel.localeCompare(b.nivel); // orden ascendente por nivel si la fecha es igual
+          return (a.nivel || "").localeCompare(b.nivel || "");
         }
 
         return sort === "date-asc" ? dateA - dateB : dateB - dateA;
@@ -132,7 +123,7 @@ export function ReportsList({ reports = [] }: ReportsListProps) {
     setUniqueNiveles(nivelesUnicos);
 
     applyFilters(safeReports, filterType, filterNivel, sortBy);
-  }, [safeReports, applyFilters]);
+  }, [safeReports, applyFilters, filterType, filterNivel, sortBy]);
 
   const handleFilterType = (type: string) => {
     setFilterType(type);
@@ -180,9 +171,11 @@ export function ReportsList({ reports = [] }: ReportsListProps) {
                 </SelectContent>
               </Select>
             </div>
-             {/* Filtro por Tipo */}
+
             <div className="w-full">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Tipo
+              </label>
               <Select value={filterType} onValueChange={handleFilterType}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Seleccionar tipo" />
@@ -197,8 +190,7 @@ export function ReportsList({ reports = [] }: ReportsListProps) {
                 </SelectContent>
               </Select>
             </div>
-            
-           
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Ordenar por fecha
@@ -208,10 +200,8 @@ export function ReportsList({ reports = [] }: ReportsListProps) {
                   <SelectValue placeholder="Seleccionar orden" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="date-desc">
-                    Más recientes primero
-                  </SelectItem>
-                  <SelectItem value="date-asc">Más antiguos primero</SelectItem>
+                  <SelectItem value="date-desc">Mas recientes primero</SelectItem>
+                  <SelectItem value="date-asc">Mas antiguos primero</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -242,7 +232,7 @@ export function ReportsList({ reports = [] }: ReportsListProps) {
                 Anterior
               </Button>
               <span className="px-3 py-1 text-sm font-medium">
-                Página {currentPage} de{" "}
+                Pagina {currentPage} de{" "}
                 {Math.ceil(filteredReports.length / itemsPerPage)}
               </span>
               <Button

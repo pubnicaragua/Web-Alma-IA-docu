@@ -44,14 +44,30 @@ export interface APIReportGeneral {
   informe_id: number;
   tipo: string;
   nivel: string;
-  fecha_generacion: Date;
+  fecha_generacion: string;
   url_reporte: string;
   creado_por: number;
+  creado_por_nombre: string;
   actualizado_por: number;
-  fecha_creacion: Date;
-  fecha_actualizacion: Date;
+  actualizado_por_nombre: string;
+  fecha_creacion: string;
+  fecha_actualizacion: string;
   activo: boolean;
   colegio_id: number;
+  curso_id: number;
+  periodo_anio: number;
+  periodo_mes: number;
+  periodo_inicio: string;
+  periodo_fin: string;
+  periodo: string;
+  curso?: {
+    curso_id: number;
+    grado_id: number;
+    colegio_id: number;
+    nombre_curso: string;
+    nivel_educativo_id: number;
+    activo: boolean;
+  };
 }
 
 // Función para convertir el formato de la API al formato de la UI
