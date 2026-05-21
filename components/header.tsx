@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
-import { Bell, Menu, Search } from "lucide-react";
+import { Bell, Menu, Search, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -43,6 +43,7 @@ export function Header({ toggleSidebar }: HeaderProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [dataSchool, setDataSchool] = useState<any>({});
+  const [profileImageFailed, setProfileImageFailed] = useState(false);
 
   const loadUserProfile = useCallback(async () => {
     try {
@@ -209,21 +210,27 @@ export function Header({ toggleSidebar }: HeaderProps) {
 
   const getFullName = () => {
     if (!profileData) return "Usuario";
+    const socialName = profileData.usuario?.nombre_social?.trim();
+    if (socialName) return socialName;
+
     const nombres = profileData.persona?.nombres || "";
     const apellidos = profileData.persona?.apellidos || "";
     if (nombres && apellidos) return `${nombres} ${apellidos}`;
     if (nombres) return nombres;
     if (apellidos) return apellidos;
-    return profileData.usuario?.nombre_social || "Usuario";
+    return "Usuario";
   };
 
   const getUserRole = () => profileData?.rol?.nombre || "Usuario";
 
   const getUserImageUrl = () => {
-    const url =
-      profileData?.usuario?.url_foto_perfil || "/confident-businessman.png";
-    return url.trim() || "/confident-businessman.png";
+    if (profileImageFailed) return "";
+    return profileData?.usuario?.url_foto_perfil?.trim() || "";
   };
+
+  useEffect(() => {
+    setProfileImageFailed(false);
+  }, [profileData?.usuario?.url_foto_perfil]);
 
   return (
     <header className="print:hidden w-full relative h-[100px]">
@@ -340,17 +347,18 @@ export function Header({ toggleSidebar }: HeaderProps) {
           <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center space-x-3 focus:outline-none">
               <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-full overflow-hidden border border-white/30 flex-shrink-0">
+                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/40 bg-white/20">
                   {isLoading ? (
                     <Skeleton className="w-full h-full rounded-full" />
-                  ) : (
-                    <Image
-                      src={getUserImageUrl() || "/placeholder.svg"}
+                  ) : getUserImageUrl() ? (
+                    <img
+                      src={getUserImageUrl()}
                       alt="Perfil de usuario"
-                      width={45}
-                      height={45}
-                      className="w-full h-full object-cover"
+                      onError={() => setProfileImageFailed(true)}
+                      className="h-full w-full object-cover"
                     />
+                  ) : (
+                    <User className="h-5 w-5 text-white" />
                   )}
                 </div>
 

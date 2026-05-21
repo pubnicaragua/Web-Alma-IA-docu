@@ -11,7 +11,7 @@ export interface ProfileResponse {
     fecha_actualizacion: string;
     activo: boolean;
     usuario_id: number;
-    nombre_social: string;
+    nombre_social: string | null;
     email: string;
     encripted_password: string;
     rol_id: number;
@@ -98,13 +98,17 @@ function guardarCursosEnLocalStorage(profile?: ProfileResponse) {
   localStorage.setItem("docente_cursos", JSON.stringify(cursosArray));
 }
 
-export async function fetchUserProfile(): Promise<ProfileResponse | null> {
+export async function fetchUserProfile(
+  options: { forceRefresh?: boolean } = {}
+): Promise<ProfileResponse | null> {
   const cacheKey = "user-profile";
 
   // Verificar cache primero
-  const cachedProfile = cacheService.get<ProfileResponse>(cacheKey);
-  if (cachedProfile) {
-    return cachedProfile;
+  if (!options.forceRefresh) {
+    const cachedProfile = cacheService.get<ProfileResponse>(cacheKey);
+    if (cachedProfile) {
+      return cachedProfile;
+    }
   }
 
   try {
@@ -132,7 +136,7 @@ export async function fetchUserProfile(): Promise<ProfileResponse | null> {
 }
 
 export interface UpdateProfileData {
-  nombre_social: string;
+  nombre_social: string | null;
   email: string;
   encripted_password: string;
   nombres: string;
@@ -163,7 +167,7 @@ export const updateProfile = async (
     }
 
     // Después de actualizar exitosamente, obtener el perfil actualizado
-    const updatedProfile = await fetchUserProfile();
+    const updatedProfile = await fetchUserProfile({ forceRefresh: true });
 
     if (!updatedProfile) {
       throw new Error("No se pudo obtener el perfil actualizado");

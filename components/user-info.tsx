@@ -6,7 +6,12 @@ import { UserContext } from "@/middleware/user-context";
 
 export function UserInfo() {
   const { userData } = useContext(UserContext);
-  // userData?.funcionalidades[0].descripcion
+  const socialName = userData?.usuario?.nombre_social?.trim();
+  const fullName =
+    [userData?.persona?.nombres, userData?.persona?.apellidos]
+      .filter(Boolean)
+      .join(" ") || "Usuario";
+  const displayName = socialName || fullName;
 
   return (
     <div className="border-t p-4">
@@ -15,9 +20,7 @@ export function UserInfo() {
           <User className="h-5 w-5" />
         </div>
         <div className="ml-3">
-          <p className="text-sm font-medium">
-            {userData?.persona?.nombres} {userData?.persona?.apellidos}
-          </p>
+          <p className="text-sm font-medium">{displayName}</p>
           <p className="text-xs text-gray-500">{userData?.rol?.nombre}</p>
         </div>
       </div>
