@@ -38,12 +38,6 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const captchRef = useRef<ReCAPTCHA>(null);
 
-  useEffect(() => {
-    if (form.formState.submitCount > 0) {
-      captchRef.current?.reset();
-    }
-  }, [form.formState.submitCount]);
-
   const onSubmit = useCallback(async (values: AuthLoginSchemaType) => {
 
     const response = await ActionMakeLogin(values);
@@ -51,6 +45,7 @@ export default function LoginPage() {
     if (response.status === 'error') {
       form.resetField('password');
       form.resetField('captcha');
+      captchRef.current?.reset();
       setError(response.message);
       toast({
         title: response.title || "Error de inicio de sesión",
