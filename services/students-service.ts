@@ -112,7 +112,7 @@ export function mapApiStudentsToStudents(apiStudents: ApiStudent[]): Student[] {
       return [];
     }
 
-    return apiStudents.map((apiStudent) => {
+    const mapped = apiStudents.map((apiStudent) => {
       try {
         // Calcular la edad a partir de la fecha de nacimiento
         const fechaNacimiento = apiStudent.personas?.fecha_nacimiento;
@@ -124,7 +124,7 @@ export function mapApiStudentsToStudents(apiStudents: ApiStudent[]): Student[] {
           apiStudent.cursos?.[0]?.grados?.nombre || "No especificado";
 
         return {
-          id: apiStudent.alumno_id.toString(),
+          id: apiStudent.alumno_id?.toString() || "",
           name: `${apiStudent.personas?.nombres || ""} ${apiStudent.personas?.apellidos || ""
             }`.trim(),
           level: grado,
@@ -136,11 +136,15 @@ export function mapApiStudentsToStudents(apiStudents: ApiStudent[]): Student[] {
           phone: apiStudent.telefono_contacto1 || "",
         };
       } catch (error) {
-        throw error;
+        console.error("Error parsing student:", error, apiStudent);
+        return null;
       }
     });
+
+    return mapped.filter((s) => s !== null) as Student[];
   } catch (error) {
-    throw error;
+    console.error("Error in mapApiStudentsToStudents:", error);
+    return [];
   }
 }
 

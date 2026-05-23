@@ -3,8 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Bell, Menu, Search, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -31,6 +30,8 @@ interface HeaderProps {
 export function Header({ toggleSidebar }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const urlSearch = searchParams.get("search") ?? "";
   const { logout } = useAuth();
   const { getFuntions, refresh, selectedSchoolId, setSelectedSchoolId } =
     useUser();
@@ -42,6 +43,27 @@ export function Header({ toggleSidebar }: HeaderProps) {
   const [isClient, setIsClient] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+
+  // Sync searchTerm with URL search parameter
+  useEffect(() => {
+    setSearchTerm(urlSearch);
+  }, [urlSearch]);
+
+  // Real-time search as user types (only active on /alumnos route)
+  useEffect(() => {
+    if (pathname === "/alumnos") {
+      const timer = setTimeout(() => {
+        if (searchTerm.trim() !== urlSearch) {
+          if (searchTerm.trim()) {
+            router.push(`/alumnos?search=${searchTerm.trim()}`);
+          } else {
+            router.push(`/alumnos`);
+          }
+        }
+      }, 300); // 300ms debounce
+      return () => clearTimeout(timer);
+    }
+  }, [searchTerm, pathname, router, urlSearch]);
   const [dataSchool, setDataSchool] = useState<any>({});
   const [profileImageFailed, setProfileImageFailed] = useState(false);
 
@@ -180,11 +202,16 @@ export function Header({ toggleSidebar }: HeaderProps) {
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!searchTerm.trim()) return;
     try {
-      if (pathname !== "/select-school")
-        router.push(`/alumnos?search=${searchTerm}`);
-      else setIsSearching(true);
+      if (pathname !== "/select-school") {
+        if (searchTerm.trim()) {
+          router.push(`/alumnos?search=${searchTerm.trim()}`);
+        } else {
+          router.push(`/alumnos`);
+        }
+      } else {
+        setIsSearching(true);
+      }
     } catch {
       toast({
         title: "Error",
@@ -194,7 +221,6 @@ export function Header({ toggleSidebar }: HeaderProps) {
       });
     } finally {
       setIsSearching(false);
-      setSearchTerm("");
     }
   };
 

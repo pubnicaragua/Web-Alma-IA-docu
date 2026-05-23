@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import fs from "fs";
 
 // API base URL
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
@@ -128,6 +129,20 @@ export async function POST(
     const hasBody = request.bodyUsed === false && request.headers.has("content-length");
     const body = hasBody ? await request.blob() : null;
 
+    let bodyText = "";
+    if (body) {
+      bodyText = await body.text();
+    }
+
+    if (path.includes("alumnos/buscar")) {
+      try {
+        fs.appendFileSync(
+          "c:\\Users\\jahir\\Web-Alma-IA-docu\\proxy-debug.log",
+          `[${new Date().toISOString()}] POST Request to ${path}: ${bodyText}\n`
+        );
+      } catch (e) {}
+    }
+
     // Copiar headers
     const headers = new Headers();
     request.headers.forEach((value, key) => {
@@ -153,19 +168,52 @@ export async function POST(
     const response = await fetch(apiUrl, {
       method: request.method,
       headers,
-      body: body, // Pasamos el Blob directamente. Ya no se necesita duplex.
+      body: body ? new Blob([bodyText], { type: body.type }) : null, // Re-crear Blob para no consumir el original si ya se leyó
     });
 
-    // Devolver la respuesta al cliente
-    // El cuerpo de la respuesta de fetch también es un stream, pero NextResponse lo maneja bien.
-    return new Response(response.body, {
-      status: response.status,
-      statusText: response.statusText,
-      headers: response.headers,
-    });
+    // Leer la respuesta para depuración si es de búsqueda
+    let responseText = "";
+    if (path.includes("alumnos/buscar")) {
+      try {
+        const clonedResponse = response.clone();
+        responseText = await clonedResponse.text();
+        fs.appendFileSync(
+          "c:\\Users\\jahir\\Web-Alma-IA-docu\\proxy-debug.log",
+          `[${new Date().toISOString()}] POST Response from ${path} (status ${response.status}): ${responseText.slice(0, 2000)}\n`
+        );
+      } catch (e) {
+        try {
+          fs.appendFileSync(
+            "c:\\Users\\jahir\\Web-Alma-IA-docu\\proxy-debug.log",
+            `[${new Date().toISOString()}] POST Response logging failed: ${e}\n`
+          );
+        } catch (inner) {}
+      }
+    }
+
+    // Intentar parsear la respuesta como JSON para evitar problemas de streams y headers
+    try {
+      // Usar la respuesta clonada si la leímos antes, de lo contrario clonar ahora
+      const finalResponse = path.includes("alumnos/buscar") ? response.clone() : response;
+      const data = await finalResponse.json();
+      return NextResponse.json(data, { status: response.status });
+    } catch (error) {
+      // Si no es JSON, usar el texto que ya leímos o leer de nuevo
+      const textData = path.includes("alumnos/buscar") ? responseText : await response.text();
+      return new NextResponse(textData, {
+        status: response.status,
+        headers: { "Content-Type": "text/plain" },
+      });
+    }
 
   } catch (error) {
     console.error("Error en el proxy:", error);
+    try {
+      fs.appendFileSync(
+        "c:\\Users\\jahir\\Web-Alma-IA-docu\\proxy-debug.log",
+        `[${new Date().toISOString()}] POST Exception: ${error}\n`
+      );
+    } catch (e) {}
     const resolvedParams = await params;
     return handleApiError(error, resolvedParams.path.join("/"));
   }
