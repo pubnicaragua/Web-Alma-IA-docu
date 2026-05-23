@@ -47,6 +47,13 @@ export default function AlertsPage({
 
 
   // Estados para almacenar los datos desde la BD
+  // Estados para almacenar los datos desde la BD
+  // Estados para almacenar los datos desde la BD
+  // Estados para almacenar los datos desde la BD
+  // Estados para almacenar los datos desde la BD
+  // Estados para almacenar los datos desde la BD
+  // Estados para almacenar los datos desde la BD
+  // 
   const [alertStates, setAlertStates] = useState<
     { alerta_estado_id: number; nombre_alerta_estado: string }[]
   >([]);
