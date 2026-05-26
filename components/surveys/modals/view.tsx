@@ -15,7 +15,7 @@ import { useUser } from "@/middleware/user-context";
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#AA46BE"];
 
-export function NoticeModalView({ avisoId, table = true }: any) {
+export function SurveyModalView({ avisoId, table = true }: any) {
 
     const { selectedSchoolId } = useUser();
     const { isOpen, onOpen, onClose } = useModal();
@@ -61,7 +61,7 @@ export function NoticeModalView({ avisoId, table = true }: any) {
                     <DialogHeader className="sticky top-0 bg-white z-10 pb-2">
                         <div className="w-full flex items-center justify-between">
                             <DialogTitle className="text-xl font-semibold">
-                                {table ? "Vista del Aviso" : "Resumen Global"}
+                                {table ? "Vista de la Encuesta" : "Resumen Global"}
                             </DialogTitle>
                             <DialogClose className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground flex items-center justify-center">
                                 <X className="h-6 w-6" />

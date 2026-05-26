@@ -9,11 +9,18 @@ import {
     DialogClose,
 } from "@/components/ui/dialog";
 import { NoticeForm } from "../form";
+import { useCallback } from "react";
+import { useRefresh } from "@/hooks/use-refresh";
 
 export function NoticeModalEdit({ notice }: any) {
+    
     const { isOpen, onOpen, onClose } = useModal();
+    const refresh = useRefresh();
 
-    console.log(notice)
+    const postSubmit = useCallback(() => {
+        onClose();
+        refresh.toggleRefresh();
+    }, []);
 
     return (
         <>
@@ -34,7 +41,8 @@ export function NoticeModalEdit({ notice }: any) {
                         </div>
                     </DialogHeader>
                     <NoticeForm
-                        avisoId={notice.id}
+                        postSubmit={postSubmit}
+                        avisoId={notice.aviso_id}
                         initialData={{
                             aviso: {
                                 titulo: notice.aviso_titulo || "",
@@ -45,11 +53,12 @@ export function NoticeModalEdit({ notice }: any) {
                                 tipo_programacion: 'Programar'
                             },
                             destinatarios: {
-                                aviso_tipo_id: notice.tipo_aviso || 0,
+                                aviso_tipo_id: notice.aviso_tipo_id || 0,
                                 aviso_destinatario_tipo: notice.destinatario_tipo || "",
-                                destinatarios: notice.destino || [],
+                                destinatarios: notice.destinatarios_ids || [],
                             },
                         }}
+                        meta={notice.meta}
                     />
                 </DialogContent>
             </Dialog>

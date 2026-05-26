@@ -25,6 +25,7 @@ export function NoticeFormNotice({ form, programacion = '' }: Readonly<PropTypes
     const avisoErrors = form.formState.errors.aviso as any;
 
     useEffect(() => {
+        if (!form.formState.isDirty) return;
         if (!programation) return;
         form.setValue('aviso.tipo_programacion', programation, {
             shouldDirty: true,
@@ -138,12 +139,14 @@ export function NoticeFormNotice({ form, programacion = '' }: Readonly<PropTypes
                     <Controller
                         name="aviso.fecha_programacion"
                         control={form.control}
-                        render={({ field }) => (
-                            <Input
-                                {...field}
-                                type="datetime-local"
-                            />
-                        )}
+                        render={({ field }) => {
+                            return (
+                                <Input
+                                    {...field}
+                                    type="datetime-local"
+                                />
+                            )
+                        }}
                     />
                     <FormError message={avisoErrors?.fecha_programacion?.message} />
                 </div>

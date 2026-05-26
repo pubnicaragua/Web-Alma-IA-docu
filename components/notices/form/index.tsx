@@ -1,18 +1,22 @@
-import { zodResolver } from "@hookform/resolvers/zod"
 import { useCallback, useRef } from "react"
+import { AxiosError } from "axios"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import { NoticeFormNotice } from "./notice"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { ServerActionResponse } from "@/types/generics"
 import { Button } from "@/components/ui/button"
-import { NoticeFormDestiny } from "./destiny"
 import { useAxios } from "@/hooks/use-axios"
+import { useToast } from "@/hooks/use-toast"
+import { NoticeFormNotice } from "./notice"
+import { NoticeFormDestiny } from "./destiny"
+import { useUser } from "@/middleware/user-context"
 
 const NoticeSchema = z.object({
     aviso: z.object({
         titulo: z.string().nonempty("El titulo es requerido"),
         descripcion: z.string().nonempty("La descripcion es requerida"),
         palabras_clave: z.string().nonempty("Las palabras clave son requeridas"),
-        archivo: z.instanceof(File).nullable().optional(),
+        archivo: z.any().nullable().optional(),
         tipo_programacion: z.string().nonempty("El tipo de programacion es requerido"),
         fecha_programacion: z.string().optional(),
     }).superRefine((aviso, ctx) => {
@@ -38,17 +42,21 @@ const NoticeSchema = z.object({
     }),
     destinatarios: z.object({
         aviso_tipo_id: z.number().min(1, { message: "El tipo de aviso es requerido" }),
-        aviso_destinatario_tipo: z.nativeEnum({ alumno: "alumno", apoderado: "apoderado" }, { message: "El tipo de destinatario es requerido" }),
+        aviso_destinatario_tipo: z.nativeEnum(
+            { alumno: "alumno", apoderado: "apoderado" },
+            { message: "El tipo de destinatario es requerido" }
+        ),
         destinatarios: z.array(z.number()).min(1, { message: "Debe seleccionar al menos un destinatario" }),
     })
-})
+});
 
 type NoticeSchema = z.infer<typeof NoticeSchema>
 
 interface PropTypes {
     initialData?: NoticeSchema;
     avisoId?: number;
-    onSuccess?: () => void;
+    meta?: any;
+    postSubmit?: () => void
 }
 
 const defaultValues: NoticeSchema = {
@@ -70,15 +78,20 @@ const defaultValues: NoticeSchema = {
 export function NoticeForm({
     initialData,
     avisoId,
-    onSuccess
+    meta,
+    postSubmit
 }: Readonly<PropTypes>) {
+
+    const axios = useAxios();
+    const { toast } = useToast();
+    const { selectedSchoolId } = useUser();
+    const submitLockRef = useRef(false);
 
     const form = useForm<NoticeSchema>({
         defaultValues: initialData ?? defaultValues,
-        resolver: zodResolver(NoticeSchema)
+        resolver: zodResolver(NoticeSchema),
+        context: { isCreate: !avisoId }
     });
-    const axios = useAxios();
-    const submitLockRef = useRef(false);
 
     const onSubmit = useCallback(async (values: NoticeSchema) => {
         if (submitLockRef.current) return;
@@ -94,26 +107,42 @@ export function NoticeForm({
                 ? new Date().toISOString()
                 : new Date(values.aviso.fecha_programacion ?? "").toISOString();
 
-        formData.append('fecha_programacion', fechaProgramacion);
+        formData.append("fecha_programacion", fechaProgramacion);
         formData.append('archivo', values.aviso.archivo ?? '');
         formData.append('aviso_destinatario_tipo', values.destinatarios.aviso_destinatario_tipo);
         formData.append('aviso_tipo_id', values.destinatarios.aviso_tipo_id.toString());
         formData.append("destinario", values.destinatarios.destinatarios.toString());
+        formData.append("colegio_id", selectedSchoolId ?? '');
+
         try {
-            await axios.execute(() =>
+            const response = await axios.execute<ServerActionResponse>(() =>
                 avisoId
-                    ? window.axios.put(`/avisosApp/avisos/${avisoId}`, formData, {
+                    ? window.axios.patch(`/avisosApp/avisos/actualizar/${avisoId}`, formData, {
                         headers: { 'Content-Type': 'multipart/form-data' },
                     })
                     : window.axios.post('/avisosApp/avisos/crear', formData, {
                         headers: { 'Content-Type': 'multipart/form-data' },
                     })
             );
-            onSuccess?.();
+
+            toast({
+                title: "Atencion",
+                description: response?.data.message
+            });
+
+            postSubmit?.()
+        } catch (error) {
+            if (error instanceof AxiosError) {
+                toast({
+                    title: "Atencion",
+                    description: error.response?.data.message,
+                    variant: 'destructive'
+                });
+            }
         } finally {
             submitLockRef.current = false;
         }
-    }, [avisoId, axios, onSuccess]);
+    }, [avisoId, selectedSchoolId, axios, toast, postSubmit]);
 
     const isSubmitting = axios.loading || form.formState.isSubmitting;
 
@@ -121,7 +150,7 @@ export function NoticeForm({
         <form onSubmit={form.handleSubmit(onSubmit)}>
             <div className="grid grid-cols-1 gap-4 mt-2">
                 <NoticeFormNotice form={form} programacion={initialData?.aviso.tipo_programacion ?? ''} />
-                <NoticeFormDestiny form={form} />
+                <NoticeFormDestiny form={form} metaInit={meta} />
             </div>
             <div className="flex justify-end mt-4">
                 <Button
