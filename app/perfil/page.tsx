@@ -40,7 +40,7 @@ export default function ProfilePage() {
       try {
         setLoading(true);
         setError(null);
-        const data = await fetchUserProfile();
+        const data = await fetchUserProfile({ forceRefresh: true });
         setProfileData(data);
       } catch (err) {
         toast({
