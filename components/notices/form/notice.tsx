@@ -17,20 +17,31 @@ interface PropTypes {
     programacion?: string;
 }
 
-const PROGRAMATION_TYPES = ['Ahora', 'Programada']
+const PROGRAMATION_TYPES = ['Ahora', 'Programar']
 
 export function NoticeFormNotice({ form, programacion = '' }: Readonly<PropTypes>) {
 
     const [programation, setProgramation] = useState(programacion);
+    const avisoErrors = form.formState.errors.aviso as any;
 
     useEffect(() => {
         if (!form.formState.isDirty) return;
         if (!programation) return;
+        form.setValue('aviso.tipo_programacion', programation, {
+            shouldDirty: true,
+            shouldValidate: true,
+        });
         if (programation == 'Ahora') {
-            form.setValue('aviso.fecha_programacion', 'now');
+            form.setValue('aviso.fecha_programacion', '', {
+                shouldDirty: true,
+                shouldValidate: true,
+            });
             return;
         }
-        form.setValue('aviso.fecha_programacion', '');
+        form.setValue('aviso.fecha_programacion', '', {
+            shouldDirty: true,
+            shouldValidate: true,
+        });
     }, [programation])
 
     return (
@@ -44,7 +55,7 @@ export function NoticeFormNotice({ form, programacion = '' }: Readonly<PropTypes
                         <Input {...field} placeholder="Escriba el título del aviso" />
                     )}
                 />
-                <FormError message={form.formState.errors.aviso?.titulo?.message} />
+                <FormError message={avisoErrors?.titulo?.message} />
             </div>
             <div className="col-span-3">
                 <Label className="text-sm text-gray-500">Palabras Clave</Label>
@@ -58,7 +69,7 @@ export function NoticeFormNotice({ form, programacion = '' }: Readonly<PropTypes
                 <p className="text-xs text-gray-400 mt-1">
                     Favor de separar las palabras clave con comas.
                 </p>
-                <FormError message={form.formState.errors.aviso?.palabras_clave?.message} />
+                <FormError message={avisoErrors?.palabras_clave?.message} />
             </div>
             <div className="col-span-3">
                 <Label className="text-sm text-gray-500">Descripción</Label>
@@ -73,7 +84,7 @@ export function NoticeFormNotice({ form, programacion = '' }: Readonly<PropTypes
                         />
                     )}
                 />
-                <FormError message={form.formState.errors.aviso?.descripcion?.message} />
+                <FormError message={avisoErrors?.descripcion?.message} />
             </div>
             <div className="col-span-3">
                 <Label className="text-sm text-gray-500">
@@ -97,10 +108,10 @@ export function NoticeFormNotice({ form, programacion = '' }: Readonly<PropTypes
                     Solo se permiten imágenes JPG, PNG, GIF y archivos PDF. El
                     archivo debe ser menor a 5MB.
                 </p>
-                <FormError message={form.formState.errors.aviso?.archivo?.message} />
+                <FormError message={avisoErrors?.archivo?.message} />
             </div>
 
-            <div className={`col-span-${programation != 'Programada' ? 3 : 1}`}>
+            <div className={`col-span-${programation != 'Programar' && programation != 'Programada' ? 3 : 1}`}>
                 <Label className="text-sm text-gray-500">
                     Tipo Programación
                 </Label>
@@ -120,7 +131,7 @@ export function NoticeFormNotice({ form, programacion = '' }: Readonly<PropTypes
                     </SelectContent>
                 </Select>
             </div>
-            {programation == 'Programada' && (
+            {(programation == 'Programar' || programation == 'Programada') && (
                 <div className="col-span-2">
                     <Label className="text-sm text-gray-500">
                         Programación
@@ -137,7 +148,7 @@ export function NoticeFormNotice({ form, programacion = '' }: Readonly<PropTypes
                             )
                         }}
                     />
-                    <FormError message={form.formState.errors.aviso?.fecha_programacion?.message} />
+                    <FormError message={avisoErrors?.fecha_programacion?.message} />
                 </div>
             )}
         </div>

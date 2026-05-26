@@ -42,9 +42,16 @@ export function NoticeFormDestiny({ form, metaInit = {
     const noticeTypeId = form.watch('destinatarios.aviso_tipo_id');
     const destinyIds = form.watch('destinatarios.destinatarios');
 
+    const studentFilters = useMemo(() => {
+        return {
+            colegio_id: filters.colegio_id,
+            "cursos.curso_id": filters.curso_id,
+        };
+    }, [filters.colegio_id, filters.curso_id]);
+
     const pagination = usePaginationSR<ApiStudent>({
         route: "/alumnos",
-        filters: filters,
+        filters: studentFilters,
         perPage: 10,
         enabled: Boolean(filters.curso_id) && noticeTypeId == 4 && Boolean(selectedSchoolId)
     });
@@ -174,7 +181,10 @@ export function NoticeFormDestiny({ form, metaInit = {
                 <div className={`col-span-${noticeTypeId > 2 ? 1 : 2}`}>
                     <Label className="text-sm text-gray-500">Grado</Label>
                     <Select
-                        onValueChange={(val: string) => setFilters({ ...filters, grado_id: val })}
+                        onValueChange={(val: string) => {
+                            setFilters({ ...filters, grado_id: val, curso_id: '' });
+                            setSelectAlumnos([]);
+                        }}
                         value={filters.grado_id ? String(filters.grado_id) : ""}
                         disabled={isCatalogLoading}
                     >
@@ -196,7 +206,10 @@ export function NoticeFormDestiny({ form, metaInit = {
                 <div className={`col-span-1`}>
                     <Label className="text-sm text-gray-500">Curso</Label>
                     <Select
-                        onValueChange={(val: string) => setFilters({ ...filters, curso_id: val })}
+                        onValueChange={(val: string) => {
+                            setFilters({ ...filters, curso_id: val });
+                            setSelectAlumnos([]);
+                        }}
                         value={filters.curso_id ? String(filters.curso_id) : ""}
                         disabled={isCatalogLoading || !filters.grado_id}
                     >

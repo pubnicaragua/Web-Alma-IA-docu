@@ -50,7 +50,7 @@ export function NoticeModalEdit({ notice }: any) {
                                 palabras_clave: (notice.palabras_clave || []).join(", "),
                                 archivo: notice.aviso_ruta_archivo || undefined,
                                 fecha_programacion: notice.aviso_fecha_programacion || "",
-                                tipo_programacion: 'Programada'
+                                tipo_programacion: 'Programar'
                             },
                             destinatarios: {
                                 aviso_tipo_id: notice.aviso_tipo_id || 0,

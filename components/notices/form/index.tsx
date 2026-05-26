@@ -1,4 +1,4 @@
-import { useCallback } from "react"
+import { useCallback, useRef } from "react"
 import { AxiosError } from "axios"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -11,14 +11,34 @@ import { NoticeFormNotice } from "./notice"
 import { NoticeFormDestiny } from "./destiny"
 import { useUser } from "@/middleware/user-context"
 
-
 const NoticeSchema = z.object({
     aviso: z.object({
-        titulo: z.string().nonempty("El título es requerido"),
-        descripcion: z.string().nonempty("La descripción es requerida"),
+        titulo: z.string().nonempty("El titulo es requerido"),
+        descripcion: z.string().nonempty("La descripcion es requerida"),
         palabras_clave: z.string().nonempty("Las palabras clave son requeridas"),
         archivo: z.any().nullable().optional(),
-        fecha_programacion: z.string().nonempty("La fecha de programación es requerida")
+        tipo_programacion: z.string().nonempty("El tipo de programacion es requerido"),
+        fecha_programacion: z.string().optional(),
+    }).superRefine((aviso, ctx) => {
+        if (aviso.tipo_programacion === "Ahora") return;
+
+        if (!aviso.fecha_programacion) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["fecha_programacion"],
+                message: "La fecha de programacion es requerida",
+            });
+            return;
+        }
+
+        const date = new Date(aviso.fecha_programacion);
+        if (isNaN(date.getTime()) || date <= new Date()) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["fecha_programacion"],
+                message: "La fecha programada debe ser mayor a la actual",
+            });
+        }
     }),
     destinatarios: z.object({
         aviso_tipo_id: z.number().min(1, { message: "El tipo de aviso es requerido" }),
@@ -30,17 +50,13 @@ const NoticeSchema = z.object({
     })
 });
 
-type NoticeSchema = z.infer<typeof NoticeSchema> & {
-    aviso: {
-        tipo_programacion: string;
-    }
-}
+type NoticeSchema = z.infer<typeof NoticeSchema>
 
 interface PropTypes {
     initialData?: NoticeSchema;
     avisoId?: number;
     meta?: any;
-    postSubmit: () => void
+    postSubmit?: () => void
 }
 
 const defaultValues: NoticeSchema = {
@@ -49,8 +65,8 @@ const defaultValues: NoticeSchema = {
         descripcion: "",
         palabras_clave: "",
         archivo: undefined,
+        tipo_programacion: "",
         fecha_programacion: "",
-        tipo_programacion: ""
     },
     destinatarios: {
         aviso_tipo_id: 0,
@@ -69,52 +85,29 @@ export function NoticeForm({
     const axios = useAxios();
     const { toast } = useToast();
     const { selectedSchoolId } = useUser();
+    const submitLockRef = useRef(false);
 
-    const form = useForm({
+    const form = useForm<NoticeSchema>({
         defaultValues: initialData ?? defaultValues,
         resolver: zodResolver(NoticeSchema),
         context: { isCreate: !avisoId }
     });
 
     const onSubmit = useCallback(async (values: NoticeSchema) => {
-
-        if (!avisoId && values.aviso.fecha_programacion !== "now") {
-            const scheduledDate = new Date(values.aviso.fecha_programacion);
-            if (Number.isNaN(scheduledDate.getTime()) || scheduledDate <= new Date()) {
-                form.setError("aviso.fecha_programacion", {
-                    type: "manual",
-                    message: "¡La fecha programada debe ser mayor a la actual!"
-                });
-                return;
-            }
-        }
+        if (submitLockRef.current) return;
+        submitLockRef.current = true;
 
         const formData = new FormData();
         formData.append('titulo', values.aviso.titulo);
         formData.append('descripcion', values.aviso.descripcion);
         formData.append('palabras_claves', values.aviso.palabras_clave);
 
-        if (values.aviso.fecha_programacion === "now") {
-            const date = new Date(Date.now() + 60 * 1000);
+        const fechaProgramacion =
+            values.aviso.tipo_programacion === "Ahora"
+                ? new Date().toISOString()
+                : new Date(values.aviso.fecha_programacion ?? "").toISOString();
 
-            const yyyy = date.getFullYear();
-            const mm = String(date.getMonth() + 1).padStart(2, "0");
-            const dd = String(date.getDate()).padStart(2, "0");
-            const hh = String(date.getHours()).padStart(2, "0");
-            const min = String(date.getMinutes()).padStart(2, "0");
-
-            const formatted = `${yyyy}-${mm}-${dd} ${hh}:${min}:00`;
-            formData.append("fecha_programacion", formatted);
-        } else {
-            let value = values.aviso.fecha_programacion.trim();
-
-            if (!/:\d{2}$/.test(value)) {
-                value = `${value}:00`;
-            }
-
-            formData.append("fecha_programacion", value);
-        }
-
+        formData.append("fecha_programacion", fechaProgramacion);
         formData.append('archivo', values.aviso.archivo ?? '');
         formData.append('aviso_destinatario_tipo', values.destinatarios.aviso_destinatario_tipo);
         formData.append('aviso_tipo_id', values.destinatarios.aviso_tipo_id.toString());
@@ -133,21 +126,25 @@ export function NoticeForm({
             );
 
             toast({
-                title: "¡Atención",
+                title: "Atencion",
                 description: response?.data.message
             });
 
-            postSubmit()
+            postSubmit?.()
         } catch (error) {
             if (error instanceof AxiosError) {
                 toast({
-                    title: "¡Atención",
+                    title: "Atencion",
                     description: error.response?.data.message,
                     variant: 'destructive'
                 });
             }
+        } finally {
+            submitLockRef.current = false;
         }
-    }, [avisoId, selectedSchoolId]);
+    }, [avisoId, selectedSchoolId, axios, toast, postSubmit]);
+
+    const isSubmitting = axios.loading || form.formState.isSubmitting;
 
     return (
         <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -158,10 +155,10 @@ export function NoticeForm({
             <div className="flex justify-end mt-4">
                 <Button
                     type="submit"
-                    disabled={axios.loading}
+                    disabled={isSubmitting}
                     className="bg-blue-500 hover:bg-blue-600"
                 >
-                    Guardar
+                    {isSubmitting ? "Guardando..." : "Guardar"}
                 </Button>
             </div>
         </form>

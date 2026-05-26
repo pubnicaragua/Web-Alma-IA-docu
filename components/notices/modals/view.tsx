@@ -91,7 +91,7 @@ export function NoticeModalView({ avisoId, table = true }: any) {
                                         cx="50%"
                                         cy="50%"
                                         labelLine={false}
-                                        label={({ name, value }) => `${name} ${(value! / total * 100).toFixed(0)}%`}
+                                        label={({ name, value }) => `${name} ${((Number(value) / total) * 100).toFixed(0)}%`}
                                         outerRadius={120}
                                         fill="#8884d8"
                                         dataKey="value"

@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { useForm } from "react-hook-form";
-import ReCAPTCHA from "react-google-recaptcha";
 import { removeAuthToken, setAuthToken } from "@/lib/api-config";
 import { fetchUserProfile } from "@/services/profile-service";
 import { ReCaptchaInput } from "@/components/ui/recaptcha";
@@ -36,7 +35,7 @@ export default function LoginPage() {
   // Estados
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const captchRef = useRef<HTMLDivElement>(null);
+  const captchRef = useRef<any>(null);
 
   const onSubmit = useCallback(async (values: AuthLoginSchemaType) => {
     console.log('[LOGIN] Enviando credenciales:', { email: values.email, password: '***' });
@@ -47,6 +46,7 @@ export default function LoginPage() {
     if (response.status === 'error') {
       form.resetField('password');
       form.resetField('captcha');
+      captchRef.current?.reset();
       setError(response.message);
       toast({
         title: response.title || "Error de inicio de sesión",

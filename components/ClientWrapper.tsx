@@ -9,9 +9,11 @@ export default function ClientWrapper({
 }: {
   children: React.ReactNode;
 }) {
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    setIsLoading(true);
+
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 2000);

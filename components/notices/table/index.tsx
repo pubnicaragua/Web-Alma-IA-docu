@@ -1,4 +1,3 @@
-import { useEffect, useMemo } from "react";
 import {
     Table,
     TableBody,
@@ -6,6 +5,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import { useMemo, useEffect } from "react";
 import { usePaginationSR } from "@/hooks/use-pagination-sr";
 import { SSRPagination } from "@/components/utils/pagination-sr";
 import { useRefresh } from "@/hooks/use-refresh";
@@ -14,6 +14,10 @@ import { NoticeTableItem } from "./item";
 
 interface PropTypes {
     filters: any;
+}
+
+interface NoticeTableRow {
+    aviso_id: number;
 }
 
 export function NoticeTable({ filters }: Readonly<PropTypes>) {
@@ -29,7 +33,7 @@ export function NoticeTable({ filters }: Readonly<PropTypes>) {
         [filters, selectedSchoolId]
     );
 
-    const pagination = usePaginationSR({
+    const pagination = usePaginationSR<NoticeTableRow>({
         route: "/avisosApp/avisos/listar",
         filters: computedFilters,
         perPage: 10
@@ -50,7 +54,7 @@ export function NoticeTable({ filters }: Readonly<PropTypes>) {
                 )}
                 {!pagination.loading && pagination.data.length === 0 && (
                     <div className="p-8 text-center text-gray-500">
-                        No se encontraron avisos que coincidan con los filtros seleccionados.
+                        No se encontraron alertas que coincidan con los filtros seleccionados.
                     </div>
                 )}
                 {!pagination.loading && pagination.data.length > 0 && (
@@ -59,17 +63,17 @@ export function NoticeTable({ filters }: Readonly<PropTypes>) {
                             <TableHeader className="bg-[#89C2F8]">
                                 <TableRow>
                                     <TableHead className="text-white">ID</TableHead>
-                                    <TableHead className="text-white">Título</TableHead>
+                                    <TableHead className="text-white">TÃ­tulo</TableHead>
                                     <TableHead className="text-white">Tipo Aviso</TableHead>
                                     <TableHead className="text-white">Tipo Persona</TableHead>
                                     <TableHead className="text-white">Palabras Clave</TableHead>
-                                    <TableHead className="text-white">Fecha Programación</TableHead>
-                                    <TableHead className="text-white text-center">Estado Envio</TableHead>
+                                    <TableHead className="text-white">Fecha ProgramaciÃ³n</TableHead>
+                                    <TableHead className="text-white text-center">Estado</TableHead>
                                     <TableHead className="text-white text-center">Acciones</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {pagination.data.map((notice: any) => (
+                                {pagination.data.map((notice) => (
                                     <NoticeTableItem key={notice?.aviso_id} notice={notice} />
                                 ))}
                             </TableBody>

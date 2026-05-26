@@ -25,7 +25,7 @@ const handleApiError = (error: unknown, path: string) => {
   );
 };
 
-export async function handleProxyRequest(
+async function handleProxyRequest(
   request: NextRequest,
   context: { params: Promise<{ path: string[] }> } | { params: { path: string[] } }
 ) {
@@ -37,7 +37,7 @@ export async function handleProxyRequest(
 
     if (search) apiUrl += `?${search}`;
 
-    console.log("Proxy →", {
+    console.log("Proxy ->", {
       method: request.method,
       path: pathArray.join("/"),
       target: apiUrl,
@@ -60,7 +60,7 @@ export async function handleProxyRequest(
       const auth = request.headers.get("authorization");
       if (!auth) {
         return NextResponse.json(
-          { error: "Se requiere autenticación" },
+          { error: "Se requiere autenticacion" },
           { status: 401 }
         );
       }
@@ -87,7 +87,6 @@ export async function handleProxyRequest(
     return new Response(data, {
       status: response.status,
       statusText: response.statusText,
-      //headers: response.headers,
     });
 
   } catch (error) {

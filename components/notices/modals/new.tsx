@@ -16,10 +16,10 @@ export function NoticeModalNew() {
     const { isOpen, onOpen, onClose } = useModal();
     const refresh = useRefresh();
 
-    const postSubmit = useCallback(()=>{
+    const postSubmit = useCallback(() => {
         onClose();
         refresh.toggleRefresh();
-    }, []);
+    }, [onClose, refresh]);
 
     return (
         <>
@@ -46,5 +46,3 @@ export function NoticeModalNew() {
         </>
     )
 }
-
-

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form"
 import { AgeRangeFilter } from "@/components/agerangefilter";
 import { FilterDropdown } from "@/components/filter-dropdown";
@@ -18,14 +18,15 @@ interface FilterValues {
     maxAge: number | undefined;
 }
 
-const statusOptions = ["Activo", "Inactivo"];
+const statusOptions = ["Todos", "Activo", "Inactivo"];
 
 export function StudentTableFilters({ setFilters, setRefresh }: Readonly<PropTypes>) {
     const { selectedSchoolId } = useUser();
     const [filtersLoading, setFiltersLoading] = useState(true);
 
+    // Store ALL courses from API so we can filter them by level
+    const [allCourses, setAllCourses] = useState<any[]>([]);
     const [levelOptions, setLevelOptions] = useState<{ grado_id: number | null, nombre: string }[]>([]);
-    const [courseOptions, setCourseOptions] = useState<{ curso_id: number | null, nombre_curso: string }[]>([]);
 
     const form = useForm<FilterValues>({
         defaultValues: {
@@ -37,6 +38,20 @@ export function StudentTableFilters({ setFilters, setRefresh }: Readonly<PropTyp
         }
     })
 
+    const selectedLevel = form.watch("levelFilter");
+
+    // Compute course options based on selected level
+    const courseOptions = useMemo(() => {
+        let filtered = allCourses;
+        if (selectedLevel?.grado_id != null) {
+            filtered = allCourses.filter(
+                (c: any) => c.grados?.grado_id === selectedLevel.grado_id
+            );
+        }
+        return [{ curso_id: null, nombre_curso: 'Todos' }, ...filtered];
+    }, [allCourses, selectedLevel]);
+
+    // Load courses and extract levels on mount
     useEffect(() => {
         if (!selectedSchoolId) return;
         (async function () {
@@ -44,24 +59,39 @@ export function StudentTableFilters({ setFilters, setRefresh }: Readonly<PropTyp
                 { params: { colegio_id: selectedSchoolId } })
                 .then((res: any) => res.data);
             const levels = [...new Map(courses.map((c: any) => [c.grados.grado_id, c.grados])).values()] as { grado_id: number | null, nombre: string }[];
-            setCourseOptions([{ curso_id: null, nombre_curso: 'Todos' }, ...courses]);
+            setAllCourses(courses);
             setLevelOptions([{ grado_id: null, nombre: 'Todos' }, ...levels]);
             setFiltersLoading(false);
         })();
     }, [selectedSchoolId]);
 
+    // When level changes, reset course selection if it doesn't belong to the new level
+    useEffect(() => {
+        const currentCourse = form.getValues("courseFilter");
+        if (currentCourse?.curso_id != null && selectedLevel?.grado_id != null) {
+            const courseStillValid = allCourses.some(
+                (c: any) => c.curso_id === currentCourse.curso_id && c.grados?.grado_id === selectedLevel.grado_id
+            );
+            if (!courseStillValid) {
+                form.setValue("courseFilter", null);
+            }
+        }
+    }, [selectedLevel, allCourses, form]);
+
+    // Build and emit filters whenever form values change
+    // These filters are applied client-side since the backend doesn't support them as query params
     useEffect(() => {
         const subscription = form.watch((values) => {
             setFilters({
-                grado_id: values?.levelFilter?.grado_id,
-                curso_id: values?.courseFilter?.curso_id,
-                min_edad: values.minAge,
-                max_edad: values.maxAge,
-                estado: values.statusFilter == 'Activo' ? 1 : 0,
+                levelName: values?.levelFilter?.nombre ?? null,
+                courseName: values?.courseFilter?.nombre_curso ?? null,
+                minAge: values?.minAge ?? null,
+                maxAge: values?.maxAge ?? null,
+                status: values?.statusFilter ?? "Activo",
             });
         });
         return () => subscription.unsubscribe();
-    }, [form]);
+    }, [form, setFilters]);
 
     return (
         <div>

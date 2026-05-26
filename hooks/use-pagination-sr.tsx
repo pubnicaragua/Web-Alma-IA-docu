@@ -28,6 +28,7 @@ export function usePaginationSR<T>({ route, filters = {}, perPage = 10, enabled 
         filters,
         page,
         perPage,
+        enabled,
     ]);
 
     useEffect(() => {

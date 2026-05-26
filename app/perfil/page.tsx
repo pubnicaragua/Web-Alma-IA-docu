@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { AppLayout } from "@/components/layout/app-layout";
 import { ProfileField } from "@/components/profile-field";
 import { Button } from "@/components/ui/button";
-import { LogOut, AlertCircle, Edit, Key } from "lucide-react";
+import { LogOut, AlertCircle, Edit, Key, User } from "lucide-react";
 import { useAuth } from "@/middleware/auth-provider";
 import {
   fetchUserProfile,
@@ -30,6 +29,7 @@ export default function ProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [profileImageFailed, setProfileImageFailed] = useState(false);
   const [refrehs, setRefresh] = useState(false);
   const { updateUserData } = useUser(); // Agregar esta línea
   const { logout } = useAuth();
@@ -40,7 +40,7 @@ export default function ProfilePage() {
       try {
         setLoading(true);
         setError(null);
-        const data = await fetchUserProfile();
+        const data = await fetchUserProfile({ forceRefresh: true });
         setProfileData(data);
       } catch (err) {
         toast({
@@ -56,6 +56,10 @@ export default function ProfilePage() {
 
     loadProfileData();
   }, [toast, refrehs]);
+
+  useEffect(() => {
+    setProfileImageFailed(false);
+  }, [profileData?.usuario?.url_foto_perfil]);
 
   const handleLogout = () => logout();
 
@@ -179,6 +183,19 @@ export default function ProfilePage() {
     }
   };
 
+  const getDisplayName = (
+    user?: ProfileResponse["usuario"],
+    person?: ProfileResponse["persona"]
+  ) => {
+    const socialName = user?.nombre_social?.trim();
+    if (socialName) return socialName;
+
+    return (
+      [person?.nombres, person?.apellidos].filter(Boolean).join(" ") ||
+      "Usuario"
+    );
+  };
+
   if (loading) {
     return (
       <AppLayout>
@@ -210,6 +227,11 @@ export default function ProfilePage() {
   }
 
   const { usuario, persona, rol, funcionalidades } = profileData;
+  const displayName = getDisplayName(usuario, persona);
+  const profileImageUrl =
+    usuario?.url_foto_perfil && !profileImageFailed
+      ? usuario.url_foto_perfil
+      : null;
 
   return (
     <AppLayout>
@@ -217,14 +239,19 @@ export default function ProfilePage() {
         {/* Zona 1: Información de perfil principal */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-8 border border-blue-200">
           <div className="flex flex-col md:flex-row items-center gap-6 ">
-            <div className="relative w-32 h-32 rounded-full overflow-hidden mb-4 flex-shrink-0 border-4 border-blue-100">
-              <Image
-                src={usuario?.url_foto_perfil || "/confident-businessman.png"}
-                alt={`${persona?.nombres} ${persona?.apellidos}`}
-                width={128}
-                height={128}
-                className="w-full h-full object-cover"
-              />
+            <div className="relative mb-4 h-32 w-32 flex-shrink-0">
+              <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border-4 border-blue-100 bg-slate-100">
+                {profileImageUrl ? (
+                  <img
+                    src={profileImageUrl}
+                    alt={displayName}
+                    onError={() => setProfileImageFailed(true)}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <User className="h-14 w-14 text-blue-300" />
+                )}
+              </div>
               <button
                 onClick={() => setIsEditModalOpen(true)}
                 className="absolute bottom-0 right-0 bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 transition-colors"
@@ -238,8 +265,7 @@ export default function ProfilePage() {
                 <div>
                   <div className="flex items-center gap-2">
                     <h1 className="text-3xl font-bold text-gray-800">
-                      {`${persona?.nombres} ${persona?.apellidos}`}
-                      {usuario?.nombre_social && ` (${usuario.nombre_social})`}
+                      {displayName}
                     </h1>
                   </div>
                   <div className="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium mt-1">
@@ -422,7 +448,6 @@ export default function ProfilePage() {
         onClose={() => setIsEditModalOpen(false)}
         profileData={getFormDataFromProfile()}
         onSave={handleSaveProfile}
-        onRefresh={() => setRefresh(!refrehs)}
       />
 
       {/* Modal para editar contraseña */}

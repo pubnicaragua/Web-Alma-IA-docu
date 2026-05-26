@@ -3,9 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { usePathname } from "next/navigation";
-import { Bell, Menu, Search } from "lucide-react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { Bell, Menu, Search, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -31,6 +30,8 @@ interface HeaderProps {
 export function Header({ toggleSidebar }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const urlSearch = searchParams.get("search") ?? "";
   const { logout } = useAuth();
   const { getFuntions, refresh, selectedSchoolId, setSelectedSchoolId } =
     useUser();
@@ -42,12 +43,34 @@ export function Header({ toggleSidebar }: HeaderProps) {
   const [isClient, setIsClient] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-  const [dataSchool, setDataSchool] = useState<any>({});
 
-  const loadUserProfile = useCallback(async () => {
+  // Sync searchTerm with URL search parameter
+  useEffect(() => {
+    setSearchTerm(urlSearch);
+  }, [urlSearch]);
+
+  // Real-time search as user types (only active on /alumnos route)
+  useEffect(() => {
+    if (pathname === "/alumnos") {
+      const timer = setTimeout(() => {
+        if (searchTerm.trim() !== urlSearch) {
+          if (searchTerm.trim()) {
+            router.push(`/alumnos?search=${searchTerm.trim()}`);
+          } else {
+            router.push(`/alumnos`);
+          }
+        }
+      }, 300); // 300ms debounce
+      return () => clearTimeout(timer);
+    }
+  }, [searchTerm, pathname, router, urlSearch]);
+  const [dataSchool, setDataSchool] = useState<any>({});
+  const [profileImageFailed, setProfileImageFailed] = useState(false);
+
+  const loadUserProfile = useCallback(async (forceRefresh: boolean = false) => {
     try {
       setIsLoading(true);
-      const data = await fetchUserProfile();
+      const data = await fetchUserProfile({ forceRefresh });
       setProfileData(data);
     } catch {
       setProfileData(null);
@@ -72,7 +95,7 @@ export function Header({ toggleSidebar }: HeaderProps) {
   }, []);
 
   useEffect(() => {
-    loadUserProfile();
+    loadUserProfile(true);
 
     // Si contexto no tiene selectedSchoolId, intenta sincronizarlo con localStorage
     if (typeof window !== "undefined" && !selectedSchoolId) {
@@ -98,6 +121,23 @@ export function Header({ toggleSidebar }: HeaderProps) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refresh]);
+
+  useEffect(() => {
+    if (!isClient) return;
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        loadUserProfile(true);
+      }
+    };
+
+    window.addEventListener("focus", handleVisibilityChange);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      window.removeEventListener("focus", handleVisibilityChange);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [isClient, loadUserProfile]);
 
   // Mantener sincronía del dataSchool con selectedSchoolId
   useEffect(() => {
@@ -179,11 +219,16 @@ export function Header({ toggleSidebar }: HeaderProps) {
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!searchTerm.trim()) return;
     try {
-      if (pathname !== "/select-school")
-        router.push(`/alumnos?search=${searchTerm}`);
-      else setIsSearching(true);
+      if (pathname !== "/select-school") {
+        if (searchTerm.trim()) {
+          router.push(`/alumnos?search=${searchTerm.trim()}`);
+        } else {
+          router.push(`/alumnos`);
+        }
+      } else {
+        setIsSearching(true);
+      }
     } catch {
       toast({
         title: "Error",
@@ -193,7 +238,6 @@ export function Header({ toggleSidebar }: HeaderProps) {
       });
     } finally {
       setIsSearching(false);
-      setSearchTerm("");
     }
   };
 
@@ -209,21 +253,27 @@ export function Header({ toggleSidebar }: HeaderProps) {
 
   const getFullName = () => {
     if (!profileData) return "Usuario";
+    const socialName = profileData.usuario?.nombre_social?.trim();
+    if (socialName) return socialName;
+
     const nombres = profileData.persona?.nombres || "";
     const apellidos = profileData.persona?.apellidos || "";
     if (nombres && apellidos) return `${nombres} ${apellidos}`;
     if (nombres) return nombres;
     if (apellidos) return apellidos;
-    return profileData.usuario?.nombre_social || "Usuario";
+    return "Usuario";
   };
 
   const getUserRole = () => profileData?.rol?.nombre || "Usuario";
 
   const getUserImageUrl = () => {
-    const url =
-      profileData?.usuario?.url_foto_perfil || "/confident-businessman.png";
-    return url.trim() || "/confident-businessman.png";
+    if (profileImageFailed) return "";
+    return profileData?.usuario?.url_foto_perfil?.trim() || "";
   };
+
+  useEffect(() => {
+    setProfileImageFailed(false);
+  }, [profileData?.usuario?.url_foto_perfil]);
 
   return (
     <header className="print:hidden w-full relative h-[100px]">
@@ -340,17 +390,18 @@ export function Header({ toggleSidebar }: HeaderProps) {
           <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center space-x-3 focus:outline-none">
               <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-full overflow-hidden border border-white/30 flex-shrink-0">
+                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/40 bg-white/20">
                   {isLoading ? (
                     <Skeleton className="w-full h-full rounded-full" />
-                  ) : (
-                    <Image
-                      src={getUserImageUrl() || "/placeholder.svg"}
+                  ) : getUserImageUrl() ? (
+                    <img
+                      src={getUserImageUrl()}
                       alt="Perfil de usuario"
-                      width={45}
-                      height={45}
-                      className="w-full h-full object-cover"
+                      onError={() => setProfileImageFailed(true)}
+                      className="h-full w-full object-cover"
                     />
+                  ) : (
+                    <User className="h-5 w-5 text-white" />
                   )}
                 </div>
 
