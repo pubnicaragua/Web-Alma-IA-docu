@@ -67,10 +67,10 @@ export function Header({ toggleSidebar }: HeaderProps) {
   const [dataSchool, setDataSchool] = useState<any>({});
   const [profileImageFailed, setProfileImageFailed] = useState(false);
 
-  const loadUserProfile = useCallback(async () => {
+  const loadUserProfile = useCallback(async (forceRefresh: boolean = false) => {
     try {
       setIsLoading(true);
-      const data = await fetchUserProfile();
+      const data = await fetchUserProfile({ forceRefresh });
       setProfileData(data);
     } catch {
       setProfileData(null);
@@ -95,7 +95,7 @@ export function Header({ toggleSidebar }: HeaderProps) {
   }, []);
 
   useEffect(() => {
-    loadUserProfile();
+    loadUserProfile(true);
 
     // Si contexto no tiene selectedSchoolId, intenta sincronizarlo con localStorage
     if (typeof window !== "undefined" && !selectedSchoolId) {
@@ -121,6 +121,23 @@ export function Header({ toggleSidebar }: HeaderProps) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refresh]);
+
+  useEffect(() => {
+    if (!isClient) return;
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        loadUserProfile(true);
+      }
+    };
+
+    window.addEventListener("focus", handleVisibilityChange);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      window.removeEventListener("focus", handleVisibilityChange);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [isClient, loadUserProfile]);
 
   // Mantener sincronía del dataSchool con selectedSchoolId
   useEffect(() => {
