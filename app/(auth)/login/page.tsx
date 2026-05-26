@@ -46,7 +46,9 @@ export default function LoginPage() {
     if (response.status === 'error') {
       form.resetField('password');
       form.resetField('captcha');
-      captchRef.current?.reset();
+      if (typeof captchRef.current?.reset === "function") {
+        captchRef.current.reset();
+      }
       setError(response.message);
       toast({
         title: response.title || "Error de inicio de sesión",
