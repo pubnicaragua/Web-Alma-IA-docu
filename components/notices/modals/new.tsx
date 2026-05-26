@@ -10,8 +10,17 @@ import {
 } from "@/components/ui/dialog";
 import { NoticeForm } from "../form";
 
-export function NoticeModalNew() {
+interface NoticeModalNewProps {
+    onCreated?: () => void;
+}
+
+export function NoticeModalNew({ onCreated }: Readonly<NoticeModalNewProps>) {
     const { isOpen, onOpen, onClose } = useModal();
+
+    const handleCreated = () => {
+        onClose();
+        onCreated?.();
+    };
 
     return (
         <>
@@ -32,7 +41,7 @@ export function NoticeModalNew() {
                             </DialogClose>
                         </div>
                     </DialogHeader>
-                    <NoticeForm />
+                    <NoticeForm onSuccess={handleCreated} />
                 </DialogContent>
             </Dialog>
         </>

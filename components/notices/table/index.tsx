@@ -8,18 +8,29 @@ import {
 import { NoticeTableItem } from "./item";
 import { usePaginationSR } from "@/hooks/use-pagination-sr";
 import { SSRPagination } from "@/components/utils/pagination-sr";
+import { useEffect } from "react";
 
 interface PropTypes {
     filters: any;
+    refreshKey?: number;
 }
 
-export function NoticeTable({ filters }: Readonly<PropTypes>) {
+interface NoticeTableRow {
+    aviso_id: number;
+}
 
-    const pagination = usePaginationSR({
+export function NoticeTable({ filters, refreshKey }: Readonly<PropTypes>) {
+
+    const pagination = usePaginationSR<NoticeTableRow>({
         route: "/avisosApp/avisos/listar",
         filters: filters,
         perPage: 10
     });
+
+    useEffect(() => {
+        if (refreshKey === undefined) return;
+        pagination.refetch();
+    }, [refreshKey]);
 
     return (
         <div>

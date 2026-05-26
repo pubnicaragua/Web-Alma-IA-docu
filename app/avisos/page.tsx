@@ -11,6 +11,7 @@ import { NoticeModalView } from "@/components/notices/modals/view";
 export default function NoticePage() {
 
     const [filters, setFilters] = useState({})
+    const [refreshKey, setRefreshKey] = useState(0)
 
     return (
         <ErrorBoundary>
@@ -20,11 +21,11 @@ export default function NoticePage() {
                         <h2 className="text-2xl font-bold text-gray-800 mb-6">Avisos</h2>
                         <div className="flex flex-col gap-6">
                             <div className="flex justify-between items-center gap-4 ">
-                                <NoticeModalNew />
+                                <NoticeModalNew onCreated={() => setRefreshKey((value) => value + 1)} />
                                 <NoticeModalView avisoId={null} table={false} />
                             </div>
                             <NoticeTableFilters setFilters={(values) => setFilters(values)} />
-                            <NoticeTable filters={filters} />
+                            <NoticeTable filters={filters} refreshKey={refreshKey} />
                         </div>
                     </div>
                 </AppLayout>
