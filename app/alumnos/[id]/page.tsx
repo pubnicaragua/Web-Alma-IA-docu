@@ -75,9 +75,9 @@ export default function StudentDetailPage() {
 
   const emociones = useMemo(() => {
     if (!studentDetails?.emociones) return []
-    return studentDetails.emociones.map((emocion) => ({
+    return studentDetails.emociones.map((emocion: any) => ({
       name: emocion.nombre,
-      value: emocion.valor,
+      value: emocion?.cantidad,
       color: "",
     }));
   }, [studentDetails?.emociones]);
@@ -85,10 +85,10 @@ export default function StudentDetailPage() {
 
   const comparativa = useMemo(() => {
     if (!studentDetails?.datosComparativa) return [];
-    return studentDetails.datosComparativa.map((data) => ({
-      name: data.name,
-      alumno: data.alumno,
-      promedio: data.promedio,
+    return studentDetails.datosComparativa.map((data:any) => ({
+      name: data.nombre,
+      alumno: data?.cantidad_alumno,
+      promedio: data?.proporcion_alumno,
     }));
   }, [studentDetails?.datosComparativa]);
 

@@ -8,18 +8,13 @@ import {
     DialogTitle,
     DialogClose,
 } from "@/components/ui/dialog";
-import { NoticeForm } from "../form";
-import { useCallback } from "react";
+import { SurveyForm } from "../form";
 import { useRefresh } from "@/hooks/use-refresh";
 
-export function NoticeModalNew() {
-    const { isOpen, onOpen, onClose } = useModal();
-    const refresh = useRefresh();
+export function SurveyModalNew() {
 
-    const postSubmit = useCallback(() => {
-        onClose();
-        refresh.toggleRefresh();
-    }, [onClose, refresh]);
+    const { isOpen, onOpen, onClose } = useModal();
+    const { toggleRefresh } = useRefresh();
 
     return (
         <>
@@ -32,7 +27,7 @@ export function NoticeModalNew() {
                     <DialogHeader className="sticky top-0 bg-white z-10 pb-2">
                         <div className="w-full flex items-center justify-between">
                             <DialogTitle className="text-xl font-semibold">
-                                Agregar nuevo aviso
+                                Agregar nueva encuesta
                             </DialogTitle>
                             <DialogClose className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground flex items-center justify-center">
                                 <X className="h-6 w-6" />
@@ -40,9 +35,16 @@ export function NoticeModalNew() {
                             </DialogClose>
                         </div>
                     </DialogHeader>
-                    <NoticeForm postSubmit={postSubmit} />
+                    <SurveyForm postSubmit={() => {
+                        toggleRefresh();
+                        setTimeout(() => {
+                            onClose();
+                        }, 350);
+                    }} />
                 </DialogContent>
             </Dialog>
         </>
     )
 }
+
+

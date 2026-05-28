@@ -24,7 +24,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { SSRPagination } from "@/components/utils/pagination-sr";
 import { DESTINY_TYPES, NOTICE_TYPES } from "@/constants/notices";
 
-export function NoticeFormDestiny({ form }: any) {
+export function NoticeFormDestiny({ form, metaInit = {
+    colegio_id: '',
+    curso_id: '',
+    grado_id: ''
+} }: any) {
+
     const { selectedSchoolId } = useUser();
     const [isCatalogLoading, setCatalogLoading] = useState(false);
 
@@ -32,39 +37,50 @@ export function NoticeFormDestiny({ form }: any) {
     const [grades, setGrades] = useState<any[]>([]);
 
     const [selectAlumnos, setSelectAlumnos] = useState<any[]>([]);
-    const [filters, setFilters] = useState({
-        colegio_id: '',
-        curso_id: '',
-        grado_id: ''
-    });
+    const [filters, setFilters] = useState(metaInit);
 
     const noticeTypeId = form.watch('destinatarios.aviso_tipo_id');
+    const destinyIds = form.watch('destinatarios.destinatarios');
+
+    const studentFilters = useMemo(() => {
+        return {
+            colegio_id: filters.colegio_id,
+            "cursos.curso_id": filters.curso_id,
+        };
+    }, [filters.colegio_id, filters.curso_id]);
 
     const pagination = usePaginationSR<ApiStudent>({
         route: "/alumnos",
-        filters: filters,
+        filters: studentFilters,
         perPage: 10,
         enabled: Boolean(filters.curso_id) && noticeTypeId == 4 && Boolean(selectedSchoolId)
     });
 
     useEffect(() => {
         if (!noticeTypeId) return;
+        if (!form.formState.isDirty) return;
+        if (selectedSchoolId === null) return;
         setFilters({
             colegio_id: selectedSchoolId ?? '',
             curso_id: '',
             grado_id: ''
         });
         setSelectAlumnos([]);
-    }, [noticeTypeId]);
+    }, [noticeTypeId, selectedSchoolId]);
+
+    useEffect(() => {
+        if (form.formState.isDirty) return;
+        if (!destinyIds.length) return;
+        setSelectAlumnos(destinyIds);
+    }, [])
 
     useEffect(() => {
         const { colegio_id } = filters;
-        if (!colegio_id) return;
         setCatalogLoading(true);
         (async function () {
             const response = await window.axios.get(`/colegios/cursos`,
                 {
-                    params: { colegio_id }
+                    params: { colegio_id: colegio_id || selectedSchoolId }
                 });
             const { data: courses } = response;
             const grades = [...new Map(courses.map((c: any) => [c.grados.grado_id, c.grados])).values()] as { grado_id: number | null, nombre: string }[];
@@ -72,7 +88,7 @@ export function NoticeFormDestiny({ form }: any) {
             setGrades(grades);
             setCatalogLoading(false);
         })();
-    }, [filters.colegio_id]);
+    }, [filters.colegio_id, selectedSchoolId]);
 
     useEffect(() => {
         const fieldName = 'destinatarios.destinatarios'
@@ -82,10 +98,10 @@ export function NoticeFormDestiny({ form }: any) {
                 fieldValue = [Number(filters.colegio_id)];
                 break;
             case 2:
-                fieldValue = [Number(filters.curso_id)];
+                fieldValue = [Number(filters.grado_id)];
                 break;
             case 3:
-                fieldValue = [Number(filters.grado_id)];
+                fieldValue = [Number(filters.curso_id)];
                 break;
             case 4:
                 fieldValue = selectAlumnos.map((i) => Number(i));
@@ -165,8 +181,11 @@ export function NoticeFormDestiny({ form }: any) {
                 <div className={`col-span-${noticeTypeId > 2 ? 1 : 2}`}>
                     <Label className="text-sm text-gray-500">Grado</Label>
                     <Select
-                        onValueChange={(val: string) => setFilters({ ...filters, grado_id: val })}
-                        value={filters.grado_id}
+                        onValueChange={(val: string) => {
+                            setFilters({ ...filters, grado_id: val, curso_id: '' });
+                            setSelectAlumnos([]);
+                        }}
+                        value={filters.grado_id ? String(filters.grado_id) : ""}
                         disabled={isCatalogLoading}
                     >
                         <SelectTrigger className="w-full">
@@ -187,8 +206,11 @@ export function NoticeFormDestiny({ form }: any) {
                 <div className={`col-span-1`}>
                     <Label className="text-sm text-gray-500">Curso</Label>
                     <Select
-                        onValueChange={(val: string) => setFilters({ ...filters, curso_id: val })}
-                        value={filters.curso_id}
+                        onValueChange={(val: string) => {
+                            setFilters({ ...filters, curso_id: val });
+                            setSelectAlumnos([]);
+                        }}
+                        value={filters.curso_id ? String(filters.curso_id) : ""}
                         disabled={isCatalogLoading || !filters.grado_id}
                     >
                         <SelectTrigger className="w-full">

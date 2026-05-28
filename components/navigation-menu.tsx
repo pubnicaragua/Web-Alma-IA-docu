@@ -13,6 +13,7 @@ import {
   ChevronDown,
   School,
   BellElectric,
+  FileQuestion,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/middleware/user-context";
@@ -31,7 +32,7 @@ export function NavigationMenu({ onItemClick }: NavigationMenuProps) {
   };
 
   const menuItems = [
-   
+
     { name: "Dashboard", href: "/", icon: Home },
     ...(getFuntions("Alertas")
       ? [{ name: "Alertas", href: "/alertas", icon: Bell }]
@@ -39,12 +40,12 @@ export function NavigationMenu({ onItemClick }: NavigationMenuProps) {
     { name: "Alumnos", href: "/alumnos", icon: Users },
     ...(getFuntions("Evaluacion Asistida")
       ? [
-          {
-            name: "Evaluacion Asistida",
-            href: "/evaluacion-asistida",
-            icon: Bell,
-          },
-        ]
+        {
+          name: "Evaluacion Asistida",
+          href: "/evaluacion-asistida",
+          icon: Bell,
+        },
+      ]
       : []),
     { name: "Comparativo", href: "/comparativo", icon: BarChart2 },
     { name: "Informes", href: "/informes", icon: FileText },
@@ -52,11 +53,16 @@ export function NavigationMenu({ onItemClick }: NavigationMenuProps) {
     ...(getFuntions("Avisos")
       ? [{ name: "Avisos", href: "/avisos", icon: BellElectric }]
       : []),
-     {
+    {
+      name: "Encuestas",
+      href: "/encuestas",
+      icon: FileQuestion,
+    },
+    {
       name: "Beneficios",
       href: "/beneficios",
       icon: BarChart2,
-    },  
+    },
   ];
 
   return (
@@ -80,7 +86,7 @@ export function NavigationMenu({ onItemClick }: NavigationMenuProps) {
           </li>
         ))}
         <li  >
-           
+
         </li>
         {/* Settings Submenu */}
         {getFuntions("Configuracion") ? (

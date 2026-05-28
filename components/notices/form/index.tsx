@@ -1,45 +1,62 @@
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useCallback } from "react"
+import { useCallback, useRef } from "react"
+import { AxiosError } from "axios"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import { NoticeFormNotice } from "./notice"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { ServerActionResponse } from "@/types/generics"
 import { Button } from "@/components/ui/button"
-import { NoticeFormDestiny } from "./destiny"
 import { useAxios } from "@/hooks/use-axios"
+import { useToast } from "@/hooks/use-toast"
+import { NoticeFormNotice } from "./notice"
+import { NoticeFormDestiny } from "./destiny"
+import { useUser } from "@/middleware/user-context"
 
 const NoticeSchema = z.object({
     aviso: z.object({
-        titulo: z.string().nonempty("El título es requerido"),
-        descripcion: z.string().nonempty("La descripción es requerida"),
+        titulo: z.string().nonempty("El titulo es requerido"),
+        descripcion: z.string().nonempty("La descripcion es requerida"),
         palabras_clave: z.string().nonempty("Las palabras clave son requeridas"),
-        archivo: z.instanceof(File).nullable().optional(),
-        fecha_programacion: z.string()
-            .nonempty("La fecha de programación es requerida")
-            .refine((value) => {
-                if (value === "now") return true;
-                const date = new Date(value);
-                if (isNaN(date.getTime())) return false;
-                return date > new Date();
-            }, {
-                message: "¡La fecha programada debe ser mayor a la actual!",
-            }),
+        archivo: z.any().nullable().optional(),
+        tipo_programacion: z.string().nonempty("El tipo de programacion es requerido"),
+        fecha_programacion: z.string().optional(),
+    }).superRefine((aviso, ctx) => {
+        if (aviso.tipo_programacion === "Ahora") return;
+
+        if (!aviso.fecha_programacion) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["fecha_programacion"],
+                message: "La fecha de programacion es requerida",
+            });
+            return;
+        }
+
+        const date = new Date(aviso.fecha_programacion);
+        if (isNaN(date.getTime()) || date <= new Date()) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["fecha_programacion"],
+                message: "La fecha programada debe ser mayor a la actual",
+            });
+        }
     }),
     destinatarios: z.object({
         aviso_tipo_id: z.number().min(1, { message: "El tipo de aviso es requerido" }),
-        aviso_destinatario_tipo: z.nativeEnum({ alumno: "alumno", apoderado: "apoderado" }, { message: "El tipo de destinatario es requerido" }),
+        aviso_destinatario_tipo: z.nativeEnum(
+            { alumno: "alumno", apoderado: "apoderado" },
+            { message: "El tipo de destinatario es requerido" }
+        ),
         destinatarios: z.array(z.number()).min(1, { message: "Debe seleccionar al menos un destinatario" }),
     })
-})
+});
 
-type NoticeSchema = z.infer<typeof NoticeSchema> & {
-    aviso: {
-        tipo_programacion: string;
-    }
-}
+type NoticeSchema = z.infer<typeof NoticeSchema>
 
 interface PropTypes {
     initialData?: NoticeSchema;
     avisoId?: number;
+    meta?: any;
+    postSubmit?: () => void
 }
 
 const defaultValues: NoticeSchema = {
@@ -48,8 +65,8 @@ const defaultValues: NoticeSchema = {
         descripcion: "",
         palabras_clave: "",
         archivo: undefined,
+        tipo_programacion: "",
         fecha_programacion: "",
-        tipo_programacion: ""
     },
     destinatarios: {
         aviso_tipo_id: 0,
@@ -60,53 +77,88 @@ const defaultValues: NoticeSchema = {
 
 export function NoticeForm({
     initialData,
-    avisoId
+    avisoId,
+    meta,
+    postSubmit
 }: Readonly<PropTypes>) {
 
-    const form = useForm({
-        defaultValues: initialData ?? defaultValues,
-        resolver: zodResolver(NoticeSchema)
-    });
     const axios = useAxios();
+    const { toast } = useToast();
+    const { selectedSchoolId } = useUser();
+    const submitLockRef = useRef(false);
 
-    const onSubmit = useCallback((values: NoticeSchema) => {
+    const form = useForm<NoticeSchema>({
+        defaultValues: initialData ?? defaultValues,
+        resolver: zodResolver(NoticeSchema),
+        context: { isCreate: !avisoId }
+    });
+
+    const onSubmit = useCallback(async (values: NoticeSchema) => {
+        if (submitLockRef.current) return;
+        submitLockRef.current = true;
+
         const formData = new FormData();
         formData.append('titulo', values.aviso.titulo);
         formData.append('descripcion', values.aviso.descripcion);
         formData.append('palabras_claves', values.aviso.palabras_clave);
 
-        if (values.aviso.fecha_programacion != 'now') {
-            formData.append('fecha_programacion', `${values.aviso.fecha_programacion}:00`);
-        }
+        const fechaProgramacion =
+            values.aviso.tipo_programacion === "Ahora"
+                ? new Date().toISOString()
+                : new Date(values.aviso.fecha_programacion ?? "").toISOString();
 
+        formData.append("fecha_programacion", fechaProgramacion);
         formData.append('archivo', values.aviso.archivo ?? '');
         formData.append('aviso_destinatario_tipo', values.destinatarios.aviso_destinatario_tipo);
         formData.append('aviso_tipo_id', values.destinatarios.aviso_tipo_id.toString());
         formData.append("destinario", values.destinatarios.destinatarios.toString());
-        axios.execute(() =>
-            avisoId
-                ? window.axios.put(`/avisosApp/avisos/${avisoId}`, formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' },
-                })
-                : window.axios.post('/avisosApp/avisos/crear', formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' },
-                })
-        );
-    }, []);
+        formData.append("colegio_id", selectedSchoolId ?? '');
+
+        try {
+            const response = await axios.execute<ServerActionResponse>(() =>
+                avisoId
+                    ? window.axios.patch(`/avisosApp/avisos/actualizar/${avisoId}`, formData, {
+                        headers: { 'Content-Type': 'multipart/form-data' },
+                    })
+                    : window.axios.post('/avisosApp/avisos/crear', formData, {
+                        headers: { 'Content-Type': 'multipart/form-data' },
+                    })
+            );
+
+            toast({
+                title: "Atencion",
+                description: response?.data.message
+            });
+
+            postSubmit?.()
+        } catch (error) {
+            if (error instanceof AxiosError) {
+                toast({
+                    title: "Atencion",
+                    description: error.response?.data.message,
+                    variant: 'destructive'
+                });
+            }
+        } finally {
+            submitLockRef.current = false;
+        }
+    }, [avisoId, selectedSchoolId, axios, toast, postSubmit]);
+
+    const isSubmitting = axios.loading || form.formState.isSubmitting;
 
     return (
         <form onSubmit={form.handleSubmit(onSubmit)}>
             <div className="grid grid-cols-1 gap-4 mt-2">
                 <NoticeFormNotice form={form} programacion={initialData?.aviso.tipo_programacion ?? ''} />
-                <NoticeFormDestiny form={form} />
+                <NoticeFormDestiny form={form} metaInit={meta} />
             </div>
             <div className="flex justify-end mt-4">
                 <Button
                     type="submit"
-                    disabled={axios.loading}
+                    disabled={isSubmitting}
                     className="bg-blue-500 hover:bg-blue-600"
                 >
-                    Guardar
+                    {isSubmitting ? "Guardando..." : "Guardar"}
                 </Button>
             </div>
         </form>
