@@ -1,10 +1,19 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Camera, Loader2, Trash2, User, X } from "lucide-react";
+import {
+  Camera,
+  Check,
+  ChevronDown,
+  Loader2,
+  Search,
+  Trash2,
+  User,
+  X,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +23,16 @@ import {
 } from "@/components/ui/dialog";
 import type { ProfileData } from "@/services/profile-service";
 import { cn } from "@/lib/utils";
+import {
+  DEFAULT_PHONE_COUNTRY_CODE,
+  getPhoneCountryByCode,
+  PHONE_COUNTRIES,
+  type PhoneCountry,
+} from "@/lib/phone-countries";
+import {
+  parsePhoneNumberFromString,
+  type CountryCode,
+} from "libphonenumber-js/max";
 
 interface FormErrors {
   nombre_social?: string;
@@ -46,12 +65,72 @@ export function EditProfileModal({
   const [fotoPerfilBase64, setFotoPerfilBase64] = useState<string | null>(null);
   const [previewImg, setPreviewImg] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [countryOpen, setCountryOpen] = useState(false);
+  const [countrySearch, setCountrySearch] = useState("");
+  const countryDropdownRef = useRef<HTMLDivElement | null>(null);
+  const countrySearchInputRef = useRef<HTMLInputElement | null>(null);
+  const [selectedCountry, setSelectedCountry] = useState<PhoneCountry>(
+    getPhoneCountryByCode(DEFAULT_PHONE_COUNTRY_CODE)
+  );
+  const [phoneNationalNumber, setPhoneNationalNumber] = useState("");
+
+  // Close country dropdown when clicking outside
+  useEffect(() => {
+    if (!countryOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        countryDropdownRef.current &&
+        !countryDropdownRef.current.contains(e.target as Node)
+      ) {
+        setCountryOpen(false);
+        setCountrySearch("");
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [countryOpen]);
+
+  // Focus search input when dropdown opens
+  useEffect(() => {
+    if (countryOpen && countrySearchInputRef.current) {
+      setTimeout(() => countrySearchInputRef.current?.focus(), 50);
+    }
+  }, [countryOpen]);
 
   useEffect(() => {
     if (isOpen) {
       setFormData(profileData);
       setFotoPerfilBase64(null);
       setPreviewImg(profileData.url_foto_perfil || null);
+      const rawPhone = String(profileData.telefono_contacto ?? "").trim();
+      if (rawPhone) {
+        try {
+          const parsed = parsePhoneNumberFromString(rawPhone);
+          if (parsed?.country && parsed.nationalNumber) {
+            const country = getPhoneCountryByCode(
+              parsed.country as CountryCode
+            );
+            setSelectedCountry(country);
+            setPhoneNationalNumber(parsed.nationalNumber);
+          } else {
+            // Could not parse (too short, no country prefix, etc.)
+            // Keep raw digits as the national number
+            setSelectedCountry(
+              getPhoneCountryByCode(DEFAULT_PHONE_COUNTRY_CODE)
+            );
+            setPhoneNationalNumber(rawPhone.replace(/\D/g, ""));
+          }
+        } catch {
+          // Parsing failed entirely – fallback to raw digits
+          setSelectedCountry(
+            getPhoneCountryByCode(DEFAULT_PHONE_COUNTRY_CODE)
+          );
+          setPhoneNationalNumber(rawPhone.replace(/\D/g, ""));
+        }
+      } else {
+        setSelectedCountry(getPhoneCountryByCode(DEFAULT_PHONE_COUNTRY_CODE));
+        setPhoneNationalNumber("");
+      }
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -61,16 +140,6 @@ export function EditProfileModal({
 
   const validateField = (name: string, value: string) => {
     let error = "";
-    if (name === "telefono_contacto") {
-      if (!value.trim()) {
-        return "El telefono es requerido";
-      }
-      if (!/^\d+$/.test(value)) {
-        return "Solo se permiten numeros";
-      }
-      return error;
-    }
-
     switch (name) {
       case "nombre_social":
       case "nombres":
@@ -88,19 +157,53 @@ export function EditProfileModal({
       case "fecha_nacimiento":
         if (!value.trim()) error = "La fecha de nacimiento es requerida";
         break;
-      case "telefono_contacto":
-        if (!value.trim()) error = "El teléfono es requerido";
-        break;
     }
     return error;
   };
 
+  const buildPhoneValue = useCallback(
+    (digits: string, country: PhoneCountry) => {
+      if (!digits) return "";
+      return `+${country.dialCode}${digits}`;
+    },
+    []
+  );
+
+  const validatePhone = useCallback(
+    (digits: string, country: PhoneCountry) => {
+      if (!digits.trim()) {
+        return "El teléfono es requerido";
+      }
+      if (!/^\d+$/.test(digits)) {
+        return "Solo se permiten números";
+      }
+      const parsed = parsePhoneNumberFromString(digits, country.code);
+      if (!parsed || !parsed.isPossible()) {
+        return `Número inválido para ${country.name}`;
+      }
+      return "";
+    },
+    []
+  );
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const digits = e.target.value.replace(/\D/g, "");
+    setPhoneNationalNumber(digits);
+    const nextValue = buildPhoneValue(digits, selectedCountry);
+    const error = validatePhone(digits, selectedCountry);
+    setErrors((prev) => ({
+      ...prev,
+      telefono_contacto: error || undefined,
+    }));
+    setFormData((prev) => ({
+      ...prev,
+      telefono_contacto: nextValue,
+    }));
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name } = e.target;
-    const value =
-      name === "telefono_contacto"
-        ? e.target.value.replace(/\D/g, "")
-        : e.target.value;
+    const value = e.target.value;
     const error = validateField(name, value);
     setErrors((prev) => ({
       ...prev,
@@ -109,6 +212,24 @@ export function EditProfileModal({
     setFormData((prev) => ({
       ...prev,
       [name]: value,
+    }));
+  };
+
+  const handleCountrySelect = (country: PhoneCountry) => {
+    setSelectedCountry(country);
+    setCountryOpen(false);
+    setCountrySearch("");
+    const nextValue = buildPhoneValue(phoneNationalNumber, country);
+    const error = phoneNationalNumber
+      ? validatePhone(phoneNationalNumber, country)
+      : "";
+    setErrors((prev) => ({
+      ...prev,
+      telefono_contacto: error || undefined,
+    }));
+    setFormData((prev) => ({
+      ...prev,
+      telefono_contacto: nextValue,
     }));
   };
 
@@ -152,7 +273,6 @@ export function EditProfileModal({
       "email",
       "fecha_nacimiento",
       "numero_documento",
-      "telefono_contacto",
     ];
 
     requiredFields.forEach((field) => {
@@ -162,6 +282,12 @@ export function EditProfileModal({
         isValid = false;
       }
     });
+
+    const phoneError = validatePhone(phoneNationalNumber, selectedCountry);
+    if (phoneError) {
+      newErrors.telefono_contacto = phoneError;
+      isValid = false;
+    }
 
     setErrors(newErrors);
     return isValid;
@@ -178,7 +304,10 @@ export function EditProfileModal({
         nombres: String(formData.nombres ?? "").trim(),
         apellidos: String(formData.apellidos ?? "").trim(),
         numero_documento: String(formData.numero_documento ?? "").trim(),
-        telefono_contacto: String(formData.telefono_contacto ?? "").trim(),
+        telefono_contacto: buildPhoneValue(
+          phoneNationalNumber,
+          selectedCountry
+        ),
       };
 
       if (fotoPerfilBase64 !== null) {
@@ -195,7 +324,7 @@ export function EditProfileModal({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
-        className="sm:max-w-[600px] p-0 overflow-hidden"
+        className="sm:max-w-[600px] p-0"
         style={{ maxHeight: "90vh", overflowY: "auto" }}
       >
         <div className="relative">
@@ -370,8 +499,7 @@ export function EditProfileModal({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
+            <div className="space-y-2 md:col-span-2">
                 <div className="flex justify-between items-center">
                   <Label htmlFor="telefono_contacto">
                     Teléfono de contacto*
@@ -382,28 +510,131 @@ export function EditProfileModal({
                     </span>
                   )}
                 </div>
-                <Input
-                  id="telefono_contacto"
-                  name="telefono_contacto"
-                  type="tel"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  value={formData.telefono_contacto || ""}
-                  onChange={handleChange}
-                  onBlur={(e) => {
-                    const error = validateField(e.target.name, e.target.value);
-                    setErrors((prev) => ({
-                      ...prev,
-                      telefono_contacto: error,
-                    }));
-                  }}
-                  className={cn(
-                    errors.telefono_contacto &&
-                      "border-red-500 focus-visible:ring-red-500"
+                {/* Unified phone input: country selector + number */}
+                <div className="relative" ref={countryDropdownRef}>
+                  <div
+                    className={cn(
+                      "flex items-center rounded-md border bg-background transition-colors",
+                      errors.telefono_contacto
+                        ? "border-red-500 ring-1 ring-red-500"
+                        : "border-input focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
+                    )}
+                  >
+                    {/* Country code trigger */}
+                    <button
+                      type="button"
+                      onClick={() => setCountryOpen((prev) => !prev)}
+                      className="flex items-center gap-1.5 border-r px-3 py-2 text-sm hover:bg-muted/50 transition-colors rounded-l-md shrink-0"
+                    >
+                      <span className="font-medium text-foreground">
+                        +{selectedCountry?.dialCode ?? ""}
+                      </span>
+                      <ChevronDown
+                        className={cn(
+                          "h-3.5 w-3.5 text-muted-foreground transition-transform",
+                          countryOpen && "rotate-180"
+                        )}
+                      />
+                    </button>
+                    {/* Phone number input */}
+                    <input
+                      id="telefono_contacto"
+                      name="telefono_contacto"
+                      type="tel"
+                      inputMode="numeric"
+                      placeholder="Número de teléfono"
+                      value={phoneNationalNumber}
+                      onChange={handlePhoneChange}
+                      onBlur={() => {
+                        const error = validatePhone(
+                          phoneNationalNumber,
+                          selectedCountry
+                        );
+                        setErrors((prev) => ({
+                          ...prev,
+                          telefono_contacto: error || undefined,
+                        }));
+                      }}
+                      className="flex-1 min-w-0 bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground"
+                    />
+                  </div>
+
+                  {/* Inline country dropdown (no Portal — stays inside Dialog) */}
+                  {countryOpen && (
+                    <div className="absolute left-0 top-full z-50 mt-1 w-full max-w-sm rounded-md border bg-popover shadow-lg animate-in fade-in-0 zoom-in-95 slide-in-from-top-2">
+                      {/* Search */}
+                      <div className="flex items-center gap-2 border-b px-3 py-2">
+                        <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <input
+                          ref={countrySearchInputRef}
+                          type="text"
+                          placeholder="Buscar país..."
+                          value={countrySearch}
+                          onChange={(e) => setCountrySearch(e.target.value)}
+                          className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                        />
+                        {countrySearch && (
+                          <button
+                            type="button"
+                            onClick={() => setCountrySearch("")}
+                            className="text-muted-foreground hover:text-foreground"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
+                      {/* Country list */}
+                      <div className="max-h-[200px] overflow-y-auto overscroll-contain py-1">
+                        {(() => {
+                          const searchLower = countrySearch.toLowerCase().trim();
+                          const filtered = searchLower
+                            ? PHONE_COUNTRIES.filter(
+                                (c) =>
+                                  c.name.toLowerCase().includes(searchLower) ||
+                                  c.dialCode.includes(searchLower) ||
+                                  c.code.toLowerCase().includes(searchLower)
+                              )
+                            : PHONE_COUNTRIES;
+
+                          if (filtered.length === 0) {
+                            return (
+                              <div className="px-3 py-4 text-center text-sm text-muted-foreground">
+                                No se encontraron países.
+                              </div>
+                            );
+                          }
+
+                          return filtered.map((country) => (
+                            <button
+                              type="button"
+                              key={country.code}
+                              onClick={() => handleCountrySelect(country)}
+                              className={cn(
+                                "flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
+                                selectedCountry?.code === country.code &&
+                                  "bg-accent/50 font-medium"
+                              )}
+                            >
+                              <Check
+                                className={cn(
+                                  "h-3.5 w-3.5 shrink-0",
+                                  selectedCountry?.code === country.code
+                                    ? "opacity-100 text-primary"
+                                    : "opacity-0"
+                                )}
+                              />
+                              <span className="truncate">{country.name}</span>
+                              <span className="ml-auto text-xs text-muted-foreground shrink-0">
+                                +{country.dialCode}
+                              </span>
+                            </button>
+                          ));
+                        })()}
+                      </div>
+                    </div>
                   )}
-                />
+                </div>
               </div>
-            </div>
 
             <div className="flex flex-col items-center gap-3">
               <Input
