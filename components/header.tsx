@@ -22,6 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getNotificationCount } from "@/services/header-service";
 import { useUser } from "@/middleware/user-context";
 import { useAuth } from "@/middleware/auth-provider";
+import { ALERTS_VIEW_PERMISSION } from "@/lib/alert-identity";
 
 interface HeaderProps {
   toggleSidebar?: () => void;
@@ -43,6 +44,7 @@ export function Header({ toggleSidebar }: HeaderProps) {
   const [isClient, setIsClient] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const canOpenAlerts = getFuntions(ALERTS_VIEW_PERMISSION);
 
   // Sync searchTerm with URL search parameter
   useEffect(() => {
@@ -211,8 +213,7 @@ export function Header({ toggleSidebar }: HeaderProps) {
   }, [isClient, selectedSchoolId, loadNotifications]);
 
   const handleBellClick = () => {
-    console.log(notificationCount)
-    if (notificationCount > 0 && getFuntions("Alertas")) {
+    if (notificationCount > 0 && canOpenAlerts) {
       router.push("/alertas");
     }
   };
@@ -369,13 +370,13 @@ export function Header({ toggleSidebar }: HeaderProps) {
         <div className="flex items-center space-x-4 flex-shrink-0">
           {pathname !== "/select-school" && (
             <div
-              className={`relative ${isClient && notificationCount > 0
+              className={`relative ${isClient && notificationCount > 0 && canOpenAlerts
                 ? "cursor-pointer"
                 : "cursor-default"
                 }`}
-              onClick={handleBellClick}
-              role="button"
-              tabIndex={0}
+              onClick={canOpenAlerts ? handleBellClick : undefined}
+              role={canOpenAlerts ? "button" : undefined}
+              tabIndex={canOpenAlerts ? 0 : undefined}
               aria-label={`Notificaciones: ${notificationCount}`}
             >
               <Bell className="text-white h-7 w-7 hidden sm:block" />

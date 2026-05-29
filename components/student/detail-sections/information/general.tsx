@@ -5,6 +5,15 @@ interface PropTypes {
     alumno: StudentGeneral
 }
 
+export function formatNullableDate(value: Date | string | null | undefined) {
+    if (!value) return "No disponible";
+
+    const parts = value.toString().split("T")[0].split("-");
+    if (parts.length !== 3) return "No disponible";
+
+    return parts.reverse().join("/");
+}
+
 export function StudentDetailInfoGeneral({ alumno }: Readonly<PropTypes>) {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8" >
@@ -44,11 +53,7 @@ export function StudentDetailInfoGeneral({ alumno }: Readonly<PropTypes>) {
                             Fecha de nacimiento:
                         </span>
                         <span className="text-gray-800 font-medium">
-                            {alumno.personas.fecha_nacimiento
-                                .toString()
-                                .split("-")
-                                .reverse()
-                                .join("/")}
+                            {formatNullableDate(alumno.personas.fecha_nacimiento)}
                         </span>
                     </div>
                     <div className="flex flex-col">

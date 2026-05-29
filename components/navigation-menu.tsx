@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/middleware/user-context";
+import { ALERTS_VIEW_PERMISSION } from "@/lib/alert-identity";
 
 interface NavigationMenuProps {
   onItemClick?: () => void;
@@ -25,6 +26,7 @@ interface NavigationMenuProps {
 export function NavigationMenu({ onItemClick }: NavigationMenuProps) {
   const pathname = usePathname();
   const { getFuntions } = useUser();
+  const canOpenAlerts = getFuntions(ALERTS_VIEW_PERMISSION);
 
   const isActive = (path: string) => {
     if (path === "/") return pathname === path;
@@ -34,7 +36,7 @@ export function NavigationMenu({ onItemClick }: NavigationMenuProps) {
   const menuItems = [
 
     { name: "Dashboard", href: "/", icon: Home },
-    ...(getFuntions("Alertas")
+    ...(canOpenAlerts
       ? [{ name: "Alertas", href: "/alertas", icon: Bell }]
       : []),
     { name: "Alumnos", href: "/alumnos", icon: Users },

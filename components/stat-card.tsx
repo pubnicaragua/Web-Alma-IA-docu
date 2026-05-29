@@ -27,26 +27,25 @@ export function StatCard({
   search
 }: StatCardProps) {
   const router = useRouter();
+  const canPress = index !== 0 && isPress;
 
   const handleClick = () => {
-    if (index !== 0 && isPress) {
+    if (canPress) {
       if (search) {
         localStorage.setItem("selectedTab", JSON.stringify(search));
       }
       router.push(`/alertas`);
-    } else {
-      localStorage.setItem("selectedTab", title);
     }
   };
 
   return (
     <div
       className={cn("rounded-lg p-4", className, {
-        "cursor-pointer hover:opacity-90 transition-opacity": index !== 0,
+        "cursor-pointer hover:opacity-90 transition-opacity": canPress,
       })}
-      onClick={handleClick}
-      role={index !== 0 ? "button" : undefined}
-      tabIndex={index !== 0 ? 0 : undefined}
+      onClick={canPress ? handleClick : undefined}
+      role={canPress ? "button" : undefined}
+      tabIndex={canPress ? 0 : undefined}
     >
       <h3 className={cn("font-medium mb-2", textColor)}>{title}</h3>
       <div className="flex items-end gap-1">

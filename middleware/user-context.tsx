@@ -11,8 +11,9 @@ import React, {
 } from "react";
 import { ProfileResponse } from "@/services/profile-service";
 import { useAuth } from "@/middleware/auth-provider";
-import { getAuthToken } from "../lib/api-config";
+import { getAuthToken, removeAuthToken } from "../lib/api-config";
 import { cacheService } from "@/lib/cache-service";
+import { useRouter } from "next/navigation";
 
 // Tipos
 export interface UserContextState {
@@ -65,6 +66,7 @@ interface UserProviderProps {
 
 export function UserProvider({ children }: UserProviderProps) {
   const { isAuthenticated } = useAuth();
+  const router = useRouter();
 
   const [state, setState] = useState({
     userData: null as ProfileResponse | null,
@@ -103,6 +105,22 @@ export function UserProvider({ children }: UserProviderProps) {
     cacheService.set("user-profile", newData, 10 * 60 * 1000);
     lastFetchTimeRef.current = Date.now();
   }, []);
+
+  const clearUserData = useCallback(() => {
+    setState((prev) => ({ ...prev, userData: null, error: null }));
+    lastFetchTimeRef.current = null;
+  }, []);
+
+  const clearInvalidSession = useCallback(() => {
+    clearUserData();
+    cacheService.clear();
+    removeAuthToken();
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("isAuthenticated");
+      sessionStorage.clear();
+    }
+    router.replace("/login");
+  }, [clearUserData, router]);
 
   // Carga perfil usuario con cache y control de peticiones
   const loadUserData = useCallback(async (forceRefresh = false) => {
@@ -148,6 +166,14 @@ export function UserProvider({ children }: UserProviderProps) {
       });
 
       if (!response.ok) {
+        const errorBody = await response.text();
+        if (
+          response.status === 401 ||
+          errorBody.toLowerCase().includes("invalid token")
+        ) {
+          clearInvalidSession();
+          return;
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
@@ -165,12 +191,7 @@ export function UserProvider({ children }: UserProviderProps) {
       setState((prev) => ({ ...prev, isLoading: false }));
       isLoadingRef.current = false;
     }
-  }, []);
-
-  const clearUserData = useCallback(() => {
-    setState((prev) => ({ ...prev, userData: null, error: null }));
-    lastFetchTimeRef.current = null;
-  }, []);
+  }, [clearInvalidSession]);
 
   const getFuntions = useCallback(
     (busqueda: string): boolean => {

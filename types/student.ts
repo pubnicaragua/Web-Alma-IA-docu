@@ -40,7 +40,7 @@ export interface StudentGeneral {
     nombres: string;
     apellidos: string;
     persona_id: number;
-    fecha_nacimiento: Date;
+    fecha_nacimiento: Date | string | null;
   };
   colegios: {
     nombre: string;
