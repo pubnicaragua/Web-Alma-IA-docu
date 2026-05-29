@@ -33,41 +33,49 @@ export function StudentDetailInfoRepresentatives({ apoderados }: Readonly<PropTy
                             </tr>
                         </thead>
                         <tbody>
-                            {apoderados.map((apoderado, index) => (
-                                <tr
-                                    key={index}
-                                    className="border-b-2 border-gray-100 hover:bg-gray-50"
-                                >
-                                    <td className="px-4 py-3 text-sm font-medium">
-                                        {apoderado.apoderados.personas.nombres}{" "}
-                                        {apoderado.apoderados.personas.apellidos}
-                                    </td>
-                                    <td className="px-4 py-3 text-sm">
-                                        <span
-                                            className={`px-2 py-1 rounded-full text-xs font-medium ${apoderado.tipo_apoderado === "Padre" ||
-                                                apoderado.tipo_apoderado === "Madre"
-                                                ? "bg-green-100 text-green-800"
-                                                : "bg-blue-100 text-blue-800"
-                                                }`}
-                                        >
-                                            {apoderado.tipo_apoderado}
-                                        </span>
-                                    </td>
-                                    <td className="px-4 py-3 text-sm">
-                                        {apoderado.observaciones}
-                                    </td>
-                                    <td className="px-4 py-3 text-sm">
-                                        <span
-                                            className={`px-2 py-1 rounded-full text-xs font-medium ${apoderado.estado_usuario === "activo"
-                                                ? "bg-green-100 text-green-800"
-                                                : "bg-red-100 text-red-800"
-                                                }`}
-                                        >
-                                            {apoderado.estado_usuario}
-                                        </span>
-                                    </td>
-                                </tr>
-                            ))}
+                            {apoderados.map((apoderado, index) => {
+                                const person = apoderado.apoderados?.personas;
+                                const name = [person?.nombres, person?.apellidos]
+                                    .filter(Boolean)
+                                    .join(" ") || "No disponible";
+                                const type = apoderado.tipo_apoderado || "No disponible";
+                                const status = apoderado.estado_usuario || "No disponible";
+
+                                return (
+                                    <tr
+                                        key={index}
+                                        className="border-b-2 border-gray-100 hover:bg-gray-50"
+                                    >
+                                        <td className="px-4 py-3 text-sm font-medium">
+                                            {name}
+                                        </td>
+                                        <td className="px-4 py-3 text-sm">
+                                            <span
+                                                className={`px-2 py-1 rounded-full text-xs font-medium ${type === "Padre" ||
+                                                    type === "Madre"
+                                                    ? "bg-green-100 text-green-800"
+                                                    : "bg-blue-100 text-blue-800"
+                                                    }`}
+                                            >
+                                                {type}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-sm">
+                                            {apoderado.observaciones || "No disponible"}
+                                        </td>
+                                        <td className="px-4 py-3 text-sm">
+                                            <span
+                                                className={`px-2 py-1 rounded-full text-xs font-medium ${status === "activo"
+                                                    ? "bg-green-100 text-green-800"
+                                                    : "bg-red-100 text-red-800"
+                                                    }`}
+                                            >
+                                                {status}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>

@@ -27,6 +27,7 @@ export function NavigationMenu({ onItemClick }: NavigationMenuProps) {
   const pathname = usePathname();
   const { getFuntions } = useUser();
   const canOpenAlerts = getFuntions(ALERTS_VIEW_PERMISSION);
+  const canOpenNotices = getFuntions("Avisos");
 
   const isActive = (path: string) => {
     if (path === "/") return pathname === path;
@@ -52,14 +53,12 @@ export function NavigationMenu({ onItemClick }: NavigationMenuProps) {
     { name: "Comparativo", href: "/comparativo", icon: BarChart2 },
     { name: "Informes", href: "/informes", icon: FileText },
     { name: "Perfil", href: "/perfil", icon: User },
-    ...(getFuntions("Avisos")
+    ...(canOpenNotices
       ? [{ name: "Avisos", href: "/avisos", icon: BellElectric }]
       : []),
-    {
-      name: "Encuestas",
-      href: "/encuestas",
-      icon: FileQuestion,
-    },
+    ...(canOpenNotices
+      ? [{ name: "Encuestas", href: "/encuestas", icon: FileQuestion }]
+      : []),
     {
       name: "Beneficios",
       href: "/beneficios",

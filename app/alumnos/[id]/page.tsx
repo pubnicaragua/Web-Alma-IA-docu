@@ -25,7 +25,7 @@ import { StudentDetailEvents } from "@/components/student/detail-sections/events
 import { StudentDetailAlerts } from "@/components/student/detail-sections/alerts";
 import { StudentDetailInfo } from "@/components/student/detail-sections/information";
 
-const generateNameFromEmail = (email: string) => {
+const generateNameFromEmail = (email?: string | null) => {
   if (!email) return "Estudiante";
 
   const parts = email.split("@")[0].split(".");
@@ -34,6 +34,14 @@ const generateNameFromEmail = (email: string) => {
       }`;
   }
   return parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+};
+
+const getStudentDisplayName = (student?: StudentDetailResponse["alumno"] | null) => {
+  const nombres = student?.personas?.nombres?.trim();
+  const apellidos = student?.personas?.apellidos?.trim();
+  const fullName = [nombres, apellidos].filter(Boolean).join(" ").trim();
+
+  return fullName || generateNameFromEmail(student?.email);
 };
 
 
@@ -92,6 +100,10 @@ export default function StudentDetailPage() {
     }));
   }, [studentDetails?.datosComparativa]);
 
+  const firstCourseId = studentDetails?.alumno?.cursos?.[0]?.curso_id;
+  const studentName = getStudentDisplayName(studentDetails?.alumno);
+  const studentEmail = studentDetails?.alumno?.email || "No disponible";
+  const schoolName = studentDetails?.alumno?.colegios?.nombre || "No disponible";
 
   return (
     <ErrorBoundary>
@@ -99,7 +111,7 @@ export default function StudentDetailPage() {
         <AppLayout>
           <>
             {isLoading && <StudentSkeleton />}
-            {!studentDetails && !isLoading && (
+            {!studentDetails && !isLoading && !selectedSchoolId && (
               <div className="container mx-auto px-2 sm:px-6 py-4 sm:py-8">
                 <div className="flex flex-col items-center justify-center h-64 bg-white rounded-lg shadow-sm p-6 border border-red-200">
                   <AlertTriangle className="h-12 w-12 text-red-500 mb-4" />
@@ -119,22 +131,22 @@ export default function StudentDetailPage() {
                   <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
                     <div className="relative w-32 h-32 rounded-full overflow-hidden flex-shrink-0 border-4 border-blue-100">
                       <Image
-                        src={studentDetails.alumno.url_foto_perfil || "/placeholder.svg"}
-                        alt={studentDetails.alumno.personas.nombres || generateNameFromEmail(studentDetails.alumno.email)}
+                        src={studentDetails.alumno?.url_foto_perfil || "/placeholder.svg"}
+                        alt={studentName}
                         width={128}
                         height={128}
                         className="w-full h-full object-cover"
                       />
                     </div>
                     <div className="flex flex-col items-center md:items-start">
-                      <h1 className="text-3xl font-bold text-gray-800">{`${studentDetails.alumno.personas.nombres || generateNameFromEmail(studentDetails.alumno.email)}  ${studentDetails.alumno.personas.apellidos}`}</h1>
+                      <h1 className="text-3xl font-bold text-gray-800">{studentName}</h1>
                       <div className="flex flex-wrap gap-4">
                         <div className="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
                           Colegio:{" "}
-                          <span className="font-bold">{studentDetails.alumno.colegios.nombre}</span>
+                          <span className="font-bold">{schoolName}</span>
                         </div>
                         <div className="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                          Email: {studentDetails.alumno.email}
+                          Email: {studentEmail}
                         </div>
                       </div>
                     </div>
@@ -183,7 +195,7 @@ export default function StudentDetailPage() {
                         </TabsTrigger>
                       ) : null}
 
-                      {getFuntions("Ficha Alumno->Eventos") ? (
+                      {getFuntions("Ficha Alumno->Eventos") && firstCourseId ? (
                         <TabsTrigger
                           value="eventos"
                           className="data-[state=active]:bg-blue-500 data-[state=active]:text-white flex items-center text-xs sm:text-sm px-2 sm:px-4"
@@ -200,8 +212,8 @@ export default function StudentDetailPage() {
                       <TabsContent value="ficha">
                         <StudentDetailInfo
                           alumno={studentDetails?.alumno}
-                          ficha={studentDetails?.ficha[0] ?? null}
-                          apoderados={studentDetails.apoderados}
+                          ficha={studentDetails?.ficha?.[0] ?? null}
+                          apoderados={studentDetails.apoderados ?? []}
                         />
                       </TabsContent>
 
@@ -216,7 +228,7 @@ export default function StudentDetailPage() {
 
                       <TabsContent value="informes">
                         <div className="bg-white rounded-lg shadow-sm p-6 border border-blue-200">
-                          <StudentReports reports={studentDetails.informes} />
+                          <StudentReports reports={studentDetails.informes ?? []} />
                         </div>
                       </TabsContent>
 
@@ -241,10 +253,16 @@ export default function StudentDetailPage() {
                       </TabsContent>
 
                       <TabsContent value="eventos">
-                        <StudentDetailEvents
-                          alumno_id={studentDetails.alumno.alumno_id}
-                          curso_id={studentDetails.alumno.cursos[0].curso_id}
-                        />
+                        {firstCourseId ? (
+                          <StudentDetailEvents
+                            alumno_id={studentDetails.alumno.alumno_id}
+                            curso_id={firstCourseId}
+                          />
+                        ) : (
+                          <p className="text-sm text-gray-500">
+                            No hay curso asociado para mostrar eventos.
+                          </p>
+                        )}
                       </TabsContent>
 
                     </div>
