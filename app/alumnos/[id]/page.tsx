@@ -24,6 +24,12 @@ import type { StudentDetailResponse } from "@/services/students-service";
 import { StudentDetailEvents } from "@/components/student/detail-sections/events";
 import { StudentDetailAlerts } from "@/components/student/detail-sections/alerts";
 import { StudentDetailInfo } from "@/components/student/detail-sections/information";
+import { useToast } from "@/hooks/use-toast";
+import {
+  buildStudentTabAuditPayload,
+  postAudit,
+  type StudentAuditSection,
+} from "@/lib/audit";
 
 const generateNameFromEmail = (email?: string | null) => {
   if (!email) return "Estudiante";
@@ -47,7 +53,10 @@ const getStudentDisplayName = (student?: StudentDetailResponse["alumno"] | null)
 
 export default function StudentDetailPage() {
   const { id } = useParams();
-  const { getFuntions, selectedSchoolId } = useUser();
+  const { getFuntions, selectedSchoolId, userData } = useUser();
+  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState("ficha");
+  const [auditingTab, setAuditingTab] = useState<string | null>(null);
   const [selectedEmotions, setSelectedEmotions] = useState<string[]>([
     "Tristeza",
     "Felicidad",
@@ -105,6 +114,61 @@ export default function StudentDetailPage() {
   const studentEmail = studentDetails?.alumno?.email || "No disponible";
   const schoolName = studentDetails?.alumno?.colegios?.nombre || "No disponible";
 
+  const auditStudentTabClick = useCallback(
+    async (section: StudentAuditSection): Promise<boolean> => {
+      const alumnoId = Number(id);
+      const colegioId = Number(studentDetails?.alumno?.colegio_id ?? selectedSchoolId);
+      const usuarioId = userData?.usuario?.usuario_id;
+
+      if (!Number.isFinite(alumnoId) || !Number.isFinite(colegioId) || !usuarioId) {
+        toast({
+          title: "Auditoría no registrada",
+          description: "Faltan datos de usuario, colegio o alumno.",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      const payload = buildStudentTabAuditPayload({
+        alumnoId,
+        colegioId,
+        section,
+        usuarioId,
+      });
+
+      try {
+        setAuditingTab(section);
+        await postAudit(payload);
+        return true;
+      } catch (auditError) {
+        console.error("Error registrando auditoria de pestaña de alumno:", auditError);
+        toast({
+          title: "Auditoría no registrada",
+          description: auditError instanceof Error ? auditError.message : "No se pudo registrar la auditoría.",
+          variant: "destructive",
+        });
+        return false;
+      } finally {
+        setAuditingTab(null);
+      }
+    },
+    [id, selectedSchoolId, studentDetails?.alumno?.colegio_id, toast, userData?.usuario?.usuario_id]
+  );
+
+  const handleTabChange = useCallback(
+    (value: string) => {
+      if (value === "alertas" || value === "informes" || value === "emociones") {
+        auditStudentTabClick(value).then((registered) => {
+          if (registered) setActiveTab(value);
+        });
+        return;
+      }
+
+      setActiveTab(value);
+    },
+    [auditStudentTabClick]
+  );
+
   return (
     <ErrorBoundary>
       <VerifyAccess permission="Ficha Alumno">
@@ -155,7 +219,7 @@ export default function StudentDetailPage() {
 
                 {/* Zona 2: Pestañas de navegación */}
                 <div className="bg-white rounded-lg shadow-sm p-4 mb-6 border border-blue-200">
-                  <Tabs defaultValue="ficha" className="w-full">
+                  <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
                     <TabsList className="bg-blue-100 w-full justify-start overflow-x-auto flex-nowrap whitespace-nowrap">
                       <TabsTrigger
                         value="ficha"
@@ -168,6 +232,7 @@ export default function StudentDetailPage() {
                         getFuntions("Alertas") ? (
                         <TabsTrigger
                           value="alertas"
+                          disabled={auditingTab !== null}
                           className="data-[state=active]:bg-blue-500 data-[state=active]:text-white flex items-center text-xs sm:text-sm px-2 sm:px-4"
                         >
                           <Bell className="h-4 w-4 mr-2" />
@@ -178,6 +243,7 @@ export default function StudentDetailPage() {
                       {getFuntions("Ficha Alumno->Informes") ? (
                         <TabsTrigger
                           value="informes"
+                          disabled={auditingTab !== null}
                           className="data-[state=active]:bg-blue-500 data-[state=active]:text-white flex items-center text-xs sm:text-sm px-2 sm:px-4"
                         >
                           <FileText className="h-4 w-4 mr-2" />
@@ -188,6 +254,7 @@ export default function StudentDetailPage() {
                       {getFuntions("Ficha Alumno->Emociones") ? (
                         <TabsTrigger
                           value="emociones"
+                          disabled={auditingTab !== null}
                           className="data-[state=active]:bg-blue-500 data-[state=active]:text-white flex items-center text-xs sm:text-sm px-2 sm:px-4"
                         >
                           <Smile className="h-4 w-4 mr-2" />
