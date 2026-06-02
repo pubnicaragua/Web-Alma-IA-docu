@@ -1,6 +1,7 @@
 // lib/api-config.ts
 import { dispatchAuthChangeEvent } from "./auth-events";
 import { decryptData, encryptData } from "./crypto-utils";
+import { normalizeSelectedSchoolId } from "./school-id";
 
 // API base URL para el proxy local
 export const API_BASE_URL = "/api/proxy";
@@ -96,7 +97,7 @@ const getSelectedSchoolId = (): string | null => {
   if (typeof window !== "undefined") {
     try {
       const selectedSchool = localStorage.getItem("selectedSchool");
-      return selectedSchool || null;
+      return normalizeSelectedSchoolId(selectedSchool);
     } catch (error) {
       return null;
     }

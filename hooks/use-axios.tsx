@@ -3,17 +3,18 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import axios, { AxiosResponse } from "axios";
 import type { DependencyList } from "react";
+import { runOptionalAxiosRequest, type OptionalPromise } from "@/lib/optional-axios-request";
 
 type UseAxiosResult<T> = {
     data: T | null;
     loading: boolean;
     error: string | null;
     refetch: () => void;
-    execute: <U = T>(customFn?: () => Promise<AxiosResponse<U>>) => Promise<AxiosResponse<U> | undefined>;
+    execute: <U = T>(customFn?: () => OptionalPromise<AxiosResponse<U>>) => Promise<AxiosResponse<U> | undefined>;
 };
 
 export function useAxios<T>(
-    requestFn: (() => Promise<AxiosResponse<T>>) | null = null,
+    requestFn: (() => OptionalPromise<AxiosResponse<T>>) | null = null,
     deps: DependencyList = []
 ): UseAxiosResult<T> {
     const [data, setData] = useState<T | null>(null);
@@ -25,15 +26,14 @@ export function useAxios<T>(
         requestRef.current = requestFn;
     }, [requestFn]);
 
-    const fetchData = useCallback((customFn?: () => Promise<AxiosResponse<T>>) => {
+    const fetchData = useCallback((customFn?: () => OptionalPromise<AxiosResponse<T>>) => {
         const fn = customFn || requestRef.current;
         if (!fn) return;
 
         setLoading(true);
         setError(null);
 
-        fn()
-            .then((res) => setData(res.data))
+        runOptionalAxiosRequest(fn, (res) => setData(res.data))
             .catch((err) => {
                 if (axios.isAxiosError(err)) {
                     setError(err.response?.data?.message || err.message);
@@ -46,19 +46,19 @@ export function useAxios<T>(
 
     // 👇 Aquí el truco: `U` es un tipo específico para cada ejecución
     const execute = async <U = T>(
-        customFn?: () => Promise<AxiosResponse<U>>
+        customFn?: () => OptionalPromise<AxiosResponse<U>>
     ): Promise<AxiosResponse<U> | undefined> => {
-        const fn = customFn as (() => Promise<AxiosResponse<U>>) | undefined;
+        const fn = customFn as (() => OptionalPromise<AxiosResponse<U>>) | undefined;
         if (!fn) return Promise.resolve(undefined);
 
         setLoading(true);
         setError(null);
 
         try {
-            const res = await fn();
-            // solo casteamos si el tipo coincide con T
-            setData(res.data as unknown as T);
-            return res;
+            return await runOptionalAxiosRequest(fn, (res) => {
+                // solo casteamos si el tipo coincide con T
+                setData(res.data as unknown as T);
+            });
         } catch (err) {
             if (axios.isAxiosError(err)) {
                 setError(err.response?.data?.message || err.message);

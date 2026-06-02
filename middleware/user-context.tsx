@@ -14,6 +14,10 @@ import { useAuth } from "@/middleware/auth-provider";
 import { getAuthToken, removeAuthToken } from "../lib/api-config";
 import { cacheService } from "@/lib/cache-service";
 import { useRouter } from "next/navigation";
+import { createGetRequestDeduper } from "@/lib/get-request-dedupe";
+import { normalizeSelectedSchoolId } from "@/lib/school-id";
+
+const dedupeProfileGet = createGetRequestDeduper();
 
 // Tipos
 export interface UserContextState {
@@ -85,17 +89,18 @@ export function UserProvider({ children }: UserProviderProps) {
   // Inicializar selectedSchoolId desde localStorage
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const selected = localStorage.getItem("selectedSchool");
+      const selected = normalizeSelectedSchoolId(localStorage.getItem("selectedSchool"));
       setState((prev) => ({ ...prev, selectedSchoolId: selected }));
     }
   }, []);
 
   // Setter que sincroniza estado y localStorage
   const setSelectedSchoolId = useCallback((id: string | null) => {
-    setState((prev) => ({ ...prev, selectedSchoolId: id }));
+    const normalizedId = normalizeSelectedSchoolId(id);
+    setState((prev) => ({ ...prev, selectedSchoolId: normalizedId }));
     if (typeof window !== "undefined") {
-      if (id === null) localStorage.removeItem("selectedSchool");
-      else localStorage.setItem("selectedSchool", id);
+      if (normalizedId === null) localStorage.removeItem("selectedSchool");
+      else localStorage.setItem("selectedSchool", normalizedId);
     }
   }, []);
 
@@ -158,26 +163,34 @@ export function UserProvider({ children }: UserProviderProps) {
       isLoadingRef.current = true;
       setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
-      const response = await fetch("/api/proxy/perfil/obtener", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const data = await dedupeProfileGet<ProfileResponse | null>(
+        "/api/proxy/perfil/obtener",
+        { params: { __authScope: token.slice(-12) } },
+        async () => {
+          const response = await fetch("/api/proxy/perfil/obtener", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          });
 
-      if (!response.ok) {
-        const errorBody = await response.text();
-        if (
-          response.status === 401 ||
-          errorBody.toLowerCase().includes("invalid token")
-        ) {
-          clearInvalidSession();
-          return;
+          if (!response.ok) {
+            const errorBody = await response.text();
+            if (
+              response.status === 401 ||
+              errorBody.toLowerCase().includes("invalid token")
+            ) {
+              clearInvalidSession();
+              return null;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          return (await response.json()) as ProfileResponse;
         }
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      );
 
-      const data = (await response.json()) as ProfileResponse;
+      if (!data) return;
 
       setState((prev) => ({ ...prev, userData: data }));
       cacheService.set("user-profile", data, 10 * 60 * 1000);
