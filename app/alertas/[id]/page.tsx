@@ -14,12 +14,14 @@ import { AlertInfoSection } from "@/components/alerts/detail-sections/info";
 import ErrorBoundary from "@/components/utils/error-bountdry"
 import { AlertStudentSection } from "@/components/alerts/detail-sections/student";
 import { useAxios } from "@/hooks/use-axios";
+import { useUser } from "@/middleware/user-context";
 
 export default function AlertDetailPage() {
 
   const { id } = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { userData, selectedSchoolId } = useUser();
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [refresh, setRefresh] = useState(false);
@@ -54,7 +56,7 @@ export default function AlertDetailPage() {
     router.back();
   };
 
-  return (
+    return (
     <ErrorBoundary>
       <AppLayout>
         {axios.loading && <AlertDetailSkeleton />}
@@ -74,7 +76,11 @@ export default function AlertDetailPage() {
               </div>
 
               <AlertStudentSection alert={alert} />
-              <AlertInfoSection alert={alert} />
+              <AlertInfoSection
+                alert={alert}
+                usuarioId={userData?.usuario?.usuario_id}
+                colegioId={selectedSchoolId ? Number(selectedSchoolId) : undefined}
+              />
               <AlertBinnacleSection
                 alertData={alert}
                 setRefresh={() => setRefresh(prev => !prev)}

@@ -21,6 +21,30 @@ export interface AuditPayload {
   referencia_id: number;
 }
 
+export type AlertAuditAction =
+  | "visualizar_imagen_alerta"
+  | "reproducir_audio_alerta";
+
+export interface AlertMediaAuditPayload {
+  tipo_auditoria_id: number;
+  colegio_id: number;
+  fecha: string;
+  usuario_id: number;
+  descripcion: string;
+  modulo_afectado: string;
+  accion_realizada: AlertAuditAction;
+  ip_origen: string;
+  model: string;
+  referencia_id: number;
+}
+
+export interface AlertMediaAuditInput {
+  alertaId: number;
+  colegioId: number;
+  usuarioId: number;
+  accion: AlertAuditAction;
+}
+
 export function buildStudentTabAuditPayload({
   alumnoId,
   colegioId,
@@ -39,6 +63,26 @@ export function buildStudentTabAuditPayload({
     ip_origen: "127.0.0.1",
     model: "alumnos",
     referencia_id: alumnoId,
+  };
+}
+
+export function buildAlertMediaAuditPayload({
+  alertaId,
+  colegioId,
+  usuarioId,
+  accion,
+}: AlertMediaAuditInput): AlertMediaAuditPayload {
+  return {
+    tipo_auditoria_id: 3,
+    colegio_id: colegioId,
+    fecha: new Date().toISOString(),
+    usuario_id: usuarioId,
+    descripcion: `Usuario ${accion.replace("_", " ")} de la alerta ${alertaId}`,
+    modulo_afectado: "alertas",
+    accion_realizada: accion,
+    ip_origen: "127.0.0.1",
+    model: "alertas",
+    referencia_id: alertaId,
   };
 }
 

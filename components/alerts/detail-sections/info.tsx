@@ -2,19 +2,76 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useLightbox } from "@/hooks/use-lightbox";
+import { useRef } from "react";
 import { AlertPagev1 } from "@/services/alerts-service";
+import { buildAlertMediaAuditPayload, postAudit } from "@/lib/audit";
 import { FileImage, Lock } from "lucide-react";
 import Image from "next/image";
 
 
 interface PropTypes {
     alert: AlertPagev1;
+    usuarioId?: number;
+    colegioId?: number;
 }
 
-export function AlertInfoSection({ alert }: Readonly<PropTypes>) {
+export function AlertInfoSection({
+    alert,
+    usuarioId,
+    colegioId,
+}: Readonly<PropTypes>) {
 
     const lightbox = useLightbox();
     const { Lightbox } = lightbox;
+    const isImageAuditSentRef = useRef(false);
+    const isAudioAuditSentRef = useRef(false);
+
+    const canAudit = Boolean(usuarioId && colegioId && Number.isFinite(colegioId) && Number.isFinite(usuarioId));
+
+    const createPayload = (action: "visualizar_imagen_alerta" | "reproducir_audio_alerta") => {
+        if (!usuarioId || !colegioId) {
+            return null;
+        }
+
+        return buildAlertMediaAuditPayload({
+            alertaId: alert.alumno_alerta_id,
+            colegioId,
+            usuarioId,
+            accion: action,
+        });
+    };
+
+    const handleImageClick = async () => {
+        if (!isImageAuditSentRef.current && alert.url_image && canAudit) {
+            isImageAuditSentRef.current = true;
+            const payload = createPayload("visualizar_imagen_alerta");
+            if (payload) {
+                try {
+                    await postAudit(payload);
+                } catch (error) {
+                    isImageAuditSentRef.current = false;
+                    console.error("Error registrando auditoría de imagen de alerta", error);
+                }
+            }
+        }
+
+        lightbox.open(alert.url_image || "");
+    };
+
+    const handleAudioPlay = async () => {
+        if (!isAudioAuditSentRef.current && alert.url_audio && canAudit) {
+            isAudioAuditSentRef.current = true;
+            const payload = createPayload("reproducir_audio_alerta");
+            if (payload) {
+                try {
+                    await postAudit(payload);
+                } catch (error) {
+                    isAudioAuditSentRef.current = false;
+                    console.error("Error registrando auditoría de audio de alerta", error);
+                }
+            }
+        }
+    };
 
     return (
         <Card className="mb-6">
@@ -72,11 +129,11 @@ export function AlertInfoSection({ alert }: Readonly<PropTypes>) {
                                 <p className="text-sm text-gray-500 mb-1">Imagen</p>
                                 {alert.url_image ? (
                                     <div>
-                                        <Button
-                                            className="bg-blue-500 hover:bg-blue-600"
-                                            onClick={() => lightbox.open(alert.url_image || '')}
-                                            aria-label="Visualizar Imagen Alerta"
-                                        >
+                                <Button
+                                    className="bg-blue-500 hover:bg-blue-600"
+                                    onClick={handleImageClick}
+                                    aria-label="Visualizar Imagen Alerta"
+                                >
                                             <FileImage />
                                             <span>Visualizar Imagen</span>
                                         </Button>
@@ -94,7 +151,12 @@ export function AlertInfoSection({ alert }: Readonly<PropTypes>) {
                             <div className="bg-gray-50 rounded-lg border border-gray-100 py-2 px-4">
                                 <p className="text-sm text-gray-500 mb-1">Audio</p>
                                 {alert.url_audio ? (
-                                    <audio src={alert.url_audio} className="w-full" controls>
+                                    <audio
+                                        src={alert.url_audio}
+                                        className="w-full"
+                                        controls
+                                        onPlay={handleAudioPlay}
+                                    >
                                     </audio>
                                 ) : (
                                     <p className="text-base font-medium text-gray-800">
