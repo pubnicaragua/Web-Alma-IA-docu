@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import {
@@ -19,8 +19,8 @@ import {
   type Emotion,
 } from "@/services/home-service";
 import { useToast } from "@/hooks/use-toast";
-import { themeColors } from "@/lib/theme-colors";
 import { DatePicker } from "@/components/ui/date-picker";
+import { useColoresCatalog } from "@/hooks/use-colores";
 
 interface BarChartComparisonPatologieGeneralProps {
   title: string;
@@ -54,6 +54,7 @@ export function BarChartComparisonPatologieGeneral({
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
 
   const { toast } = useToast();
+  const { getColor } = useColoresCatalog();
 
   const dateFilterValue =
     dateMode === "today"
@@ -62,12 +63,13 @@ export function BarChartComparisonPatologieGeneral({
         ? selectedDate.toISOString().slice(0, 10)
         : "today";
 
-  function formatDateToYYYYMMDD(date: Date): string {
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, "0");
-    const day = date.getDate().toString().padStart(2, "0");
-    return `${year}/${month}/${day}`;
-  }
+  const getPatologieColor = (emotionName: string): string =>
+    getColor("patologias", emotionName, "#6c757d");
+
+  const dataWithCatalogColor = data.map((emotion) => ({
+    ...emotion,
+    color: getPatologieColor(emotion.name),
+  }));
 
   useEffect(() => {
     if (apiEmotions) {
@@ -75,7 +77,8 @@ export function BarChartComparisonPatologieGeneral({
         name: emotion.nombre,
         value: Math.round(emotion.valor / 100),
         cantidad_respuestas: Math.round(emotion.valor / 100),
-        color: getPatologieColor(emotion.nombre),
+        cantidad_negativas: 0,
+        cantidad_neutras: 0,
       }));
       setData(transformedData);
 
@@ -153,8 +156,8 @@ export function BarChartComparisonPatologieGeneral({
   };
 
   const filteredData =
-    data && data.length > 0
-      ? data.filter((emotion) => selectedEmotions.includes(emotion.name))
+    dataWithCatalogColor && dataWithCatalogColor.length > 0
+      ? dataWithCatalogColor.filter((emotion) => selectedEmotions.includes(emotion.name))
       : [];
 
   const maxYAxisValue = Math.max(
@@ -216,7 +219,7 @@ export function BarChartComparisonPatologieGeneral({
           {data && Boolean(data.length) && (
             <>
               <div className="flex flex-wrap gap-2 mb-4">
-                {data.map((emotion) => (
+                {dataWithCatalogColor.map((emotion) => (
                   <Badge
                     key={emotion.name}
                     variant={
@@ -331,14 +334,9 @@ export function BarChartComparisonPatologieGeneral({
   );
 }
 
-function getPatologieColor(emotion: string): string {
-  const colors: Record<string, string> = {
-    Felicidad: themeColors.chart.yellow,
-    Tristeza: themeColors.chart.blue,
-    Estrés: themeColors.chart.gray,
-    Ansiedad: themeColors.chart.orange,
-    Enojo: themeColors.chart.red,
-    Otros: themeColors.chart.purple,
-  };
-  return colors[emotion] || themeColors.chart.gray;
+function formatDateToYYYYMMDD(date: Date): string {
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const day = date.getDate().toString().padStart(2, "0");
+  return `${year}/${month}/${day}`;
 }

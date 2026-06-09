@@ -19,7 +19,7 @@ import {
   type Emotion,
 } from "@/services/home-service";
 import { useToast } from "@/hooks/use-toast";
-import { themeColors } from "@/lib/theme-colors";
+import { useColoresCatalog } from "@/hooks/use-colores";
 import { DatePicker } from "@/components/ui/date-picker";
 
 interface BarChartComparisonProps {
@@ -59,6 +59,15 @@ export function BarChartComparison({
       : "today";
 
   const { toast } = useToast();
+  const { getColor } = useColoresCatalog();
+
+  const colorOfEmotion = (emotionName: string): string =>
+    getColor("emociones", emotionName, "#6c757d");
+
+  const dataWithCatalogColor = data.map((item) => ({
+    ...item,
+    color: colorOfEmotion(item.name),
+  }));
 
   useEffect(() => {
     if (!initialData && !apiEmotions) {
@@ -67,7 +76,7 @@ export function BarChartComparison({
       const transformedData = apiEmotions.map((emotion) => ({
         name: emotion.nombre,
         value: Math.round(emotion.valor / 100),
-        color: getEmotionColor(emotion.nombre),
+        color: colorOfEmotion(emotion.nombre),
       }));
       setData(transformedData);
 
@@ -105,7 +114,7 @@ export function BarChartComparison({
       setData(
         emotionsData.map((emotion) => ({
           ...emotion,
-          color: getEmotionColor(emotion.name),
+          color: colorOfEmotion(emotion.name),
         }))
       );
     } catch (err) {
@@ -125,8 +134,10 @@ export function BarChartComparison({
   };
 
   const filteredData =
-    data && data.length > 0
-      ? data.filter((emotion) => selectedEmotions.includes(emotion.name))
+    dataWithCatalogColor && dataWithCatalogColor.length > 0
+      ? dataWithCatalogColor.filter((emotion) =>
+          selectedEmotions.includes(emotion.name)
+        )
       : [];
 
   if (isLoading) {
@@ -202,7 +213,7 @@ export function BarChartComparison({
       </div>
 
       <div className="flex flex-wrap gap-2 mb-4">
-        {data.map((emotion) => (
+        {dataWithCatalogColor.map((emotion) => (
           <Badge
             key={emotion.name}
             variant={
@@ -272,22 +283,4 @@ function formatDateToYYYYMMDD(date: Date): string {
   return `${year}/${month}/${day}`;
 }
 
-function getEmotionColor(emotion: string): string {
-  const colors: Record<string, string> = {
-    Felicidad: themeColors.chart.yellow,
-    Alegria: themeColors.chart.yellow,
-    Tristeza: themeColors.chart.blue,
-    Estrés: themeColors.chart.gray,
-    Ansiedad: themeColors.chart.orange,
-    Enojo: themeColors.chart.red,
-    Gratitud: themeColors.chart.green,
-    Esperanza: themeColors.chart.purple,
-    Tranquilidad: themeColors.chart.blue,
-    Otros: themeColors.chart.gray,
-    Amor: themeColors.chart.red,
-    Miedo: themeColors.chart.orange,
-    Sorpresa: themeColors.chart.yellow,
-    Confusión: themeColors.chart.gray,
-  };
-  return colors[emotion] || themeColors.chart.gray;
-}
+

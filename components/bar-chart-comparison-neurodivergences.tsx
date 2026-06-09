@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import {
@@ -19,8 +19,8 @@ import {
   type Emotion,
 } from "@/services/home-service";
 import { useToast } from "@/hooks/use-toast";
-import { themeColors } from "@/lib/theme-colors";
 import { DatePicker } from "@/components/ui/date-picker";
+import { useColoresCatalog } from "@/hooks/use-colores";
 
 interface BarChartComparisonNeurodivergencesProps {
   title: string;
@@ -53,6 +53,7 @@ export function BarChartComparisonNeurodivergences({
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
 
   const { toast } = useToast();
+  const { getColor } = useColoresCatalog();
 
   const dateFilterValue =
     dateMode === "today"
@@ -60,6 +61,14 @@ export function BarChartComparisonNeurodivergences({
       : selectedDate
         ? selectedDate.toISOString().slice(0, 10)
         : "today";
+
+  const getNeurodivergenceColor = (emotion: string): string =>
+    getColor("neurodivergencias", emotion, "#6c757d");
+
+  const dataWithCatalogColor = data.map((emotion) => ({
+    ...emotion,
+    color: getNeurodivergenceColor(emotion.name),
+  }));
 
   useEffect(() => {
     if (!initialData && !apiEmotions) {
@@ -69,7 +78,8 @@ export function BarChartComparisonNeurodivergences({
         name: emotion.nombre,
         value: Math.round(emotion.valor / 100),
         cantidad_respuestas: Math.round(emotion.valor / 100),
-        color: getNeurodivergenceColor(emotion.nombre),
+        cantidad_negativas: 0,
+        cantidad_neutras: 0,
       }));
       setData(transformedData);
 
@@ -140,8 +150,10 @@ export function BarChartComparisonNeurodivergences({
   };
 
   const filteredData =
-    data && data.length > 0
-      ? data.filter((emotion) => selectedEmotions.includes(emotion.name))
+    dataWithCatalogColor && dataWithCatalogColor.length > 0
+      ? dataWithCatalogColor.filter((emotion) =>
+          selectedEmotions.includes(emotion.name)
+        )
       : [];
 
   const maxYAxisValue = Math.max(
@@ -203,7 +215,7 @@ export function BarChartComparisonNeurodivergences({
           {data && Boolean(data.length) && (
             <>
               <div className="flex flex-wrap gap-2 mb-4">
-                {data.map((emotion) => (
+                {dataWithCatalogColor.map((emotion) => (
                   <Badge
                     key={emotion.name}
                     variant={
@@ -321,16 +333,4 @@ function formatDateToYYYYMMDD(date: Date): string {
   const month = (date.getMonth() + 1).toString().padStart(2, "0");
   const day = date.getDate().toString().padStart(2, "0");
   return `${year}/${month}/${day}`;
-}
-
-function getNeurodivergenceColor(emotion: string): string {
-  const colors: Record<string, string> = {
-    Felicidad: themeColors.chart.yellow,
-    Tristeza: themeColors.chart.blue,
-    Estrés: themeColors.chart.gray,
-    Ansiedad: themeColors.chart.orange,
-    Enojo: themeColors.chart.red,
-    Otros: themeColors.chart.purple,
-  };
-  return colors[emotion] || themeColors.chart.gray;
 }

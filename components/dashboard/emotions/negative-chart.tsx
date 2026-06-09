@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Frown, TriangleAlert } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { IEmotionBarChart } from "@/types/dashboard";
@@ -85,4 +85,3 @@ export function BarNegativeEmotionsChart() {
         </div>
     );
 }
-

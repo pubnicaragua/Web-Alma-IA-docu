@@ -15,7 +15,7 @@ import { Smile, RefreshCw, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { fetchEmotions, type Emotion } from "@/services/home-service";
 import { useToast } from "@/hooks/use-toast";
-import { themeColors } from "@/lib/theme-colors";
+import { useColoresCatalog } from "@/hooks/use-colores";
 
 interface BarChartComparisonAlumnoProps {
   title: string;
@@ -42,12 +42,13 @@ export function BarChartComparisonAlumno({
   const [isLoading, setIsLoading] = useState(!initialData && !apiEmotions);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const { getColor } = useColoresCatalog();
 
   useEffect(() => {
     const transformedData = apiEmotions?.map((emotion) => ({
       name: emotion.name,
       value: emotion.value,
-      color: emotion.color,
+      color: getColor("emociones", emotion.name, emotion.color || "#6c757d"),
     }));
     setData(transformedData || []);
 
@@ -63,7 +64,12 @@ export function BarChartComparisonAlumno({
       setError(null);
       const emotionsData = await fetchEmotions();
       setSelectedEmotions(emotionsData.map((emotion) => emotion.name));
-      setData(emotionsData);
+      setData(
+        emotionsData.map((emotion) => ({
+          ...emotion,
+          color: getColor("emociones", emotion.name, emotion.color),
+        }))
+      );
     } catch (err) {
       setError(
         "No se pudieron cargar los datos de emociones. Intente nuevamente."
@@ -82,9 +88,15 @@ export function BarChartComparisonAlumno({
   };
 
   // Filtrar los datos solo si hay datos disponibles
+  const dataWithCatalogColor = data.map((emotion) => ({
+    ...emotion,
+    color: getColor("emociones", emotion.name, emotion.color || "#6c757d"),
+  }));
   const filteredData =
-    data && data.length > 0
-      ? data.filter((emotion) => selectedEmotions.includes(emotion.name))
+    dataWithCatalogColor && dataWithCatalogColor.length > 0
+      ? dataWithCatalogColor.filter((emotion) =>
+          selectedEmotions.includes(emotion.name)
+        )
       : [];
 
   // Renderizar esqueleto durante la carga
@@ -147,7 +159,7 @@ export function BarChartComparisonAlumno({
       </div>
 
       <div className="flex flex-wrap gap-2 mb-4">
-        {data.map((emotion) => (
+        {dataWithCatalogColor.map((emotion) => (
           <Badge
             key={emotion.name}
             variant={
@@ -209,15 +221,5 @@ export function BarChartComparisonAlumno({
   );
 }
 
-// Función auxiliar para asignar colores a las emociones
-function getEmotionColor(emotion: string): string {
-  const colors: Record<string, string> = {
-    Felicidad: themeColors.chart.yellow,
-    Tristeza: themeColors.chart.blue,
-    Estrés: themeColors.chart.gray,
-    Ansiedad: themeColors.chart.orange,
-    Enojo: themeColors.chart.red,
-    Otros: themeColors.chart.purple,
-  };
-  return colors[emotion] || themeColors.chart.gray;
-}
+
+

@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useEffect } from "react"
 import {
@@ -14,11 +14,11 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Smile, RefreshCw, AlertCircle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { themeColors } from "@/lib/theme-colors"
+import { useColoresCatalog } from "@/hooks/use-colores"
 import { fetchEmotionsForGrade } from "@/services/home-service"
 
 interface EmotionData {
-  name: string // Ejemplo: "1° Medio A - Jornada Mañana"
+  name: string // Ejemplo: "1Â° Medio A - Jornada MaÃ±ana"
   [emotion: string]: string | number // Ejemplo: "Ansiedad": 3, "Felicidad": 2
 }
 
@@ -33,6 +33,7 @@ export function BarChartComparisonCategory({ title, grado }: BarChartComparisonC
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const { toast } = useToast()
+  const { getColor } = useColoresCatalog()
 
   useEffect(() => {
     loadData()
@@ -80,6 +81,9 @@ export function BarChartComparisonCategory({ title, grado }: BarChartComparisonC
       prev.includes(emotion) ? prev.filter((e) => e !== emotion) : [...prev, emotion]
     )
   }
+
+  const getEmotionColor = (emotion: string): string =>
+    getColor("emociones", emotion, "#6c757d")
 
   if (isLoading) {
     return (
@@ -146,7 +150,9 @@ export function BarChartComparisonCategory({ title, grado }: BarChartComparisonC
                 : "bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700"
             }`}
             style={{
-              backgroundColor: selectedEmotions.includes(emotion) ? getEmotionColor(emotion) : "",
+              backgroundColor: selectedEmotions.includes(emotion)
+                ? getEmotionColor(emotion)
+                : "",
               borderColor: getEmotionColor(emotion),
               color: selectedEmotions.includes(emotion) ? "white" : "",
             }}
@@ -196,33 +202,4 @@ export function BarChartComparisonCategory({ title, grado }: BarChartComparisonC
       </div>
     </div>
   )
-}
-
-// Función auxiliar para asignar colores a las emociones
-function getEmotionColor(emotion: string): string {
-  const colors: Record<string, string> = {
-    Alegria: themeColors.emotions.Alegría,
-    Tranquilidad: themeColors.emotions.Tranquilidad,
-    Orgullo: themeColors.emotions.Orgullo,
-    Gratitud: themeColors.emotions.Gratitud,
-    Amor: themeColors.emotions.Amor,
-    Esperanza: themeColors.emotions.Esperanza,
-    Sorpresa: themeColors.emotions.Sorpresa,
-    Confusión: themeColors.emotions.Confusión,
-    Indiferencia: themeColors.emotions.Indiferencia,
-    Miedo: themeColors.emotions.Miedo,
-    Tristeza: themeColors.emotions.Tristeza,
-    Enojo: themeColors.emotions.Enojo,
-    Frustración: themeColors.emotions.Frustración,
-    Ansiedad: themeColors.emotions.Ansiedad,
-    Verguenza: themeColors.emotions.Vergüenza,
-    Celos: themeColors.emotions.Celos,
-    Agobio: themeColors.emotions.Agobio,
-    Inseguridad: themeColors.emotions.Inseguridad,
-    Desesperanza: themeColors.emotions.Desesperanza,
-    Culpa: themeColors.emotions.Culpa,
-    Estrés: themeColors.emotions.Estrés,
-    Aburrimiento: themeColors.emotions.Aburrimiento
-  };
-  return colors[emotion] || themeColors.emotions.Aburrimiento;
 }
