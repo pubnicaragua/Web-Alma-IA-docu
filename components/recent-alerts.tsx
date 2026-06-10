@@ -11,8 +11,22 @@ import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, UserRound } from "lucide-react";
+import {
+  ANONYMOUS_STUDENT_IMAGE,
+  canRevealStudentIdentity,
+  getStudentIdentityLabel,
+  shouldUseDefaultStudentImage,
+} from "@/lib/alert-identity";
 
-export function RecentAlerts() {
+interface RecentAlertsProps {
+  canNavigateToAlert?: boolean;
+  forceAnonymous?: boolean;
+}
+
+export function RecentAlerts({
+  canNavigateToAlert = true,
+  forceAnonymous = false,
+}: RecentAlertsProps) {
   const [alerts, setAlerts] = useState<RecentAlert[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -123,19 +137,49 @@ export function RecentAlerts() {
       </CardHeader>
       <CardContent>
         <div className="space-y-0">
-          {getCurrentPageAlerts().map((alert, index) => (
+          {getCurrentPageAlerts().map((alert, index) => {
+            const isAnonymous = forceAnonymous || alert.anonimo;
+            const canRevealIdentity = canRevealStudentIdentity(
+              isAnonymous
+            );
+            const studentName = alert.alumnos?.personas
+              ? `${alert.alumnos.personas.nombres} ${alert.alumnos.personas.apellidos}`
+              : "Estudiante";
+            const displayName = getStudentIdentityLabel(
+              studentName,
+              isAnonymous
+            );
+            const useDefaultImage = shouldUseDefaultStudentImage(
+              isAnonymous
+            );
+            return (
             <div
               key={alert.alumno_alerta_id || index}
-              onClick={() => handleAlertClick(alert.alumno_alerta_id)}
+              onClick={
+                canNavigateToAlert
+                  ? () => handleAlertClick(alert.alumno_alerta_id)
+                  : undefined
+              }
+              className={canNavigateToAlert ? "cursor-pointer" : "cursor-default"}
             >
               <div className="flex items-center justify-between py-3">
                 <div className="flex items-center gap-3 w-[45%]">
                   {isClient && (
-                    <div className="relative h-10 w-10 overflow-hidden rounded-full flex-shrink-0 cursor-pointer">
-                      {shouldShowDefaultIcon(alert) ? (
+                    <div
+                      className={`relative h-10 w-10 overflow-hidden rounded-full flex-shrink-0 ${
+                        canNavigateToAlert ? "cursor-pointer" : "cursor-default"
+                      }`}
+                    >
+                      {useDefaultImage ? (
+                        <Image
+                          src={ANONYMOUS_STUDENT_IMAGE}
+                          alt="Estudiante anonimo"
+                          fill
+                          className="object-cover"
+                        />
+                      ) : shouldShowDefaultIcon(alert) ? (
                         <div
-                          className={`flex h-full w-full items-center justify-center bg-gray-100 text-gray-500 ${alert.anonimo ? "blur-xl" : ""
-                            }`}
+                          className="flex h-full w-full items-center justify-center bg-gray-100 text-gray-500"
                           aria-label="Imagen de estudiante no disponible"
                         >
                           <UserRound className="h-6 w-6" />
@@ -143,23 +187,21 @@ export function RecentAlerts() {
                       ) : (
                         <Image
                           src={alert.alumnos!.url_foto_perfil!}
-                          alt={`${alert.alumnos?.personas?.nombres || "Estudiante"
-                            }`}
+                          alt={studentName}
                           fill
-                          className={`object-cover ${alert.anonimo ? "blur-xl" : ""
-                            }`}
+                          className="object-cover"
                           onError={() => handleImageError(alert.alumno_alerta_id)}
                         />
                       )}
                     </div>
                   )}
-                  <div className="min-w-0 cursor-pointer">
+                  <div
+                    className={`min-w-0 ${
+                      canNavigateToAlert ? "cursor-pointer" : "cursor-default"
+                    }`}
+                  >
                     <h4 className="text-sm font-medium truncate">
-                      {!alert.anonimo
-                        ? alert.alumnos?.personas
-                          ? `${alert.alumnos.personas.nombres} ${alert.alumnos.personas.apellidos}`
-                          : "Estudiante"
-                        : "Anonimo"}
+                      {displayName}
                     </h4>
                     <p className="text-xs text-gray-500 truncate">
                       {alert.alertas_tipos?.nombre || "Alerta"}
@@ -187,7 +229,8 @@ export function RecentAlerts() {
                 <div className="border-t border-gray-100"></div>
               )}
             </div>
-          ))}
+            );
+          })}
           {alerts.length > itemsPerPage && (
             <div className="flex items-center space-x-2 pt-4 justify-end ">
               <Button

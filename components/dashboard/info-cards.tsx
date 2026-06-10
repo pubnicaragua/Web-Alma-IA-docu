@@ -4,10 +4,12 @@ import { CardData } from "@/services/home-service";
 import { useMemo } from "react";
 import { StatCard } from "../stat-card";
 import { useUser } from "@/middleware/user-context";
+import { ALERTS_VIEW_PERMISSION } from "@/lib/alert-identity";
 
 
 export function DashboardInfoCards() {
     const { getFuntions, selectedSchoolId } = useUser();
+    const canOpenAlerts = getFuntions(ALERTS_VIEW_PERMISSION);
     const axios = useAxios<CardData>(() => window.axios.get("/home/cards/emociones", {
         params: {
             colegio_id: selectedSchoolId
@@ -104,7 +106,7 @@ export function DashboardInfoCards() {
                             search={card.search}
                             className={card.className}
                             textColor={card.textColor}
-                            isPress={getFuntions("Alertas")}
+                            isPress={canOpenAlerts}
                         />
                     ))}
                 </>

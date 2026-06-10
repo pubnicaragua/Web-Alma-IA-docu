@@ -24,8 +24,14 @@ import type { StudentDetailResponse } from "@/services/students-service";
 import { StudentDetailEvents } from "@/components/student/detail-sections/events";
 import { StudentDetailAlerts } from "@/components/student/detail-sections/alerts";
 import { StudentDetailInfo } from "@/components/student/detail-sections/information";
+import { useToast } from "@/hooks/use-toast";
+import {
+  buildStudentTabAuditPayload,
+  postAudit,
+  type StudentAuditSection,
+} from "@/lib/audit";
 
-const generateNameFromEmail = (email: string) => {
+const generateNameFromEmail = (email?: string | null) => {
   if (!email) return "Estudiante";
 
   const parts = email.split("@")[0].split(".");
@@ -36,10 +42,21 @@ const generateNameFromEmail = (email: string) => {
   return parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
 };
 
+const getStudentDisplayName = (student?: StudentDetailResponse["alumno"] | null) => {
+  const nombres = student?.personas?.nombres?.trim();
+  const apellidos = student?.personas?.apellidos?.trim();
+  const fullName = [nombres, apellidos].filter(Boolean).join(" ").trim();
+
+  return fullName || generateNameFromEmail(student?.email);
+};
+
 
 export default function StudentDetailPage() {
   const { id } = useParams();
-  const { getFuntions, selectedSchoolId } = useUser();
+  const { getFuntions, selectedSchoolId, userData } = useUser();
+  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState("ficha");
+  const [auditingTab, setAuditingTab] = useState<string | null>(null);
   const [selectedEmotions, setSelectedEmotions] = useState<string[]>([
     "Tristeza",
     "Felicidad",
@@ -92,6 +109,65 @@ export default function StudentDetailPage() {
     }));
   }, [studentDetails?.datosComparativa]);
 
+  const firstCourseId = studentDetails?.alumno?.cursos?.[0]?.curso_id;
+  const studentName = getStudentDisplayName(studentDetails?.alumno);
+  const studentEmail = studentDetails?.alumno?.email || "No disponible";
+  const schoolName = studentDetails?.alumno?.colegios?.nombre || "No disponible";
+
+  const auditStudentTabClick = useCallback(
+    async (section: StudentAuditSection): Promise<boolean> => {
+      const alumnoId = Number(id);
+      const colegioId = Number(studentDetails?.alumno?.colegio_id ?? selectedSchoolId);
+      const usuarioId = userData?.usuario?.usuario_id;
+
+      if (!Number.isFinite(alumnoId) || !Number.isFinite(colegioId) || !usuarioId) {
+        toast({
+          title: "Auditoría no registrada",
+          description: "Faltan datos de usuario, colegio o alumno.",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      const payload = buildStudentTabAuditPayload({
+        alumnoId,
+        colegioId,
+        section,
+        usuarioId,
+      });
+
+      try {
+        setAuditingTab(section);
+        await postAudit(payload);
+        return true;
+      } catch (auditError) {
+        console.error("Error registrando auditoria de pestaña de alumno:", auditError);
+        toast({
+          title: "Auditoría no registrada",
+          description: auditError instanceof Error ? auditError.message : "No se pudo registrar la auditoría.",
+          variant: "destructive",
+        });
+        return false;
+      } finally {
+        setAuditingTab(null);
+      }
+    },
+    [id, selectedSchoolId, studentDetails?.alumno?.colegio_id, toast, userData?.usuario?.usuario_id]
+  );
+
+  const handleTabChange = useCallback(
+    (value: string) => {
+      if (value === "alertas" || value === "informes" || value === "emociones") {
+        auditStudentTabClick(value).then((registered) => {
+          if (registered) setActiveTab(value);
+        });
+        return;
+      }
+
+      setActiveTab(value);
+    },
+    [auditStudentTabClick]
+  );
 
   return (
     <ErrorBoundary>
@@ -99,7 +175,7 @@ export default function StudentDetailPage() {
         <AppLayout>
           <>
             {isLoading && <StudentSkeleton />}
-            {!studentDetails && !isLoading && (
+            {!studentDetails && !isLoading && !selectedSchoolId && (
               <div className="container mx-auto px-2 sm:px-6 py-4 sm:py-8">
                 <div className="flex flex-col items-center justify-center h-64 bg-white rounded-lg shadow-sm p-6 border border-red-200">
                   <AlertTriangle className="h-12 w-12 text-red-500 mb-4" />
@@ -119,22 +195,22 @@ export default function StudentDetailPage() {
                   <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
                     <div className="relative w-32 h-32 rounded-full overflow-hidden flex-shrink-0 border-4 border-blue-100">
                       <Image
-                        src={studentDetails.alumno.url_foto_perfil || "/placeholder.svg"}
-                        alt={studentDetails.alumno.personas.nombres || generateNameFromEmail(studentDetails.alumno.email)}
+                        src={studentDetails.alumno?.url_foto_perfil || "/placeholder.svg"}
+                        alt={studentName}
                         width={128}
                         height={128}
                         className="w-full h-full object-cover"
                       />
                     </div>
                     <div className="flex flex-col items-center md:items-start">
-                      <h1 className="text-3xl font-bold text-gray-800">{`${studentDetails.alumno.personas.nombres || generateNameFromEmail(studentDetails.alumno.email)}  ${studentDetails.alumno.personas.apellidos}`}</h1>
+                      <h1 className="text-3xl font-bold text-gray-800">{studentName}</h1>
                       <div className="flex flex-wrap gap-4">
                         <div className="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
                           Colegio:{" "}
-                          <span className="font-bold">{studentDetails.alumno.colegios.nombre}</span>
+                          <span className="font-bold">{schoolName}</span>
                         </div>
                         <div className="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                          Email: {studentDetails.alumno.email}
+                          Email: {studentEmail}
                         </div>
                       </div>
                     </div>
@@ -143,7 +219,7 @@ export default function StudentDetailPage() {
 
                 {/* Zona 2: Pestañas de navegación */}
                 <div className="bg-white rounded-lg shadow-sm p-4 mb-6 border border-blue-200">
-                  <Tabs defaultValue="ficha" className="w-full">
+                  <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
                     <TabsList className="bg-blue-100 w-full justify-start overflow-x-auto flex-nowrap whitespace-nowrap">
                       <TabsTrigger
                         value="ficha"
@@ -156,6 +232,7 @@ export default function StudentDetailPage() {
                         getFuntions("Alertas") ? (
                         <TabsTrigger
                           value="alertas"
+                          disabled={auditingTab !== null}
                           className="data-[state=active]:bg-blue-500 data-[state=active]:text-white flex items-center text-xs sm:text-sm px-2 sm:px-4"
                         >
                           <Bell className="h-4 w-4 mr-2" />
@@ -166,6 +243,7 @@ export default function StudentDetailPage() {
                       {getFuntions("Ficha Alumno->Informes") ? (
                         <TabsTrigger
                           value="informes"
+                          disabled={auditingTab !== null}
                           className="data-[state=active]:bg-blue-500 data-[state=active]:text-white flex items-center text-xs sm:text-sm px-2 sm:px-4"
                         >
                           <FileText className="h-4 w-4 mr-2" />
@@ -176,6 +254,7 @@ export default function StudentDetailPage() {
                       {getFuntions("Ficha Alumno->Emociones") ? (
                         <TabsTrigger
                           value="emociones"
+                          disabled={auditingTab !== null}
                           className="data-[state=active]:bg-blue-500 data-[state=active]:text-white flex items-center text-xs sm:text-sm px-2 sm:px-4"
                         >
                           <Smile className="h-4 w-4 mr-2" />
@@ -183,7 +262,7 @@ export default function StudentDetailPage() {
                         </TabsTrigger>
                       ) : null}
 
-                      {getFuntions("Ficha Alumno->Eventos") ? (
+                      {getFuntions("Ficha Alumno->Eventos") && firstCourseId ? (
                         <TabsTrigger
                           value="eventos"
                           className="data-[state=active]:bg-blue-500 data-[state=active]:text-white flex items-center text-xs sm:text-sm px-2 sm:px-4"
@@ -200,8 +279,8 @@ export default function StudentDetailPage() {
                       <TabsContent value="ficha">
                         <StudentDetailInfo
                           alumno={studentDetails?.alumno}
-                          ficha={studentDetails?.ficha[0] ?? null}
-                          apoderados={studentDetails.apoderados}
+                          ficha={studentDetails?.ficha?.[0] ?? null}
+                          apoderados={studentDetails.apoderados ?? []}
                         />
                       </TabsContent>
 
@@ -216,7 +295,7 @@ export default function StudentDetailPage() {
 
                       <TabsContent value="informes">
                         <div className="bg-white rounded-lg shadow-sm p-6 border border-blue-200">
-                          <StudentReports reports={studentDetails.informes} />
+                          <StudentReports reports={studentDetails.informes ?? []} />
                         </div>
                       </TabsContent>
 
@@ -241,10 +320,16 @@ export default function StudentDetailPage() {
                       </TabsContent>
 
                       <TabsContent value="eventos">
-                        <StudentDetailEvents
-                          alumno_id={studentDetails.alumno.alumno_id}
-                          curso_id={studentDetails.alumno.cursos[0].curso_id}
-                        />
+                        {firstCourseId ? (
+                          <StudentDetailEvents
+                            alumno_id={studentDetails.alumno.alumno_id}
+                            curso_id={firstCourseId}
+                          />
+                        ) : (
+                          <p className="text-sm text-gray-500">
+                            No hay curso asociado para mostrar eventos.
+                          </p>
+                        )}
                       </TabsContent>
 
                     </div>

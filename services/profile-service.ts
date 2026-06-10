@@ -112,12 +112,16 @@ export async function fetchUserProfile(
   }
 
   try {
-    const response = await fetchWithAuth("/perfil/obtener", {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
+    const response = await fetchWithAuth(
+      "/perfil/obtener",
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
       },
-    });
+      false
+    );
 
     if (!response.ok) {
       return null;
@@ -180,12 +184,16 @@ export const updateProfile = async (
 };
 export async function fetchUserProfileBitacora(): Promise<ProfileResponse | null> {
   try {
-    const response = await fetchWithAuth("/perfil/obtener", {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
+    const response = await fetchWithAuth(
+      "/perfil/obtener",
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
       },
-    });
+      false
+    );
 
     if (!response.ok) {
       return null;

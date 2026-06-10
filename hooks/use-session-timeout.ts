@@ -12,8 +12,11 @@ export function useSessionTimeout() {
   const router = useRouter();
   const { toast } = useToast();
   const { logout } = useAuth();
-  const warningTimeoutRef = useRef<NodeJS.Timeout>(null);
-  const logoutTimeoutRef = useRef<NodeJS.Timeout>(null);
+  const warningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const logoutTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isDevelopment =
+    process.env.NODE_ENV === "development" ||
+    process.env.NEXT_PUBLIC_ENVIROMENT === "development";
 
   const handleLogout = useCallback(() => {
     if (typeof window !== "undefined") logout(true);
@@ -21,8 +24,8 @@ export function useSessionTimeout() {
 
   const resetTimeout = useCallback(() => {
     if (typeof window !== "undefined") {
-      clearTimeout(warningTimeoutRef.current);
-      clearTimeout(logoutTimeoutRef.current);
+      if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
+      if (logoutTimeoutRef.current) clearTimeout(logoutTimeoutRef.current);
 
       // Configurar advertencia a los 2 minutos
       warningTimeoutRef.current = setTimeout(() => {
@@ -43,6 +46,8 @@ export function useSessionTimeout() {
   }, [handleLogout, toast]);
 
   useEffect(() => {
+    if (isDevelopment) return;
+
     if (typeof window !== "undefined") {
       const events = [
         "mousedown",
@@ -65,9 +70,9 @@ export function useSessionTimeout() {
         events.forEach((event) => {
           document.removeEventListener(event, resetOnActivity, true);
         });
-        clearTimeout(warningTimeoutRef.current);
-        clearTimeout(logoutTimeoutRef.current);
+        if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
+        if (logoutTimeoutRef.current) clearTimeout(logoutTimeoutRef.current);
       };
     }
-  }, [resetTimeout]);
+  }, [isDevelopment, resetTimeout]);
 }

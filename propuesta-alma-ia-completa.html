@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Propuesta de Soporte - Alma IA & Software Nicaragua</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #4299ff 0%, #1a1a1a 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+            color: #1a1a1a;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 30px 90px rgba(0,0,0,0.25);
+            overflow: hidden;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4299ff 0%, #1a1a1a 100%);
+            padding: 60px 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background: white;
+            border-radius: 100% 100% 0 0;
+        }
+
+        .logo-container {
+            position: relative;
+            z-index: 2;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            width: 160px;
+            height: auto;
+            filter: drop-shadow(0 10px 30px rgba(0,0,0,0.2));
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .header h1 {
+            font-size: 3em;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 2;
+            letter-spacing: -1px;
+        }
+
+        .header p {
+            font-size: 1.3em;
+            color: rgba(255,255,255,0.95);
+            position: relative;
+            z-index: 2;
+            font-weight: 300;
+        }
+
+        .content { padding: 60px 40px; }
+        .section { margin-bottom: 60px; }
+
+        .section-title {
+            font-size: 2.2em;
+            font-weight: 800;
+            background: linear-gradient(135deg, #4299ff 0%, #1a1a1a 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 30px;
+            letter-spacing: -0.5px;
+        }
+
+        .intro-text {
+            font-size: 1.1em;
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 30px 0;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        th {
+            background: linear-gradient(135deg, #4299ff 0%, #1a1a1a 100%);
+            color: white;
+            padding: 20px;
+            text-align: left;
+            font-weight: 700;
+            font-size: 1.05em;
+            letter-spacing: 0.3px;
+        }
+
+        td {
+            padding: 18px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 1em;
+        }
+
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background: #f8fbff; }
+
+        .editable {
+            background: #fff;
+            border: 2px solid #e0e0e0;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1em;
+            font-weight: 600;
+            color: #4299ff;
+            transition: all 0.3s ease;
+            min-width: 100px;
+            text-align: center;
+        }
+
+        .editable:focus {
+            outline: none;
+            border-color: #4299ff;
+            box-shadow: 0 0 0 3px rgba(66, 153, 255, 0.1);
+            background: #f8fbff;
+        }
+
+        .editable:hover { border-color: #4299ff; }
+
+        .total-row {
+            background: linear-gradient(135deg, #4299ff 0%, #1a1a1a 100%);
+            color: white;
+            font-weight: 700;
+            font-size: 1.15em;
+        }
+
+        .total-row td {
+            border: none;
+            padding: 22px 20px;
+        }
+
+        .total-row .editable {
+            background: rgba(255,255,255,0.95);
+            border-color: rgba(255,255,255,0.3);
+            color: #4299ff;
+            font-weight: 700;
+        }
+
+        .cost-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .cost-card {
+            background: linear-gradient(135deg, #4299ff 0%, #1a1a1a 100%);
+            padding: 30px;
+            border-radius: 16px;
+            color: white;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(66, 153, 255, 0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .cost-card:hover { transform: translateY(-5px); }
+
+        .cost-card h4 {
+            font-size: 1em;
+            font-weight: 400;
+            opacity: 0.9;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .cost-card .amount {
+            font-size: 2.5em;
+            font-weight: 800;
+            margin: 10px 0;
+            letter-spacing: -1px;
+        }
+
+        .footer {
+            background: #1a1a1a;
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .footer p { margin: 8px 0; opacity: 0.8; }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin: 5px;
+        }
+
+        .badge-alta { background: #10b981; color: white; }
+        .badge-critica { background: #ef4444; color: white; }
+        .badge-estrategico { background: #f59e0b; color: white; }
+
+        .note {
+            background: #fff9e6;
+            border-left: 4px solid #fbbf24;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+
+        .strategy-box {
+            background: #f0fdf4;
+            border-left: 4px solid #10b981;
+            padding: 25px;
+            border-radius: 12px;
+            margin: 25px 0;
+            line-height: 1.6;
+        }
+
+        .strategy-box h3 {
+            color: #10b981;
+            font-size: 1.3em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 { font-size: 2em; }
+            .content { padding: 40px 20px; }
+            table { font-size: 0.9em; }
+            th, td { padding: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo-container">
+                <img src="logotipo.png" alt="Alma IA Logo" class="logo">
+            </div>
+            <h1>Plan de Soporte Alma IA</h1>
+            <p>Estructura Eficiente (Meta: ~$1,200/mes) e Integración con Software Nicaragua</p>
+        </div>
+
+        <div class="content">
+            <!-- ESTRATEGIA DE FINANCIAMIENTO CRISTIAN / SOFTWARE NICARAGUA -->
+            <div class="section">
+                <h2 class="section-title">Estrategia de Financiamiento Cruzado</h2>
+                <div class="strategy-box">
+                    <h3>💡 Venta de Software de Cristian (Software Nicaragua) al Costo Operativo</h3>
+                    <p>Para no depender de un financiamiento externo agresivo, utilizaremos la cartera de proyectos de <strong>Software Nicaragua</strong> desarrollados por Cristian. Al comercializar estos sistemas consolidados a su <strong>costo operativo directo</strong>, canalizaremos el 100% de ese margen e ingreso recurrente para subsidiar y financiar el soporte técnico de <strong>Alma IA</strong>.</p>
+                    <p style="margin-top: 10px;">De esta forma, habilitamos un ecosistema autosostenible donde el software nicaragüense impulsa activamente la implementación de IA en los 10 colegios.</p>
+                </div>
+            </div>
+
+            <!-- TABLA DE EQUIPO OPTIMIZADO (2 Y 2) -->
+            <div class="section">
+                <h2 class="section-title">1. Estructura de Equipo Eficiente (Medio Tiempo)</h2>
+                <p class="intro-text">Para ajustarnos a la meta mensual cercana a los <strong>$1,200 USD</strong>, estructuramos un equipo de <strong>4 desarrolladores clave a medio tiempo</strong> (distribuidos en esquema de 2 y 2 para cubrir frentes simultáneos sin sobrecostos).</p>
+                
+                <table id="talent-table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Rol Principal</th>
+                            <th>Frentes de Soporte Cubiertos</th>
+                            <th>Asignación</th>
+                            <th>Costo Mensual (USD)</th>
+                            <th>Costo Anual (USD)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Jonathan</strong></td>
+                            <td>Frontend Developer</td>
+                            <td>Interfaces de usuario, accesibilidad colegios/apoderados, bugs visuales</td>
+                            <td>Medio Tiempo (20h/s)</td>
+                            <td><input type="number" class="editable calc-monthly-talent" value="300" data-index="0"></td>
+                            <td><input type="text" class="editable" id="talent-0-annual" value="$3,600" readonly></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Jair</strong></td>
+                            <td>Backend Developer</td>
+                            <td>APIs, integraciones, lógica de negocio y reportes Alma IA</td>
+                            <td>Medio Tiempo (20h/s)</td>
+                            <td><input type="number" class="editable calc-monthly-talent" value="300" data-index="1"></td>
+                            <td><input type="text" class="editable" id="talent-1-annual" value="$3,600" readonly></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Sergio</strong></td>
+                            <td>Database Specialist</td>
+                            <td>Consultas, backups de los 10 colegios, rendimiento Supabase</td>
+                            <td>Medio Tiempo (20h/s)</td>
+                            <td><input type="number" class="editable calc-monthly-talent" value="300" data-index="2"></td>
+                            <td><input type="text" class="editable" id="talent-2-annual" value="$3,600" readonly></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Dilice</strong></td>
+                            <td>DevOps & Infraestructura</td>
+                            <td>Despliegues Render, AWS, monitorización 20k usuarios, alertas</td>
+                            <td>Medio Tiempo (20h/s)</td>
+                            <td><input type="number" class="editable calc-monthly-talent" value="300" data-index="3"></td>
+                            <td><input type="text" class="editable" id="talent-3-annual" value="$3,600" readonly></td>
+                        </tr>
+                        <tr class="total-row">
+                            <td colspan="4"><strong>TOTAL SOPORTE TALENTO (4 personas a 1/2 tiempo)</strong></td>
+                            <td><input type="text" class="editable" id="total-talent-monthly" value="$1,200" readonly></td>
+                            <td><input type="text" class="editable" id="total-talent-annual" value="$14,400" readonly></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- INFRAESTRUCTURA CLOUD -->
+            <div class="section">
+                <h2 class="section-title">2. Costos de Infraestructura Cloud Optimizado</h2>
+                <p class="intro-text">Costos adaptados y ajustados para la operación real controlada de los 10 colegios (10,000 alumnos + 10,000 apoderados).</p>
+
+                <table id="cloud-table">
+                    <thead>
+                        <tr>
+                            <th>Servidor / Servicio</th>
+                            <th>Uso Específico Alma IA (10 Colegios)</th>
+                            <th>Costo Mensual (USD)</th>
+                            <th>Costo Anual (USD)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Supabase Pro</strong></td>
+                            <td>Base de Datos Postgres + Auth de los 20,000 usuarios + Storage fotos perfil</td>
+                            <td><input type="number" class="editable calc-cloud" value="25" data-index="0"></td>
+                            <td><input type="text" class="editable" id="cloud-0-annual" value="$300" readonly></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Supabase Extra</strong></td>
+                            <td>Crecimiento de volumen de datos y ancho de banda activo</td>
+                            <td><input type="number" class="editable calc-cloud" value="25" data-index="1"></td>
+                            <td><input type="text" class="editable" id="cloud-1-annual" value="$300" readonly></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Render (Backend)</strong></td>
+                            <td>Web Service para API centralizada de Alma IA (Standard Plan)</td>
+                            <td><input type="number" class="editable calc-cloud" value="25" data-index="2"></td>
+                            <td><input type="text" class="editable" id="cloud-2-annual" value="$300" readonly></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Render (Workers/Front)</strong></td>
+                            <td>Tareas asíncronas y cron jobs de envíos de alertas colegios</td>
+                            <td><input type="number" class="editable calc-cloud" value="15" data-index="3"></td>
+                            <td><input type="text" class="editable" id="cloud-3-annual" value="$180" readonly></td>
+                        </tr>
+                        <tr>
+                            <td><strong>AWS SES (Email)</strong></td>
+                            <td>Envío masivo de alertas de comportamiento y asistencia a apoderados</td>
+                            <td><input type="number" class="editable calc-cloud" value="10" data-index="4"></td>
+                            <td><input type="text" class="editable" id="cloud-4-annual" value="$120" readonly></td>
+                        </tr>
+                        <tr>
+                            <td><strong>AWS S3 & CloudFront</strong></td>
+                            <td>Almacenamiento de informes escolares, PDFs generados por IA y CDN rápido</td>
+                            <td><input type="number" class="editable calc-cloud" value="20" data-index="5"></td>
+                            <td><input type="text" class="editable" id="cloud-5-annual" value="$240" readonly></td>
+                        </tr>
+                        <tr class="total-row">
+                            <td colspan="2"><strong>TOTAL INFRAESTRUCTURA CLOUD</strong></td>
+                            <td><input type="text" class="editable" id="total-cloud-monthly" value="$120" readonly></td>
+                            <td><input type="text" class="editable" id="total-cloud-annual" value="$1,440" readonly></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- PROYECCIÓN Y RESUMEN GENERAL -->
+            <div class="section">
+                <h2 class="section-title">3. Resumen Consolidado de Inversión Mensual</h2>
+                
+                <div class="cost-summary">
+                    <div class="cost-card">
+                        <h4>Soporte Talento</h4>
+                        <div class="amount" id="card-talent-val">$1,200</div>
+                        <p>USD / mes</p>
+                    </div>
+                    <div class="cost-card">
+                        <h4>Servidores & Cloud</h4>
+                        <div class="amount" id="card-cloud-val">$120</div>
+                        <p>USD / mes</p>
+                    </div>
+                    <div class="cost-card" style="background: linear-gradient(135deg, #1a1a1a 0%, #333 100%);">
+                        <h4>Total Operativo</h4>
+                        <div class="amount" id="card-total-val">$1,320</div>
+                        <p>USD / mes</p>
+                    </div>
+                </div>
+
+                <div class="note" style="background: #e3f2fd; border-left-color: #4299ff;">
+                    <strong>📉 Análisis de Viabilidad Económica:</strong><br>
+                    • Con esta optimización pasamos de una proyección sobredimensionada a un presupuesto ágil de <strong>$1,320 USD mensuales totales</strong> ($1,200 de talento + $120 de servidores).<br>
+                    • Este costo es perfectamente absorbible mediante la comercialización directa de <strong>1 o 2 soluciones consolidadas de Software Nicaragua</strong> mensuales a costo operativo.
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <h3 style="margin-bottom: 15px; font-size: 1.5em;">ALMA IA & SOFTWARE NICARAGUA</h3>
+            <p>Estrategia de Sostenibilidad y Soporte Operativo</p>
+            <p>Mayo 2026</p>
+        </div>
+    </div>
+
+    <script>
+        function parseValue(input) {
+            const val = parseFloat(input.value);
+            return isNaN(val) ? 0 : val;
+        }
+
+        function formatCurrency(value) {
+            return '$' + value.toLocaleString('en-US');
+        }
+
+        function recalculate() {
+            // Recalcular Talento
+            const monthlyTalentInputs = document.querySelectorAll('.calc-monthly-talent');
+            let totalTalentMonthly = 0;
+            
+            monthlyTalentInputs.forEach(input => {
+                const index = input.getAttribute('data-index');
+                const monthly = parseValue(input);
+                const annual = monthly * 12;
+                document.getElementById(`talent-${index}-annual`).value = formatCurrency(annual);
+                totalTalentMonthly += monthly;
+            });
+            
+            document.getElementById('total-talent-monthly').value = formatCurrency(totalTalentMonthly);
+            document.getElementById('total-talent-annual').value = formatCurrency(totalTalentMonthly * 12);
+            document.getElementById('card-talent-val').textContent = formatCurrency(totalTalentMonthly);
+
+            // Recalcular Cloud
+            const cloudInputs = document.querySelectorAll('.calc-cloud');
+            let totalCloudMonthly = 0;
+            
+            cloudInputs.forEach(input => {
+                const index = input.getAttribute('data-index');
+                const monthly = parseValue(input);
+                const annual = monthly * 12;
+                document.getElementById(`cloud-${index}-annual`).value = formatCurrency(annual);
+                totalCloudMonthly += monthly;
+            });
+
+            document.getElementById('total-cloud-monthly').value = formatCurrency(totalCloudMonthly);
+            document.getElementById('total-cloud-annual').value = formatCurrency(totalCloudMonthly * 12);
+            document.getElementById('card-cloud-val').textContent = formatCurrency(totalCloudMonthly);
+
+            // Gran Total
+            const grandTotalMonthly = totalTalentMonthly + totalCloudMonthly;
+            document.getElementById('card-total-val').textContent = formatCurrency(grandTotalMonthly);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.calc-monthly-talent, .calc-cloud').forEach(input => {
+                input.addEventListener('input', recalculate);
+            });
+            recalculate();
+        });
+    </script>
+</body>
+</html>

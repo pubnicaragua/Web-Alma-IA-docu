@@ -2,7 +2,12 @@ import type { StudentMedicalRecord } from "@/types/student";
 import { AlertTriangle } from "lucide-react";
 
 interface PropTypes {
-    ficha: StudentMedicalRecord
+    ficha: StudentMedicalRecord | null
+}
+
+function fieldText(value: string | null | undefined) {
+    const text = value?.trim();
+    return text || "No disponible";
 }
 
 export function StudentDetailInfoMedicalRecord({ ficha }: Readonly<PropTypes>) {
@@ -18,7 +23,7 @@ export function StudentDetailInfoMedicalRecord({ ficha }: Readonly<PropTypes>) {
                         Historial médico
                     </h4>
                     <p className="text-gray-600">
-                        {ficha?.historial_medico.trim() || "No disponible"}
+                        {fieldText(ficha?.historial_medico)}
                     </p>
                 </div>
                 <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
@@ -26,23 +31,21 @@ export function StudentDetailInfoMedicalRecord({ ficha }: Readonly<PropTypes>) {
                         Alergias conocidas
                     </h4>
                     <p className="text-gray-600">
-                        {ficha?.alergias.trim() || "No disponible"}
+                        {fieldText(ficha?.alergias)}
                     </p>
                 </div>
                 <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
                     <h4 className="font-medium text-gray-700 mb-2">
                         Condiciones médicas actuales
                     </h4>
-                    {ficha?.condiciones_medicas_relevantes.trim() ||
-                        "No disponible"}
+                    {fieldText(ficha?.condiciones_medicas_relevantes)}
                 </div>
                 <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
                     <h4 className="font-medium text-gray-700 mb-2">
                         Medicamentos actuales
                     </h4>
                     <p className="text-gray-600">
-                        {ficha?.medicamentos_actuales.trim() ||
-                            "No disponible"}
+                        {fieldText(ficha?.medicamentos_actuales)}
                     </p>
                 </div>
                 <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
@@ -50,8 +53,7 @@ export function StudentDetailInfoMedicalRecord({ ficha }: Readonly<PropTypes>) {
                         Diagnósticos previos
                     </h4>
                     <p className="text-gray-600">
-                        {ficha?.diagnosticos_previos.trim() ||
-                            "No disponible"}
+                        {fieldText(ficha?.diagnosticos_previos)}
                     </p>
                 </div>
                 <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 md:col-span-2">
@@ -59,8 +61,7 @@ export function StudentDetailInfoMedicalRecord({ ficha }: Readonly<PropTypes>) {
                         Terapias y tratamientos en curso
                     </h4>
                     <p className="text-gray-600">
-                        {ficha?.terapias_tratamiento_curso.trim() ||
-                            "No disponible"}
+                        {fieldText(ficha?.terapias_tratamiento_curso)}
                     </p>
                 </div>
             </div>

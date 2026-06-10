@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { Suspense, useState, useEffect, useCallback, useMemo } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AppLayout } from "@/components/layout/app-layout";
@@ -16,6 +16,14 @@ import { TeachersListSkeleton } from "@/components/teacher/teachers-list-skeleto
 import { equalsIgnoreCase } from "@/lib/utils";
 
 export default function TeachersPage() {
+  return (
+    <Suspense fallback={null}>
+      <TeachersPageContent />
+    </Suspense>
+  );
+}
+
+function TeachersPageContent() {
   const router = useRouter();
 
   // Estados para los datos y la carga

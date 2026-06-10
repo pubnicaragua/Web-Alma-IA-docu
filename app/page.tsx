@@ -21,6 +21,9 @@ import { DashboardInfoCards } from "@/components/dashboard/info-cards";
 import ErrorBoundary from "@/components/utils/error-bountdry";
 import { BarNegativeEmotionsChart } from "@/components/dashboard/emotions/negative-chart";
 import { BarPositiveEmotionsChart } from "@/components/dashboard/emotions/positive-chart";
+import { ALERTS_VIEW_PERMISSION } from "@/lib/alert-identity";
+
+const RECENT_ALERTS_CHART_PERMISSION = "Grafico Alertas Recientes";
 
 const EMOTIONS = ["Tristeza", "Felicidad", "Estrés", "Ansiedad", "Enojo", "Otros"];
 
@@ -29,7 +32,8 @@ export default function Home() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
-  const [haveAccess, setHaveAccess] = useState(false);
+  const [canShowRecentAlerts, setCanShowRecentAlerts] = useState(false);
+  const [canOpenAlerts, setCanOpenAlerts] = useState(false);
 
   const [selectedEmotionsGeneral, setSelectedEmotionsGeneral] = useState<string[]>(EMOTIONS);
   const [selectedEmotions, setSelectedEmotions] = useState<string[]>(EMOTIONS);
@@ -74,7 +78,8 @@ export default function Home() {
 
     loadSchool();
     if (!userLoading && userData) {
-      getFuntions("Alertas") ? setHaveAccess(true) : setHaveAccess(false);
+      setCanShowRecentAlerts(getFuntions(RECENT_ALERTS_CHART_PERMISSION));
+      setCanOpenAlerts(getFuntions(ALERTS_VIEW_PERMISSION));
     }
     setIsLoading(false)
   }, [router, toast, userLoading, userData, getFuntions]);
@@ -159,7 +164,12 @@ export default function Home() {
           {/* Fechas importantes y alertas recientes */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
             <ImportantDates title="Fechas importantes" />
-            {haveAccess ? <RecentAlerts /> : null}
+            {canShowRecentAlerts ? (
+              <RecentAlerts
+                canNavigateToAlert={canOpenAlerts}
+                forceAnonymous={!canOpenAlerts}
+              />
+            ) : null}
           </div>
         </div>
       </AppLayout>

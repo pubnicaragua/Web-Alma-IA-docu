@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { Suspense, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
@@ -14,35 +14,46 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
-import {
-  fetchUserProfile,
-  type ProfileResponse,
-} from "@/services/profile-service";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getNotificationCount } from "@/services/header-service";
 import { useUser } from "@/middleware/user-context";
 import { useAuth } from "@/middleware/auth-provider";
+import { ALERTS_VIEW_PERMISSION } from "@/lib/alert-identity";
 
 interface HeaderProps {
   toggleSidebar?: () => void;
 }
 
 export function Header({ toggleSidebar }: HeaderProps) {
+  return (
+    <Suspense fallback={null}>
+      <HeaderInner toggleSidebar={toggleSidebar} />
+    </Suspense>
+  );
+}
+
+function HeaderInner({ toggleSidebar }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const urlSearch = searchParams.get("search") ?? "";
   const { logout } = useAuth();
-  const { getFuntions, refresh, selectedSchoolId, setSelectedSchoolId } =
+  const {
+    getFuntions,
+    refresh,
+    selectedSchoolId,
+    setSelectedSchoolId,
+    userData: profileData,
+    isLoading: isProfileLoading,
+  } =
     useUser();
   const { toast } = useToast();
 
-  const [profileData, setProfileData] = useState<ProfileResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [notificationCount, setNotificationCount] = useState(0);
   const [isClient, setIsClient] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const canOpenAlerts = getFuntions(ALERTS_VIEW_PERMISSION);
 
   // Sync searchTerm with URL search parameter
   useEffect(() => {
@@ -67,18 +78,6 @@ export function Header({ toggleSidebar }: HeaderProps) {
   const [dataSchool, setDataSchool] = useState<any>({});
   const [profileImageFailed, setProfileImageFailed] = useState(false);
 
-  const loadUserProfile = useCallback(async (forceRefresh: boolean = false) => {
-    try {
-      setIsLoading(true);
-      const data = await fetchUserProfile({ forceRefresh });
-      setProfileData(data);
-    } catch {
-      setProfileData(null);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
   const loadNotifications = useCallback(async () => {
     try {
       const count = await getNotificationCount(selectedSchoolId || undefined);
@@ -95,8 +94,6 @@ export function Header({ toggleSidebar }: HeaderProps) {
   }, []);
 
   useEffect(() => {
-    loadUserProfile(true);
-
     // Si contexto no tiene selectedSchoolId, intenta sincronizarlo con localStorage
     if (typeof window !== "undefined" && !selectedSchoolId) {
       const lsSelected = localStorage.getItem("selectedSchool");
@@ -121,23 +118,6 @@ export function Header({ toggleSidebar }: HeaderProps) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refresh]);
-
-  useEffect(() => {
-    if (!isClient) return;
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        loadUserProfile(true);
-      }
-    };
-
-    window.addEventListener("focus", handleVisibilityChange);
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => {
-      window.removeEventListener("focus", handleVisibilityChange);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, [isClient, loadUserProfile]);
 
   // Mantener sincronía del dataSchool con selectedSchoolId
   useEffect(() => {
@@ -211,8 +191,7 @@ export function Header({ toggleSidebar }: HeaderProps) {
   }, [isClient, selectedSchoolId, loadNotifications]);
 
   const handleBellClick = () => {
-    console.log(notificationCount)
-    if (notificationCount > 0 && getFuntions("Alertas")) {
+    if (notificationCount > 0 && canOpenAlerts) {
       router.push("/alertas");
     }
   };
@@ -369,13 +348,13 @@ export function Header({ toggleSidebar }: HeaderProps) {
         <div className="flex items-center space-x-4 flex-shrink-0">
           {pathname !== "/select-school" && (
             <div
-              className={`relative ${isClient && notificationCount > 0
+              className={`relative ${isClient && notificationCount > 0 && canOpenAlerts
                 ? "cursor-pointer"
                 : "cursor-default"
                 }`}
-              onClick={handleBellClick}
-              role="button"
-              tabIndex={0}
+              onClick={canOpenAlerts ? handleBellClick : undefined}
+              role={canOpenAlerts ? "button" : undefined}
+              tabIndex={canOpenAlerts ? 0 : undefined}
               aria-label={`Notificaciones: ${notificationCount}`}
             >
               <Bell className="text-white h-7 w-7 hidden sm:block" />
@@ -391,7 +370,7 @@ export function Header({ toggleSidebar }: HeaderProps) {
             <DropdownMenuTrigger className="flex items-center space-x-3 focus:outline-none">
               <div className="flex items-center gap-2">
                 <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/40 bg-white/20">
-                  {isLoading ? (
+                  {isProfileLoading ? (
                     <Skeleton className="w-full h-full rounded-full" />
                   ) : getUserImageUrl() ? (
                     <img
@@ -406,7 +385,7 @@ export function Header({ toggleSidebar }: HeaderProps) {
                 </div>
 
                 <div className="text-white text-right hidden sm:block min-w-[120px]">
-                  {isLoading ? (
+                  {isProfileLoading ? (
                     <>
                       <Skeleton className="h-4 w-28 mb-1" />
                       <Skeleton className="h-3 w-20" />

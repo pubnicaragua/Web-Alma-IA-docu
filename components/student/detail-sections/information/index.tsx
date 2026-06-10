@@ -5,9 +5,9 @@ import { StudentDetailInfoMedicalRecord } from "./medical-record";
 import { StudentDetailInfoRepresentatives } from "./representatives";
 
 interface PropTypes {
-    alumno: StudentGeneral
-    ficha: StudentMedicalRecord,
-    apoderados: StudentRepresentative[]
+    alumno: StudentGeneral | null | undefined
+    ficha: StudentMedicalRecord | null,
+    apoderados: StudentRepresentative[] | null | undefined
 }
 
 export function StudentDetailInfo({
@@ -19,12 +19,12 @@ export function StudentDetailInfo({
 
     return (
         <>
-            <StudentDetailInfoGeneral alumno={alumno} />
+            {alumno ? <StudentDetailInfoGeneral alumno={alumno} /> : null}
             {getFuntions("Ficha Alumno->Antecedentes Clinicos") && (
                 <StudentDetailInfoMedicalRecord ficha={ficha} />
             )}
             {getFuntions("Ficha Alumno->Apoderados") && (
-                <StudentDetailInfoRepresentatives apoderados={apoderados} />
+                <StudentDetailInfoRepresentatives apoderados={apoderados ?? []} />
             )}
         </>
     )

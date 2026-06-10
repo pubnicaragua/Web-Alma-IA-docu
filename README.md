@@ -1,5 +1,7 @@
 # Alma IA - Frontend 🚀
 
+> Versión desplegada en Vercel
+
 Este proyecto es el frontend de la plataforma **Alma IA**, desarrollado utilizando el framework moderno **Next.js** (App Router), con **TypeScript**, **Tailwind CSS** para los estilos y la biblioteca de componentes **shadcn/ui**.
 
 ---

@@ -18,6 +18,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { AuthActionResponse, AuthLoginSchemaType } from "@/types/auth";
 import { ActionMakeLogin } from "@/actions/auth";
 
+const REMEMBERED_LOGIN_KEY = "remembered_login";
+const REMEMBER_LOGIN_ENABLED_KEY = "remember_login_enabled";
+
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -36,6 +39,33 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const captchRef = useRef<any>(null);
+
+  useEffect(() => {
+    const rememberEnabled =
+      localStorage.getItem(REMEMBER_LOGIN_ENABLED_KEY) === "true";
+    const rememberedEmail = localStorage.getItem(REMEMBERED_LOGIN_KEY);
+
+    form.setValue("rememberMe", rememberEnabled);
+    if (rememberEnabled && rememberedEmail) {
+      form.setValue("email", rememberedEmail);
+    }
+  }, [form]);
+
+  const rememberMe = form.watch("rememberMe");
+  const email = form.watch("email");
+
+  useEffect(() => {
+    localStorage.setItem(REMEMBER_LOGIN_ENABLED_KEY, String(Boolean(rememberMe)));
+
+    if (!rememberMe) {
+      localStorage.removeItem(REMEMBERED_LOGIN_KEY);
+      return;
+    }
+
+    if (email.trim()) {
+      localStorage.setItem(REMEMBERED_LOGIN_KEY, email.trim());
+    }
+  }, [email, rememberMe]);
 
   const onSubmit = useCallback(async (values: AuthLoginSchemaType) => {
     console.log('[LOGIN] Enviando credenciales:', { email: values.email, password: '***' });
@@ -59,8 +89,15 @@ export default function LoginPage() {
     }
 
     const { data } = response as unknown as AuthActionResponse;
-    setAuthToken(data?.token);
+    setAuthToken(data?.token, Boolean(values.rememberMe));
     localStorage.setItem("isAuthenticated", "true");
+    if (values.rememberMe) {
+      localStorage.setItem(REMEMBERED_LOGIN_KEY, values.email);
+      localStorage.setItem(REMEMBER_LOGIN_ENABLED_KEY, "true");
+    } else {
+      localStorage.removeItem(REMEMBERED_LOGIN_KEY);
+      localStorage.setItem(REMEMBER_LOGIN_ENABLED_KEY, "false");
+    }
 
     try {
       await fetchUserProfile();
@@ -78,7 +115,7 @@ export default function LoginPage() {
 
     // Redirección a la página de selección de colegio
     router.push("/select-school");
-  }, []);
+  }, [form, router, toast]);
 
   return (
     <div className="bg-white rounded-lg p-8 shadow-md">

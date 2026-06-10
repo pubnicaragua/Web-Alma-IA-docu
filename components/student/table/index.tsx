@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { DataTable } from "@/components/data-table";
 import { SSRPagination } from "@/components/utils/pagination-sr";
@@ -18,6 +18,14 @@ const columns = [
 ];
 
 export function StudentTable({ filters, refresh }: Readonly<{ filters: any, refresh: boolean }>) {
+    return (
+        <Suspense fallback={<div className="bg-white rounded-lg shadow-sm p-8 text-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div><p className="text-gray-600">Cargando...</p></div>}>
+            <StudentTableInner filters={filters} refresh={refresh} />
+        </Suspense>
+    );
+}
+
+function StudentTableInner({ filters, refresh }: Readonly<{ filters: any, refresh: boolean }>) {
     const { selectedSchoolId } = useUser();
     const searParams = useSearchParams();
     const searchParam = searParams.get("search") ?? "";

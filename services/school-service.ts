@@ -70,12 +70,16 @@ export interface School {
 
 export async function loadSchools(): Promise<School[]> {
   try {
-    const response = await fetchWithAuth(`/colegios`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
+    const response = await fetchWithAuth(
+      `/colegios`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
       },
-    });
+      false
+    );
 
     if (!response.ok) {
       const errorText = await response.text();

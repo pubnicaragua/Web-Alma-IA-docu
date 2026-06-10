@@ -20,10 +20,10 @@ export interface Student {
 export interface StudentGeneral {
   alumno_id: number;
   colegio_id: number;
-  url_foto_perfil: string;
-  telefono_contacto1: string;
-  telefono_contacto2: string;
-  email: string;
+  url_foto_perfil: string | null;
+  telefono_contacto1: string | null;
+  telefono_contacto2: string | null;
+  email: string | null;
   creado_por: number;
   actualizado_por: number;
   fecha_creacion: Date;
@@ -31,21 +31,21 @@ export interface StudentGeneral {
   activo: boolean;
   persona_id: number;
   personas: {
-    tipo_documento: string;
-    numero_documento: string;
+    tipo_documento: string | null;
+    numero_documento: string | null;
     generos: {
       nombre: string;
       genero_id: number;
-    };
-    nombres: string;
-    apellidos: string;
+    } | null;
+    nombres: string | null;
+    apellidos: string | null;
     persona_id: number;
-    fecha_nacimiento: Date;
-  };
+    fecha_nacimiento: Date | string | null;
+  } | null;
   colegios: {
     nombre: string;
     colegio_id: number;
-  };
+  } | null;
   cursos: {
     curso_id: number;
     grados: {
@@ -56,19 +56,19 @@ export interface StudentGeneral {
       nomber: string;
       nivel_educativo_id: number;
     };
-  }[];
+  }[] | null;
 }
 
 export interface StudentMedicalRecord {
   alumno_ant_clinico_id: number;
   alumno_id: number;
-  historial_medico: string;
-  alergias: string;
-  enfermedades_cronicas: string;
-  condiciones_medicas_relevantes: string;
-  medicamentos_actuales: string;
-  diagnosticos_previos: string;
-  terapias_tratamiento_curso: string;
+  historial_medico: string | null;
+  alergias: string | null;
+  enfermedades_cronicas: string | null;
+  condiciones_medicas_relevantes: string | null;
+  medicamentos_actuales: string | null;
+  diagnosticos_previos: string | null;
+  terapias_tratamiento_curso: string | null;
   creado_por: number;
   actualizado_por: number;
   fecha_creacion: Date;
@@ -115,8 +115,8 @@ export interface StudentRepresentative {
   alumno_id: number;
   apoderado_id: number;
   tipo_apoderado: string;
-  observaciones: string;
-  estado_usuario: string;
+  observaciones: string | null;
+  estado_usuario: string | null;
   creado_por: Date;
   actualizado_por: Date;
   fecha_creacion: Date;
@@ -124,16 +124,16 @@ export interface StudentRepresentative {
   activo: boolean;
   apoderados: {
     personas: {
-      nombres: string;
-      apellidos: string;
+      nombres: string | null;
+      apellidos: string | null;
       persona_id: number;
-    };
+    } | null;
     apoderado_id: number;
     email_contacto1: string;
     email_contacto2: string;
     telefono_contacto1: string;
     telefono_contacto2: string;
-  };
+  } | null;
 }
 
 

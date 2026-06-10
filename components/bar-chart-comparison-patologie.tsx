@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import {
@@ -14,14 +14,14 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Smile, RefreshCw, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { themeColors } from "@/lib/theme-colors";
 import {
   fetchEmotionsForGrade,
   fetchPatologieForGrade,
 } from "@/services/home-service";
+import { useColoresCatalog } from "@/hooks/use-colores";
 
 interface EmotionData {
-  name: string; // Ejemplo: "1° Medio A - Jornada Mañana"
+  name: string; // Ejemplo: "1Â° Medio A - Jornada MaÃ±ana"
   [emotion: string]: string | number; // Ejemplo: "Ansiedad": 3, "Felicidad": 2
 }
 
@@ -39,10 +39,14 @@ export function BarChartComparisonPatologie({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const { getColor } = useColoresCatalog();
 
   useEffect(() => {
     loadData();
   }, [grado]);
+
+  const getEmotionColor = (emotion: string): string =>
+    getColor("patologias", emotion, "#6c757d");
 
   const loadData = async () => {
     try {
@@ -51,7 +55,7 @@ export function BarChartComparisonPatologie({
       const emotionsData = await fetchPatologieForGrade(grado);
       const allEmotions = new Set<string>();
 
-      // Normalizar datos y recopilar todas las patologias
+      // Normalizar datos y recopilar todas las patologías
       const normalizedData = emotionsData.map((item) => {
         const { name, ...emotions } = item;
         Object.keys(emotions).forEach((emotion) => allEmotions.add(emotion));
@@ -211,18 +215,4 @@ export function BarChartComparisonPatologie({
       </div>
     </div>
   );
-}
-
-// Función auxiliar para asignar colores a las patologias
-function getEmotionColor(emotion: string): string {
-  const colors: Record<string, string> = {
-    "Salud Mental": "#4DA6FF",
-    "Trastorno del Ánimo": "#6E6E6E",
-    "Trauma Complejo": "#B03A2E",
-    Neurodivergencia: "#9B59B6",
-    "Trastorno del Sueño": "#2C3E50",
-    "Trastorno de Conducta Alimentaria": "#808000",
-    "Adicciones Conductuales": "#E67E22",
-  };
-  return colors[emotion] || themeColors.chart.gray;
 }

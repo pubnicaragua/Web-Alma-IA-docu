@@ -4,6 +4,27 @@ import { AuthLoginSchemaType } from "@/types/auth";
 import { ProfileResponse } from "@/services/profile-service";
 import { validateRecaptch } from "@/lib/reacaptcha";
 
+function getLoginErrorMessage(status: number, responseText: string) {
+    const normalizedText = responseText.toLowerCase();
+
+    if (
+        status === 401 ||
+        normalizedText.includes("invalid login credentials")
+    ) {
+        return "Correo o contraseña incorrectos.";
+    }
+
+    if (status === 429) {
+        return "Demasiados intentos. Espera unos minutos e intenta nuevamente.";
+    }
+
+    if (status >= 500) {
+        return "No pudimos iniciar sesión por un problema del servidor. Intenta nuevamente en unos minutos.";
+    }
+
+    return "No pudimos iniciar sesión. Revisa tus datos e intenta nuevamente.";
+}
+
 export async function ActionMakeLogin(values: AuthLoginSchemaType): Promise<ServerActionResponse> {
     let message = '¡Inicio sesión con exito!';
     let status: 'success' | 'error' = 'success';
@@ -56,7 +77,7 @@ async function validateCredentials(values: AuthLoginSchemaType) {
             console.error('[AUTH] ❌ ERROR - Login fallido');
             console.error('[AUTH] Status:', response.status);
             console.error('[AUTH] Body:', responseText);
-            throw new Error(`Error ${response.status}: ${responseText || response.statusText}`);
+            throw new Error(getLoginErrorMessage(response.status, responseText || response.statusText));
         }
 
         let data;

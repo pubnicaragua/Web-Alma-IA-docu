@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { X, Plus, AlertTriangle, Clock } from "lucide-react";
 import { useParams } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
@@ -81,7 +81,9 @@ export function StudentDetailAddAlertModal({ onRefresh }: AddAlertModalProps) {
     const params = useParams();
     const { toast } = useToast();
 
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
+    const catalogsLoadedRef = useRef(false);
+    const catalogsLoadingRef = useRef(false);
 
     const [prioridades, setPrioridades] = useState<ApiAlertPriority[]>([]);
     const [alertStates, setAlertStates] = useState<any[]>([]);
@@ -108,8 +110,13 @@ export function StudentDetailAddAlertModal({ onRefresh }: AddAlertModalProps) {
         },
     });
 
-    useEffect(() => {
-        (async function () {
+    const showCatalogLoading = loading || (isOpen && !catalogsLoadedRef.current);
+
+    const loadCatalogs = useCallback(async () => {
+        if (catalogsLoadedRef.current || catalogsLoadingRef.current) return;
+
+        try {
+            catalogsLoadingRef.current = true;
             setLoading(true);
             const [prioridadesData, alertStatesData, severidadData, bitacoraUsers] =
                 await Promise.all([
@@ -131,9 +138,17 @@ export function StudentDetailAddAlertModal({ onRefresh }: AddAlertModalProps) {
                 severidad: severidadData?.[0]?.nombre || "",
                 responsable: bitacoraUsers?.[0]?.personas.persona_id?.toString() || "",
             }));
+            catalogsLoadedRef.current = true;
+        } finally {
+            catalogsLoadingRef.current = false;
             setLoading(false);
-        })();
+        }
     }, [reset]);
+
+    useEffect(() => {
+        if (!isOpen) return;
+        loadCatalogs();
+    }, [isOpen, loadCatalogs]);
 
     const onSubmit = async (values: AddAlertFormValues) => {
         try {
@@ -193,7 +208,7 @@ export function StudentDetailAddAlertModal({ onRefresh }: AddAlertModalProps) {
                 className="bg-blue-500 hover:bg-blue-600"
                 onClick={onOpen}
                 aria-label="Agregar alerta manual"
-                disabled={loading || userLoading}
+                disabled={userLoading}
             >
                 <Plus className={isMobile ? "" : "mr-2"} size={16} />
                 {!isMobile && <span>Agregar alerta manual</span>}
@@ -213,7 +228,7 @@ export function StudentDetailAddAlertModal({ onRefresh }: AddAlertModalProps) {
                         </div>
                     </DialogHeader>
 
-                    {loading ? (
+                    {showCatalogLoading ? (
                         <div className="py-8 text-center text-gray-500">
                             Cargando datos...
                         </div>

@@ -33,6 +33,8 @@ export interface RecentAlert {
   };
 }
 
+export const FALLBACK_RECENT_ALERTS: RecentAlert[] = [];
+
 export interface ImportantDate {
   calendario_fecha_importante_id: number;
   colegio_id: number;

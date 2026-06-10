@@ -11,8 +11,13 @@ import React, {
 } from "react";
 import { ProfileResponse } from "@/services/profile-service";
 import { useAuth } from "@/middleware/auth-provider";
-import { getAuthToken } from "../lib/api-config";
+import { getAuthToken, removeAuthToken } from "../lib/api-config";
 import { cacheService } from "@/lib/cache-service";
+import { useRouter } from "next/navigation";
+import { createGetRequestDeduper } from "@/lib/get-request-dedupe";
+import { normalizeSelectedSchoolId } from "@/lib/school-id";
+
+const dedupeProfileGet = createGetRequestDeduper();
 
 // Tipos
 export interface UserContextState {
@@ -65,6 +70,7 @@ interface UserProviderProps {
 
 export function UserProvider({ children }: UserProviderProps) {
   const { isAuthenticated } = useAuth();
+  const router = useRouter();
 
   const [state, setState] = useState({
     userData: null as ProfileResponse | null,
@@ -83,17 +89,18 @@ export function UserProvider({ children }: UserProviderProps) {
   // Inicializar selectedSchoolId desde localStorage
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const selected = localStorage.getItem("selectedSchool");
+      const selected = normalizeSelectedSchoolId(localStorage.getItem("selectedSchool"));
       setState((prev) => ({ ...prev, selectedSchoolId: selected }));
     }
   }, []);
 
   // Setter que sincroniza estado y localStorage
   const setSelectedSchoolId = useCallback((id: string | null) => {
-    setState((prev) => ({ ...prev, selectedSchoolId: id }));
+    const normalizedId = normalizeSelectedSchoolId(id);
+    setState((prev) => ({ ...prev, selectedSchoolId: normalizedId }));
     if (typeof window !== "undefined") {
-      if (id === null) localStorage.removeItem("selectedSchool");
-      else localStorage.setItem("selectedSchool", id);
+      if (normalizedId === null) localStorage.removeItem("selectedSchool");
+      else localStorage.setItem("selectedSchool", normalizedId);
     }
   }, []);
 
@@ -103,6 +110,22 @@ export function UserProvider({ children }: UserProviderProps) {
     cacheService.set("user-profile", newData, 10 * 60 * 1000);
     lastFetchTimeRef.current = Date.now();
   }, []);
+
+  const clearUserData = useCallback(() => {
+    setState((prev) => ({ ...prev, userData: null, error: null }));
+    lastFetchTimeRef.current = null;
+  }, []);
+
+  const clearInvalidSession = useCallback(() => {
+    clearUserData();
+    cacheService.clear();
+    removeAuthToken();
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("isAuthenticated");
+      sessionStorage.clear();
+    }
+    router.replace("/login");
+  }, [clearUserData, router]);
 
   // Carga perfil usuario con cache y control de peticiones
   const loadUserData = useCallback(async (forceRefresh = false) => {
@@ -140,18 +163,34 @@ export function UserProvider({ children }: UserProviderProps) {
       isLoadingRef.current = true;
       setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
-      const response = await fetch("/api/proxy/perfil/obtener", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const data = await dedupeProfileGet<ProfileResponse | null>(
+        "/api/proxy/perfil/obtener",
+        { params: { __authScope: token.slice(-12) } },
+        async () => {
+          const response = await fetch("/api/proxy/perfil/obtener", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+          if (!response.ok) {
+            const errorBody = await response.text();
+            if (
+              response.status === 401 ||
+              errorBody.toLowerCase().includes("invalid token")
+            ) {
+              clearInvalidSession();
+              return null;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
 
-      const data = (await response.json()) as ProfileResponse;
+          return (await response.json()) as ProfileResponse;
+        }
+      );
+
+      if (!data) return;
 
       setState((prev) => ({ ...prev, userData: data }));
       cacheService.set("user-profile", data, 10 * 60 * 1000);
@@ -165,12 +204,7 @@ export function UserProvider({ children }: UserProviderProps) {
       setState((prev) => ({ ...prev, isLoading: false }));
       isLoadingRef.current = false;
     }
-  }, []);
-
-  const clearUserData = useCallback(() => {
-    setState((prev) => ({ ...prev, userData: null, error: null }));
-    lastFetchTimeRef.current = null;
-  }, []);
+  }, [clearInvalidSession]);
 
   const getFuntions = useCallback(
     (busqueda: string): boolean => {
