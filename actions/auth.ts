@@ -5,6 +5,16 @@ import { ProfileResponse } from "@/services/profile-service";
 import { validateRecaptch } from "@/lib/reacaptcha";
 
 function getLoginErrorMessage(status: number, responseText: string) {
+    try {
+        const parsed = JSON.parse(responseText);
+        const backendMessage = parsed.errorInfo?.message || parsed.message;
+        if (backendMessage) {
+            return backendMessage;
+        }
+    } catch (e) {
+        // Ignorar error de parsing
+    }
+
     const normalizedText = responseText.toLowerCase();
 
     if (
