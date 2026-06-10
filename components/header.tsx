@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { Suspense, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
@@ -25,6 +25,14 @@ interface HeaderProps {
 }
 
 export function Header({ toggleSidebar }: HeaderProps) {
+  return (
+    <Suspense fallback={null}>
+      <HeaderInner toggleSidebar={toggleSidebar} />
+    </Suspense>
+  );
+}
+
+function HeaderInner({ toggleSidebar }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
