@@ -12,7 +12,7 @@ const https = require('https');
 
 // Configuración
 const CONFIG = {
-  API_URL: process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api-almaia.onrender.com/api/v1',
+  API_URL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://192.168.1.30:3001/api/v1',
   MAIL_HOST: process.env.MAIL_HOST || 'smtp.gmail.com',
   MAIL_PORT: process.env.MAIL_PORT || 587,
   MAIL_USER: process.env.MAIL_USER,
