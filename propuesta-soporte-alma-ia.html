@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Propuesta de Soporte - Alma IA</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px;
+            text-align: center;
+            color: white;
+        }
+
+        .logo {
+            width: 180px;
+            height: 180px;
+            margin: 0 auto 20px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .logo-text {
+            font-size: 48px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-size: 2em;
+            color: #667eea;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .subsection-title {
+            font-size: 1.5em;
+            color: #764ba2;
+            margin: 25px 0 15px;
+        }
+
+        .card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-left: 5px solid #667eea;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        }
+
+        .card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .info-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .info-label {
+            font-weight: bold;
+            color: #764ba2;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            color: #555;
+            font-size: 1.1em;
+        }
+
+        .cost-highlight {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1.3em;
+            font-weight: bold;
+            margin: 20px 0;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .highlight-row {
+            background: #fff3cd;
+            font-weight: bold;
+        }
+
+        .total-row {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .total-row td {
+            border: none;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin: 5px 5px 5px 0;
+        }
+
+        .badge-high {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge-medium {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .badge-critical {
+            background: #dc3545;
+            color: white;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+            margin: 20px 0;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-bottom: 20px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -23px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #667eea;
+            border: 3px solid white;
+            box-shadow: 0 0 0 2px #667eea;
+        }
+
+        .timeline-item::after {
+            content: '';
+            position: absolute;
+            left: -18px;
+            top: 17px;
+            width: 2px;
+            height: calc(100% - 5px);
+            background: #667eea;
+        }
+
+        .timeline-item:last-child::after {
+            display: none;
+        }
+
+        .footer {
+            background: #2c3e50;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .footer p {
+            margin: 5px 0;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .container {
+                box-shadow: none;
+            }
+            .card:hover {
+                transform: none;
+            }
+        }
+
+        .summary-box {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 30px 0;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .summary-box h3 {
+            color: white;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .summary-item {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <div class="logo-text">ALMA IA</div>
+            </div>
+            <h1>Propuesta de Soporte Técnico y Operativo</h1>
+            <p>Estructura de Costos y Recursos para Escalamiento</p>
+        </div>
+
+        <div class="content">
+            <!-- Sección 1: Áreas de Soporte -->
+            <div class="section">
+                <h2 class="section-title">1. Áreas de Soporte por Frente</h2>
+                
+                <div class="card">
+                    <h3>🎨 Frontend</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Costo Mensual</div>
+                            <div class="info-value">$6,500 USD + Prestaciones</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Calidad Esperada</div>
+                            <div class="info-value"><span class="badge badge-high">Alta</span></div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Disponibilidad</div>
+                            <div class="info-value">Tiempo Completo (40h/semana)</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Compromiso Mínimo</div>
+                            <div class="info-value">9 meses</div>
+                        </div>
+                    </div>
+                    <p style="margin-top: 15px;"><strong>Responsabilidades:</strong> Desarrollo de interfaces de usuario, optimización UX/UI, integración con APIs, mantenimiento de componentes React/Vue, responsive design.</p>
+                </div>
+
+                <div class="card">
+                    <h3>⚙️ Backend</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Costo Mensual</div>
+                            <div class="info-value">$6,500 USD + Prestaciones</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Calidad Esperada</div>
+                            <div class="info-value"><span class="badge badge-high">Alta</span></div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Disponibilidad</div>
+                            <div class="info-value">Tiempo Completo (40h/semana)</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Compromiso Mínimo</div>
+                            <div class="info-value">9 meses</div>
+                        </div>
+                    </div>
+                    <p style="margin-top: 15px;"><strong>Responsabilidades:</strong> Desarrollo de APIs REST/GraphQL, lógica de negocio, integración con servicios externos, optimización de rendimiento, seguridad de aplicaciones.</p>
+                </div>
+
+                <div class="card">
+                    <h3>🗄️ Base de Datos (BD)</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Costo Mensual</div>
+                            <div class="info-value">$6,500 USD + Prestaciones</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Calidad Esperada</div>
+                            <div class="info-value"><span class="badge badge-critical">Crítica</span></div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Disponibilidad</div>
+                            <div class="info-value">Tiempo Completo (40h/semana)</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Compromiso Mínimo</div>
+                            <div class="info-value">9 meses</div>
+                        </div>
+                    </div>
+                    <p style="margin-top: 15px;"><strong>Responsabilidades:</strong> Diseño de esquemas, optimización de queries, backups y recuperación, migraciones, monitoreo de rendimiento, seguridad de datos.</p>
+                </div>
+
+                <div class="card">
+                    <h3>☁️ Infraestructura / DevOps</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Costo Mensual</div>
+                            <div class="info-value">$6,500 USD + Prestaciones</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Calidad Esperada</div>
+                            <div class="info-value"><span class="badge badge-critical">Crítica</span></div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Disponibilidad</div>
+                            <div class="info-value">Tiempo Completo + On-Call</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Compromiso Mínimo</div>
+                            <div class="info-value">9 meses</div>
+                        </div>
+                    </div>
+                    <p style="margin-top: 15px;"><strong>Responsabilidades:</strong> Gestión de servidores, CI/CD, monitoreo y alertas, escalabilidad, seguridad de infraestructura, gestión de costos cloud.</p>
+                </div>
+
+                <div class="card">
+                    <h3>💼 Comercial / Customer Success</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Costo Mensual</div>
+                            <div class="info-value">$6,500 USD + Prestaciones</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Calidad Esperada</div>
+                            <div class="info-value"><span class="badge badge-high">Alta</span></div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Disponibilidad</div>
+                            <div class="info-value">Tiempo Completo (40h/semana)</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Compromiso Mínimo</div>
+                            <div class="info-value">9 meses</div>
+                        </div>
+                    </div>
+                    <p style="margin-top: 15px;"><strong>Responsabilidades:</strong> Onboarding de clientes, soporte técnico-comercial, capacitaciones, gestión de relaciones, análisis de métricas de uso, feedback de producto.</p>
+                </div>
+
+                <div class="card">
+                    <h3>🎯 Product Manager</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Costo Mensual</div>
+                            <div class="info-value">$6,500 USD + Prestaciones</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Calidad Esperada</div>
+                            <div class="info-value"><span class="badge badge-high">Alta</span></div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Disponibilidad</div>
+                            <div class="info-value">Tiempo Completo (40h/semana)</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Compromiso Mínimo</div>
+                            <div class="info-value">9 meses</div>
+                        </div>
+                    </div>
+                    <p style="margin-top: 15px;"><strong>Responsabilidades:</strong> Roadmap de producto, priorización de features, coordinación de equipos, análisis de mercado, definición de KPIs.</p>
+                </div>
+            </div>
+
+            <!-- Sección 2: Costos de Infraestructura Cloud -->
+            <div class="section">
+                <h2 class="section-title">2. Costos de Infraestructura Cloud</h2>
+                <p style="margin-bottom: 20px;"><strong>Escenario:</strong> 10 colegios con 1,000 alumnos cada uno + 1,000 apoderados por colegio = <strong>20,000 usuarios totales</strong></p>
+
+                <div class="card">
+                    <h3>📊 Supabase (Base de Datos + Auth + Storage)</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Plan</th>
+                                <th>Características</th>
+                                <th>Costo Mensual</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Pro Plan</strong></td>
+                                <td>
+                                    • 8 GB Database<br>
+                                    • 50 GB Bandwidth<br>
+                                    • 100 GB Storage<br>
+                                    • Backups diarios<br>
+                                    • Soporte prioritario
+                                </td>
+                                <td><strong>$25 USD/mes</strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Recursos Adicionales</strong></td>
+                                <td>
+                                    • +8 GB Database adicional<br>
+                                    • +50 GB Bandwidth adicional<br>
+                                    • +100 GB Storage adicional
+                                </td>
+                                <td><strong>~$50 USD/mes</strong></td>
+                            </tr>
+                            <tr class="total-row">
+                                <td colspan="2">TOTAL SUPABASE ESTIMADO</td>
+                                <td>$75 USD/mes</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card">
+                    <h3>🚀 Render (Hosting de Aplicaciones)</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Servicio</th>
+                                <th>Especificaciones</th>
+                                <th>Costo Mensual</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Web Service (Backend)</strong></td>
+                                <td>
+                                    • Standard Plan<br>
+                                    • 2 GB RAM<br>
+                                    • 2 CPU<br>
+                                    • Auto-scaling
+                                </td>
+                                <td><strong>$25 USD/mes</strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Web Service (Frontend)</strong></td>
+                                <td>
+                                    • Static Site<br>
+                                    • CDN incluido<br>
+                                    • SSL automático
+                                </td>
+                                <td><strong>$0 USD/mes (Free)</strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Background Workers</strong></td>
+                                <td>
+                                    • Para tareas asíncronas<br>
+                                    • 1 GB RAM
+                                </td>
+                                <td><strong>$15 USD/mes</strong></td>
+                            </tr>
+                            <tr class="total-row">
+                                <td colspan="2">TOTAL RENDER ESTIMADO</td>
+                                <td>$40 USD/mes</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card">
+                    <h3>☁️ AWS (Servicios Complementarios)</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Servicio</th>
+                                <th>Uso Estimado</th>
+                                <th>Costo Mensual</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>S3 (Storage)</strong></td>
+                                <td>
+                                    • 500 GB almacenamiento<br>
+                                    • Documentos, imágenes, backups
+                                </td>
+                                <td><strong>$12 USD/mes</strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong>CloudFront (CDN)</strong></td>
+                                <td>
+                                    • 1 TB transferencia<br>
+                                    • Distribución global
+                                </td>
+                                <td><strong>$85 USD/mes</strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong>SES (Email Service)</strong></td>
+                                <td>
+                                    • 100,000 emails/mes<br>
+                                    • Notificaciones automáticas
+                                </td>
+                                <td><strong>$10 USD/mes</strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Lambda (Serverless)</strong></td>
+                                <td>
+                                    • Procesamiento de eventos<br>
+                                    • 5M invocaciones/mes
+                                </td>
+                                <td><strong>$15 USD/mes</strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong>CloudWatch (Monitoring)</strong></td>
+                                <td>
+                                    • Logs y métricas<br>
+                                    • Alertas
+                                </td>
+                                <td><strong>$20 USD/mes</strong></td>
+                            </tr>
+                            <tr class="total-row">
+                                <td colspan="2">TOTAL AWS ESTIMADO</td>
+                                <td>$142 USD/mes</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="summary-box">
+                    <h3>💰 Resumen Total de Infraestructura Cloud</h3>
+                    <div class="summary-item">
+                        <strong>Supabase:</strong> $75 USD/mes
+                    </div>
+                    <div class="summary-item">
+                        <strong>Render:</strong> $40 USD/mes
+                    </div>
+                    <div class="summary-item">
+                        <strong>AWS:</strong> $142 USD/mes
+                    </div>
+                    <div class="cost-highlight" style="margin-top: 20px;">
+                        TOTAL INFRAESTRUCTURA: $257 USD/mes
+                    </div>
+                    <div class="cost-highlight">
+                        TOTAL ANUAL: $3,084 USD/año
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección 3: Inversión en Talento -->
+            <div class="section">
+                <h2 class="section-title">3. Inversión en Talento Presencial</h2>
+                
+                <div class="card">
+                    <h3>🎯 Estrategia de Reclutamiento y Retención</h3>
+                    <p style="margin-bottom: 20px;">Hemos realizado un recorrido exhaustivo para identificar y asegurar talento local de alta calidad con compromiso a largo plazo.</p>
+                    
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <strong>Fase 1: Reclutamiento (Mes 1-2)</strong>
+                            <p>Búsqueda activa, entrevistas técnicas, evaluación cultural. Inversión en plataformas de reclutamiento y headhunters especializados.</p>
+                        </div>
+                        <div class="timeline-item">
+                            <strong>Fase 2: Onboarding y Capacitación (Mes 2-4)</strong>
+                            <p>Capacitación intensiva en tecnologías específicas de Alma IA, procesos internos, mejores prácticas. Inversión en cursos, certificaciones y mentorías.</p>
+                        </div>
+                        <div class="timeline-item">
+                            <strong>Fase 3: Adopción Cultural (Mes 4-6)</strong>
+                            <p>Integración a la cultura de trabajo, metodologías ágiles, valores de la empresa. Acompañamiento continuo y feedback.</p>
+                        </div>
+                        <div class="timeline-item">
+                            <strong>Fase 4: Productividad Completa (Mes 6+)</strong>
+                            <p>Talento completamente integrado y productivo, contribuyendo al máximo de su capacidad.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>💵 Estructura de Costos por Talento</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Concepto</th>
+                                <th>Descripción</th>
+                                <th>Monto Mensual</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Salario Base</strong></td>
+                                <td>Compensación competitiva para retener talento senior</td>
+                                <td>$6,500 USD</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Prestaciones Legales</strong></td>
+                                <td>IMSS, INFONAVIT, SAR, vacaciones, aguinaldo</td>
+                                <td>~$1,950 USD (30%)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Beneficios Adicionales</strong></td>
+                                <td>Seguro de gastos médicos mayores, vales de despensa</td>
+                                <td>~$650 USD (10%)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Capacitación Continua</strong></td>
+                                <td>Cursos, certificaciones, conferencias</td>
+                                <td>~$325 USD (5%)</td>
+                            </tr>
+                            <tr class="total-row">
+                                <td colspan="2">COSTO TOTAL POR TALENTO</td>
+                                <td>$9,425 USD/mes</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card">
+                    <h3>📊 Inversión Total en Equipo Técnico</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Rol</th>
+                                <th>Cantidad</th>
+                                <th>Costo Unitario</th>
+                                <th>Costo Total Mensual</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Frontend Developer</td>
+                                <td>1</td>
+                                <td>$9,425 USD</td>
+                                <td>$9,425 USD</td>
+                            </tr>
+                            <tr>
+                                <td>Backend Developer</td>
+                                <td>1</td>
+                                <td>$9,425 USD</td>
+                                <td>$9,425 USD</td>
+                            </tr>
+                            <tr>
+                                <td>Database Specialist</td>
+                                <td>1</td>
+                                <td>$9,425 USD</td>
+                                <td>$9,425 USD</td>
+                            </tr>
+                            <tr>
+                                <td>DevOps/Infrastructure</td>
+                                <td>1</td>
+                                <td>$9,425 USD</td>
+                                <td>$9,425 USD</td>
+                            </tr>
+                            <tr>
+                                <td>Customer Success/Comercial</td>
+                                <td>1</td>
+                                <td>$9,425 USD</td>
+                                <td>$9,425 USD</td>
+                            </tr>
+                            <tr>
+                                <td>Product Manager</td>
+                                <td>1</td>
+                                <td>$9,425 USD</td>
+                                <td>$9,425 USD</td>
+                            </tr>
+                            <tr class="total-row">
+                                <td colspan="3">TOTAL EQUIPO (6 personas)</td>
+                                <td>$56,550 USD/mes</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="cost-highlight">
+                    INVERSIÓN ANUAL EN TALENTO: $678,600 USD/año
+                </div>
+            </div>
+
+            <!-- Sección 4: Resumen Ejecutivo -->
+            <div class="section">
+                <h2 class="section-title">4. Resumen Ejecutivo de Inversión</h2>
+                
+                <div class="card">
+                    <h3>📈 Proyección de Costos Totales</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Categoría</th>
+                                <th>Mensual</th>
+                                <th>Anual</th>
+                                <th>% del Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Talento Humano (6 personas)</strong></td>
+                                <td>$56,550 USD</td>
+                                <td>$678,600 USD</td>
+                                <td>99.5%</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Infraestructura Cloud</strong></td>
+                                <td>$257 USD</td>
+                                <td>$3,084 USD</td>
+                                <td>0.5%</td>
+                            </tr>
+                            <tr class="total-row">
+                                <td><strong>INVERSIÓN TOTAL</strong></td>
+                                <td>$56,807 USD</td>
+                                <td>$681,684 USD</td>
+                                <td>100%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="summary-box">
+                    <h3>🎯 Valor Agregado de la Propuesta</h3>
+                    <div class="summary-item">
+                        <strong>✓ Talento Presencial:</strong> Equipo comprometido con presencia física, facilitando colaboración y cultura organizacional
+                    </div>
+                    <div class="summary-item">
+                        <strong>✓ Compromiso a Largo Plazo:</strong> Mínimo 9 meses garantizados, reduciendo rotación y costos de re-reclutamiento
+                    </div>
+                    <div class="summary-item">
+                        <strong>✓ Capacitación Incluida:</strong> Inversión en desarrollo profesional continuo para mantener competitividad técnica
+                    </div>
+                    <div class="summary-item">
+                        <strong>✓ Cultura Organizacional:</strong> Tiempo dedicado a adopción de valores y metodologías de trabajo de Alma IA
+                    </div>
+                    <div class="summary-item">
+                        <strong>✓ Escalabilidad Garantizada:</strong> Infraestructura cloud dimensionada para 20,000 usuarios con capacidad de crecimiento
+                    </div>
+                    <div class="summary-item">
+                        <strong>✓ Soporte 24/7:</strong> Equipo DevOps con disponibilidad on-call para incidentes críticos
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>⚠️ Consideraciones Importantes</h3>
+                    <ul style="margin-left: 20px; line-height: 1.8;">
+                        <li><strong>Periodo de Rampa:</strong> Los primeros 6 meses requieren inversión en capacitación antes de alcanzar productividad completa</li>
+                        <li><strong>Costos de Infraestructura Variables:</strong> Los costos cloud pueden incrementar con mayor uso; se recomienda monitoreo mensual</li>
+                        <li><strong>Escalamiento de Equipo:</strong> Para más de 20 colegios, se requerirá ampliar el equipo proporcionalmente</li>
+                        <li><strong>Retención de Talento:</strong> Mercado competitivo requiere revisiones salariales anuales y beneficios atractivos</li>
+                        <li><strong>Contingencia:</strong> Se recomienda presupuesto adicional del 10-15% para imprevistos y oportunidades</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>📅 Timeline de Implementación</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Fase</th>
+                                <th>Duración</th>
+                                <th>Actividades Clave</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Mes 1-2</strong></td>
+                                <td>2 meses</td>
+                                <td>Reclutamiento, selección y contratación del equipo completo</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Mes 2-4</strong></td>
+                                <td>2 meses</td>
+                                <td>Onboarding, capacitación técnica, setup de infraestructura</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Mes 4-6</strong></td>
+                                <td>2 meses</td>
+                                <td>Adopción cultural, primeros proyectos, ajustes de procesos</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Mes 6-9</strong></td>
+                                <td>3 meses</td>
+                                <td>Productividad completa, optimizaciones, escalamiento</td>
+                            </tr>
+                            <tr class="highlight-row">
+                                <td colspan="3"><strong>A partir del Mes 9:</strong> Equipo completamente operativo y productivo</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Sección 5: ROI y Justificación -->
+            <div class="section">
+                <h2 class="section-title">5. Retorno de Inversión (ROI)</h2>
+                
+                <div class="card">
+                    <h3>💡 Análisis de Costo por Usuario</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Métrica</th>
+                                <th>Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Total de Usuarios (10 colegios)</td>
+                                <td>20,000 usuarios</td>
+                            </tr>
+                            <tr>
+                                <td>Costo Mensual Total</td>
+                                <td>$56,807 USD</td>
+                            </tr>
+                            <tr class="highlight-row">
+                                <td><strong>Costo por Usuario/Mes</strong></td>
+                                <td><strong>$2.84 USD</strong></td>
+                            </tr>
+                            <tr class="highlight-row">
+                                <td><strong>Costo por Colegio/Mes</strong></td>
+                                <td><strong>$5,680.70 USD</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card">
+                    <h3>🎓 Costo por Estudiante</h3>
+                    <p style="margin-bottom: 15px;">Considerando que cada colegio tiene 1,000 estudiantes:</p>
+                    <div class="cost-highlight">
+                        Costo por Estudiante: $5.68 USD/mes
+                    </div>
+                    <div class="cost-highlight">
+                        Costo por Estudiante: $68.16 USD/año
+                    </div>
+                    <p style="margin-top: 20px; font-size: 0.95em; color: #666;">
+                        <strong>Nota:</strong> Este costo incluye soporte técnico completo, infraestructura cloud, desarrollo continuo de features, y atención personalizada. Es altamente competitivo comparado con soluciones similares en el mercado educativo.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="footer">
+            <h3 style="margin-bottom: 15px;">ALMA IA</h3>
+            <p>Propuesta de Soporte Técnico y Operativo</p>
+            <p>Documento generado: Mayo 2026</p>
+            <p style="margin-top: 15px; font-size: 0.9em;">© 2026 Alma IA - Todos los derechos reservados</p>
+        </div>
+    </div>
+</body>
+</html>
