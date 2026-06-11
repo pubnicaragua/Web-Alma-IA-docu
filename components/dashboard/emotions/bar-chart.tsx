@@ -12,7 +12,7 @@ import {
 } from 'recharts';
 import { Badge } from '@/components/ui/badge';
 import { TriangleAlert } from 'lucide-react';
-import { useColoresCatalog } from '@/hooks/use-colores';
+import { IEmotionBarChart } from '@/types/dashboard';
 
 interface PropTypes {
   data: IEmotionBarChart[];
@@ -27,11 +27,6 @@ const DEFAULT_EMOTION_COLOR = '#6c757d';
 
 export function BarEmotionChart({ data }: Readonly<PropTypes>) {
   const [excluded, setExcluded] = React.useState<string[]>([]);
-  const { getColor } = useColoresCatalog();
-
-  const getEmotionColor = (emotionName: string): string => {
-    return getColor('emociones', emotionName, DEFAULT_EMOTION_COLOR);
-  };
 
   const emotions = useMemo(() => {
     return data.filter((emotion) => !excluded.includes(emotion.nombre));
@@ -91,7 +86,8 @@ export function BarEmotionChart({ data }: Readonly<PropTypes>) {
     );
   };
 
-  const emotionSeriesColor = (emotion: { nombre: string }) => getEmotionColor(emotion.nombre);
+  const emotionSeriesColor = (emotion: IEmotionBarChart) =>
+    emotion.color || DEFAULT_EMOTION_COLOR;
 
   return (
     <div>
