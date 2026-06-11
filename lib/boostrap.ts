@@ -1,6 +1,15 @@
-'use client';
+"use client";
+
 import { createApiAxiosInstante } from "./axios";
 
-window.axios = createApiAxiosInstante();
+export function ensureWindowAxios() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  if (!window.axios) {
+    window.axios = createApiAxiosInstante();
+  }
+}
 
 
