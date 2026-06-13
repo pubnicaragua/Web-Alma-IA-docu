@@ -96,12 +96,18 @@ export interface StudentDetailResponse {
   informes: StudentDetailReport[];
   emociones: Array<{
     nombre: string;
-    valor: number;
+    total?: number;
+    positivos?: number;
+    neutrales?: number;
+    negativos?: number;
+    conotacion?: string;
+    color?: string;
+    cantidad_preguntas?: number;
   }>;
   datosComparativa: Array<{
-    name: string;
-    alumno: number;
-    promedio: number;
+    nombre: string;
+    cantidad_alumno: number;
+    proporcion_alumno: number;
   }>;
 }
 
