@@ -1,0 +1,185 @@
+
+> my-v0-project@0.1.0 dev
+> next dev
+
+   ▲ Next.js 15.2.4
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.100.28:3000
+   - Environments: .env.local, .env
+
+ ✓ Starting...
+ ✓ Ready in 1685ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 5.8s (1192 modules)
+ GET /_next/static/chunks/app-pages-internals.js 404 in 6326ms
+ GET /_next/static/css/app/layout.css 404 in 6306ms
+ ○ Compiling /login ...
+ ✓ Compiled /login in 2.3s (1257 modules)
+ GET /login?next=%2F 200 in 1954ms
+ ✓ Compiled in 145ms (543 modules)
+ ✓ Compiled in 94ms (543 modules)
+ ✓ Compiled in 176ms (543 modules)
+ ✓ Compiled in 160ms (543 modules)
+ ✓ Compiled in 189ms (543 modules)
+ ✓ Compiled in 222ms (543 modules)
+ ○ Compiling / ...
+ ✓ Compiled / in 11.7s (4070 modules)
+ GET / 200 in 12859ms
+ ○ Compiling /api/proxy/[...path] ...
+ ✓ Compiled /api/proxy/[...path] in 7.8s (4075 modules)
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 7959ms
+Proxy -> {
+  method: 'GET',
+  path: 'home/alertas/totales',
+  target: 'http://localhost:3001/api/v1/home/alertas/totales?colegio_id=0'
+}
+Proxy -> {
+  method: 'GET',
+  path: 'home/fechas/importantes',
+  target: 'http://localhost:3001/api/v1/home/fechas/importantes?colegio_id=0'
+}
+Proxy -> {
+  method: 'GET',
+  path: 'perfil/obtener',
+  target: 'http://localhost:3001/api/v1/perfil/obtener'
+}
+Proxy -> {
+  method: 'GET',
+  path: 'home/alertas/totales',
+  target: 'http://localhost:3001/api/v1/home/alertas/totales?colegio_id=0'
+}
+Proxy -> {
+  method: 'GET',
+  path: 'colegios',
+  target: 'http://localhost:3001/api/v1/colegios'
+}
+Proxy -> {
+  method: 'GET',
+  path: 'home/fechas/importantes',
+  target: 'http://localhost:3001/api/v1/home/fechas/importantes?colegio_id=0'
+}
+[PROXY] GET http://localhost:3001/api/v1/colegios -> 200
+ GET /api/proxy/colegios 200 in 6784ms
+[PROXY] GET http://localhost:3001/api/v1/home/fechas/importantes?colegio_id=0 -> 200
+ GET /api/proxy/home/fechas/importantes?colegio_id=0 200 in 2109ms
+[PROXY] GET http://localhost:3001/api/v1/home/fechas/importantes?colegio_id=0 -> 200
+ GET /api/proxy/home/fechas/importantes?colegio_id=0 200 in 6521ms
+Proxy -> {
+  method: 'GET',
+  path: 'colegios',
+  target: 'http://localhost:3001/api/v1/colegios'
+}
+Proxy -> {
+  method: 'GET',
+  path: 'alumnos/alertas/conteo',
+  target: 'http://localhost:3001/api/v1/alumnos/alertas/conteo?colegio_id=0'
+}
+Proxy -> {
+  method: 'GET',
+  path: 'home/cards/emociones',
+  target: 'http://localhost:3001/api/v1/home/cards/emociones?colegio_id=0'
+}
+[PROXY] GET http://localhost:3001/api/v1/home/alertas/totales?colegio_id=0 -> 200
+ GET /api/proxy/home/alertas/totales?colegio_id=0 200 in 6681ms
+[PROXY] GET http://localhost:3001/api/v1/home/alertas/totales?colegio_id=0 -> 200
+ GET /api/proxy/home/alertas/totales?colegio_id=0 200 in 6694ms
+[PROXY] GET http://localhost:3001/api/v1/perfil/obtener -> 200
+ GET /api/proxy/perfil/obtener 200 in 6697ms
+ GET / 200 in 66ms
+[PROXY] GET http://localhost:3001/api/v1/alumnos/alertas/conteo?colegio_id=0 -> 200
+ GET /api/proxy/alumnos/alertas/conteo?colegio_id=0 200 in 469ms
+Proxy -> {
+  method: 'GET',
+  path: 'colores',
+  target: 'http://localhost:3001/api/v1/colores?grouped=true'
+}
+Proxy -> {
+  method: 'GET',
+  path: 'home/barra/patologias',
+  target: 'http://localhost:3001/api/v1/home/barra/patologias?fecha_hasta=2026%2F06%2F12&colegio_id=0'
+}
+Proxy -> {
+  method: 'GET',
+  path: 'home/barra/neurodivergencias',
+  target: 'http://localhost:3001/api/v1/home/barra/neurodivergencias?fecha_hasta=2026%2F06%2F12&colegio_id=0'
+}
+[PROXY] GET http://localhost:3001/api/v1/colegios -> 200
+ GET /api/proxy/colegios 200 in 608ms
+Proxy -> {
+  method: 'GET',
+  path: 'colegios',
+  target: 'http://localhost:3001/api/v1/colegios'
+}
+Proxy -> {
+  method: 'GET',
+  path: 'home/barra/patologias',
+  target: 'http://localhost:3001/api/v1/home/barra/patologias?fecha_hasta=2026%2F06%2F12&colegio_id=0'
+}
+[PROXY] GET http://localhost:3001/api/v1/colegios -> 200
+ GET /api/proxy/colegios 200 in 492ms
+Proxy -> {
+  method: 'GET',
+  path: 'home/barra/neurodivergencias',
+  target: 'http://localhost:3001/api/v1/home/barra/neurodivergencias?fecha_hasta=2026%2F06%2F12&colegio_id=0'
+}
+[PROXY] GET http://localhost:3001/api/v1/colores?grouped=true -> 200
+ GET /api/proxy/colores?grouped=true 200 in 566ms
+Proxy -> {
+  method: 'GET',
+  path: 'home/alertas/recientes',
+  target: 'http://localhost:3001/api/v1/home/alertas/recientes?colegio_id=0'
+}
+[PROXY] GET http://localhost:3001/api/v1/home/barra/patologias?fecha_hasta=2026%2F06%2F12&colegio_id=0 -> 200
+ GET /api/proxy/home/barra/patologias?fecha_hasta=2026/06/12&colegio_id=0 200 in 667ms
+[PROXY] GET http://localhost:3001/api/v1/home/barra/neurodivergencias?fecha_hasta=2026%2F06%2F12&colegio_id=0 -> 200
+ GET /api/proxy/home/barra/neurodivergencias?fecha_hasta=2026/06/12&colegio_id=0 200 in 665ms
+[PROXY] GET http://localhost:3001/api/v1/home/barra/patologias?fecha_hasta=2026%2F06%2F12&colegio_id=0 -> 200
+ GET /api/proxy/home/barra/patologias?fecha_hasta=2026/06/12&colegio_id=0 200 in 635ms
+Proxy -> {
+  method: 'GET',
+  path: 'home/alertas/recientes',
+  target: 'http://localhost:3001/api/v1/home/alertas/recientes?colegio_id=0'
+}
+Proxy -> {
+  method: 'GET',
+  path: 'comparativa/emociones/top-diagnosticos',
+  target: 'http://localhost:3001/api/v1/comparativa/emociones/top-diagnosticos?colegio_id=0&fecha=2026-06-13&tipo=negativo'
+}
+Proxy -> {
+  method: 'GET',
+  path: 'comparativa/emociones/top-diagnosticos',
+  target: 'http://localhost:3001/api/v1/comparativa/emociones/top-diagnosticos?colegio_id=0&fecha=2026-06-13&tipo=positivo'
+}
+[PROXY] GET http://localhost:3001/api/v1/comparativa/emociones/top-diagnosticos?colegio_id=0&fecha=2026-06-13&tipo=negativo -> 200
+ GET /api/proxy/comparativa/emociones/top-diagnosticos?colegio_id=0&fecha=2026-06-13&tipo=negativo 200 in 296ms
+[PROXY] GET http://localhost:3001/api/v1/home/barra/neurodivergencias?fecha_hasta=2026%2F06%2F12&colegio_id=0 -> 200
+ GET /api/proxy/home/barra/neurodivergencias?fecha_hasta=2026/06/12&colegio_id=0 200 in 493ms
+[PROXY] GET http://localhost:3001/api/v1/home/alertas/recientes?colegio_id=0 -> 200
+ GET /api/proxy/home/alertas/recientes?colegio_id=0 200 in 477ms
+[PROXY] GET http://localhost:3001/api/v1/comparativa/emociones/top-diagnosticos?colegio_id=0&fecha=2026-06-13&tipo=positivo -> 200
+ GET /api/proxy/comparativa/emociones/top-diagnosticos?colegio_id=0&fecha=2026-06-13&tipo=positivo 200 in 513ms
+[PROXY] GET http://localhost:3001/api/v1/home/alertas/recientes?colegio_id=0 -> 200
+ GET /api/proxy/home/alertas/recientes?colegio_id=0 200 in 527ms
+ ✓ Compiled in 511ms (1942 modules)
+ GET / 200 in 55ms
+[PROXY] GET http://localhost:3001/api/v1/home/cards/emociones?colegio_id=0 -> 200
+ GET /api/proxy/home/cards/emociones?colegio_id=0 200 in 2883ms
+ ✓ Compiled in 274ms (1942 modules)
+ GET / 200 in 25ms
+ ✓ Compiled in 223ms (1942 modules)
+ GET / 200 in 35ms
+ ✓ Compiled in 168ms (1942 modules)
+ GET / 200 in 12ms
+ ✓ Compiled in 169ms (1942 modules)
+ GET / 200 in 12ms
+ ✓ Compiled in 166ms (1942 modules)
+ GET / 200 in 14ms
+ ✓ Compiled in 379ms (1942 modules)
+ GET / 200 in 25ms
+ ✓ Compiled in 335ms (1942 modules)
+ GET / 200 in 28ms
+ ✓ Compiled in 266ms (1942 modules)
+ GET / 200 in 24ms
+ ✓ Compiled in 321ms (1942 modules)
+ GET / 200 in 34ms
+[?25h
