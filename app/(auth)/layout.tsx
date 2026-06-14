@@ -6,6 +6,7 @@ import Image from "next/image";
 
 // Importamos version desde package.json (ajusta la ruta según donde esté este archivo)
 import packageInfo from "../../package.json";
+import { MEDICAL_DISCLAIMER_TEXT } from "@/lib/legal";
 
 export default function AuthLayout({
   children,
@@ -131,6 +132,9 @@ export default function AuthLayout({
               </svg>
             </a>
           ) : null}
+          <div className="mx-auto mt-1 max-w-xl px-4 text-xs leading-relaxed text-gray-100">
+            {MEDICAL_DISCLAIMER_TEXT}
+          </div>
           <div>
             Versión: {packageInfo.version} © {year} AlmaIA
           </div>

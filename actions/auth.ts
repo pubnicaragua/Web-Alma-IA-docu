@@ -3,6 +3,7 @@ import { ServerActionResponse } from "@/types/generics";
 import { AuthLoginSchemaType } from "@/types/auth";
 import { ProfileResponse } from "@/services/profile-service";
 import { validateRecaptch } from "@/lib/reacaptcha";
+import { normalizeLoginActionErrorMessage, PROFILE_VALIDATION_ERROR } from "@/lib/auth-login-error";
 
 function getLoginErrorMessage(status: number, responseText: string) {
     try {
@@ -46,11 +47,7 @@ export async function ActionMakeLogin(values: AuthLoginSchemaType): Promise<Serv
         data = await validateCredentials(values);
         await validateProfileType(data.token);
     } catch (error) {
-        if (error instanceof Error) {
-            message = error.message;
-        } else {
-            message = 'Ocurrió un error inesperado';
-        }
+        message = normalizeLoginActionErrorMessage(error);
         status = 'error';
     }
 
@@ -131,10 +128,18 @@ async function validateProfileType(token: string) {
         },
     });
 
+    if (!response.ok) {
+        throw new Error(PROFILE_VALIDATION_ERROR);
+    }
+
     const data = await response.json() as ProfileResponse;
 
     if (!data) {
-        throw new Error("No se pudo obtener el perfil");
+        throw new Error(PROFILE_VALIDATION_ERROR);
+    }
+
+    if (!data.rol || typeof data.rol.nombre !== "string" || !data.rol.nombre.trim()) {
+        throw new Error("perfil incompleto");
     }
 
     if (["Alumno", "Apoderado"].includes(data.rol.nombre)) {
