@@ -30,9 +30,8 @@ Hemos creado una plantilla para ti. Sigue estos pasos para configurarlo:
    ```
 3. Configura los siguientes campos en tu archivo `.env` o `.env.local`:
    * **`NEXT_PUBLIC_API_BASE_URL`**: La URL base de tu API de backend (ej. `http://localhost:8000` o tu servidor en la nube).
-   * **`NEXT_PUBLIC_ENCRYPTION_KEY`**: Una clave secreta para encriptar datos localmente.
    * **`NEXT_PUBLIC_ENVIROMENT`**: Establece `"development"` para ver la etiqueta de desarrollo en pantalla o `"production"` para ocultarla.
-   * **`NEXT_PUBLIC_RECAPTCHA_SITE_KEY`** y **`NEXT_PUBLIC_RECAPTCHA_SECRET`**: Claves para habilitar Google reCAPTCHA v2.
+   * **`NEXT_PUBLIC_RECAPTCHA_SITE_KEY`**: Clave pública para habilitar Google reCAPTCHA v2. El secret debe configurarse solo en el backend como `RECAPTCHA_SECRET`.
 
 ---
 
@@ -65,6 +64,7 @@ Una vez iniciado, abre tu navegador e ingresa a:
 * **Compilar para producción**: `pnpm build` (Crea una versión optimizada del frontend lista para desplegar).
 * **Iniciar en producción**: `pnpm start` (Ejecuta la build de producción previamente construida).
 * **Analizar errores de sintaxis**: `pnpm lint` (Ejecuta ESLint para asegurar la calidad del código).
+* **Inventario de endpoints**: revisa [`README-ENDPOINTS.md`](./README-ENDPOINTS.md).
 
 ---
 
