@@ -1,8 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { ensureWindowAxios } from "@/lib/boostrap";
 import SplashScreen from "./SplashScreen";
 import { DevelopmentMode } from "./utils/app-mode";
+
+ensureWindowAxios();
 
 export default function ClientWrapper({
   children,

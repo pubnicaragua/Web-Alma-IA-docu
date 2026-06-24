@@ -1,6 +1,6 @@
 "use client";
 import { useParams } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   AlertTriangle,
   Bell,
@@ -14,9 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StudentAlerts } from "@/components/student/student-alerts";
 import { StudentReports } from "@/components/student/student-reports";
 import { StudentSkeleton } from "@/components/student/student-skeleton";
-import { BarChartComparisonAlumno } from "@/components/bar-chart-comparison-alumno";
 import { VerifyAccess } from "@/components/authentication/verify-access";
-import { ComparisonChart } from "@/components/comparison-chart";
 import ErrorBoundary from "@/components/utils/error-bountdry";
 import { useAxios } from "@/hooks/use-axios";
 import { useUser } from "@/middleware/user-context";
@@ -24,6 +22,7 @@ import type { StudentDetailResponse } from "@/services/students-service";
 import { StudentDetailEvents } from "@/components/student/detail-sections/events";
 import { StudentDetailAlerts } from "@/components/student/detail-sections/alerts";
 import { StudentDetailInfo } from "@/components/student/detail-sections/information";
+import { StudentEmotionsSection } from "@/components/student/student-emotions-section";
 import { useToast } from "@/hooks/use-toast";
 import {
   buildStudentTabAuditPayload,
@@ -57,14 +56,6 @@ export default function StudentDetailPage() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("ficha");
   const [auditingTab, setAuditingTab] = useState<string | null>(null);
-  const [selectedEmotions, setSelectedEmotions] = useState<string[]>([
-    "Tristeza",
-    "Felicidad",
-    "Estrés",
-    "Ansiedad",
-    "Enojo",
-    "Otros",
-  ]);
 
   const fetchStudentValue = useCallback(async () => {
     if (!selectedSchoolId) return;
@@ -81,33 +72,6 @@ export default function StudentDetailPage() {
     refetch,
     error
   } = useAxios<StudentDetailResponse>(fetchStudentValue, [id, selectedSchoolId])
-
-  const handleToggleEmotion = (emotion: string) => {
-    if (selectedEmotions.includes(emotion)) {
-      setSelectedEmotions(selectedEmotions.filter((e) => e !== emotion));
-    } else {
-      setSelectedEmotions([...selectedEmotions, emotion]);
-    }
-  };
-
-  const emociones = useMemo(() => {
-    if (!studentDetails?.emociones) return []
-    return studentDetails.emociones.map((emocion: any) => ({
-      name: emocion.nombre,
-      value: emocion?.cantidad,
-      color: "",
-    }));
-  }, [studentDetails?.emociones]);
-
-
-  const comparativa = useMemo(() => {
-    if (!studentDetails?.datosComparativa) return [];
-    return studentDetails.datosComparativa.map((data:any) => ({
-      name: data.nombre,
-      alumno: data?.cantidad_alumno,
-      promedio: data?.proporcion_alumno,
-    }));
-  }, [studentDetails?.datosComparativa]);
 
   const firstCourseId = studentDetails?.alumno?.cursos?.[0]?.curso_id;
   const studentName = getStudentDisplayName(studentDetails?.alumno);
@@ -275,13 +239,15 @@ export default function StudentDetailPage() {
                     </TabsList>
 
                     {/* Zona 3: Contenido de las pestañas */}
-                    <div className="mt-6 bg-white rounded-lg p-4 border border-blue-100">
+                    <div className="mt-6">
                       <TabsContent value="ficha">
+                        <div className="bg-white rounded-lg p-4 border border-blue-100">
                         <StudentDetailInfo
                           alumno={studentDetails?.alumno}
                           ficha={studentDetails?.ficha?.[0] ?? null}
                           apoderados={studentDetails.apoderados ?? []}
                         />
+                        </div>
                       </TabsContent>
 
                       <TabsContent value="alertas">
@@ -300,36 +266,25 @@ export default function StudentDetailPage() {
                       </TabsContent>
 
                       <TabsContent value="emociones">
-                        <div className="bg-white rounded-lg shadow-sm p-6 border border-blue-200">
-                          <h3 className="text-xl font-semibold text-gray-800 mb-6">
-                            Registro emocional del alumno
-                          </h3>
-
-                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <BarChartComparisonAlumno
-                              title="Emociones"
-                              selectedEmotions={selectedEmotions}
-                              onToggleEmotion={handleToggleEmotion}
-                              apiEmotions={emociones}
-                              setSelectedEmotions={setSelectedEmotions}
-                            />
-
-                            <ComparisonChart comparisonData={comparativa} />
-                          </div>
-                        </div>
+                        <StudentEmotionsSection
+                          studentId={String(id)}
+                          schoolId={Number(studentDetails?.alumno?.colegio_id ?? selectedSchoolId ?? 0)}
+                        />
                       </TabsContent>
 
                       <TabsContent value="eventos">
-                        {firstCourseId ? (
-                          <StudentDetailEvents
-                            alumno_id={studentDetails.alumno.alumno_id}
-                            curso_id={firstCourseId}
-                          />
-                        ) : (
-                          <p className="text-sm text-gray-500">
-                            No hay curso asociado para mostrar eventos.
-                          </p>
-                        )}
+                        <div className="bg-white rounded-lg p-4 border border-blue-100">
+                          {firstCourseId ? (
+                            <StudentDetailEvents
+                              alumno_id={studentDetails.alumno.alumno_id}
+                              curso_id={firstCourseId}
+                            />
+                          ) : (
+                            <p className="text-sm text-gray-500">
+                              No hay curso asociado para mostrar eventos.
+                            </p>
+                          )}
+                        </div>
                       </TabsContent>
 
                     </div>
