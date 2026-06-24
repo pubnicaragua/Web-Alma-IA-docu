@@ -17,24 +17,69 @@ function isPublicPath(path: string) {
   );
 }
 
+// Obtener la lista blanca de orígenes permitidos desde las variables de entorno
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter((origin) => origin && origin !== "*");
+
 export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
+  const origin = request.headers.get("origin");
+  const isAllowed = origin && ALLOWED_ORIGINS.includes(origin);
+
+  // 1. Manejar preflight OPTIONS request para CORS
+  if (request.method === "OPTIONS") {
+    const response = new NextResponse(null, { status: 204 });
+    if (origin && isAllowed) {
+      response.headers.set("Access-Control-Allow-Origin", origin);
+      response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+      response.headers.set("Access-Control-Allow-Headers", "X-Requested-With, Content-Type, Authorization, Date-Zone");
+      response.headers.set("Access-Control-Allow-Credentials", "true");
+    }
+    return response;
+  }
+
+  // 2. Si es una ruta de API, no aplicar redirecciones de sesión, solo inyectar cabeceras CORS
+  if (path.startsWith("/api/")) {
+    const response = NextResponse.next();
+    if (origin && isAllowed) {
+      response.headers.set("Access-Control-Allow-Origin", origin);
+      response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+      response.headers.set("Access-Control-Allow-Headers", "X-Requested-With, Content-Type, Authorization, Date-Zone");
+      response.headers.set("Access-Control-Allow-Credentials", "true");
+    }
+    return response;
+  }
+
+  // 3. Aplicar control de acceso para páginas del frontend
   const token = request.cookies.get("auth_token")?.value;
   const hasAuthCookie = Boolean(token);
 
-  if (path === "/login" && hasAuthCookie) {
-    return NextResponse.redirect(new URL("/", request.url));
-  }
+  let response: NextResponse;
 
-  if (!hasAuthCookie && !isPublicPath(path)) {
+  if (path === "/login" && hasAuthCookie) {
+    response = NextResponse.redirect(new URL("/", request.url));
+  } else if (!hasAuthCookie && !isPublicPath(path)) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", path);
-    return NextResponse.redirect(loginUrl);
+    response = NextResponse.redirect(loginUrl);
+  } else {
+    response = NextResponse.next();
   }
 
-  return NextResponse.next();
+  // Inyectar cabeceras CORS si corresponde
+  if (origin && isAllowed) {
+    response.headers.set("Access-Control-Allow-Origin", origin);
+    response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    response.headers.set("Access-Control-Allow-Headers", "X-Requested-With, Content-Type, Authorization, Date-Zone");
+    response.headers.set("Access-Control-Allow-Credentials", "true");
+  }
+
+  return response;
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)"],
+  // Coincidir con todas las rutas excepto recursos estáticos e imágenes
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)"],
 };
