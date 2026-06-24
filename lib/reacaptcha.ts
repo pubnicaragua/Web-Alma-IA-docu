@@ -2,12 +2,6 @@
 // Validar el captcha
 export async function validateRecaptch(captcha: string) {
 
-    // El frontend usa un componente dummy mientras reCAPTCHA esta deshabilitado.
-    if (captcha === "recaptcha-disabled") {
-        console.log("[reCAPTCHA] Validacion omitida: captcha deshabilitado");
-        return;
-    }
-
     // En desarrollo, saltar la validacion del servidor de Google.
     if (process.env.NODE_ENV === "development") {
         console.log("[reCAPTCHA] Validacion omitida en modo desarrollo");
@@ -24,7 +18,7 @@ export async function validateRecaptch(captcha: string) {
             "Content-Type": "application/x-www-form-urlencoded",
         },
         body: new URLSearchParams({
-            secret: process.env.NEXT_PUBLIC_RECAPTCHA_SECRET ?? "",
+            secret: process.env.RECAPTCHA_SECRET ?? "",
             response: captcha
         }),
     });

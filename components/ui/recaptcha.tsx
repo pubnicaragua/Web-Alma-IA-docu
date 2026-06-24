@@ -1,20 +1,16 @@
-import { forwardRef, useEffect } from "react";
+import ReCAPTCHA, { ReCAPTCHAProps } from "react-google-recaptcha";
+import { forwardRef } from "react";
 
-type ReCaptchaInputProps = {
-  onChange?: (token: string | null) => void;
-  [key: string]: any;
-};
+type ReCaptchaInputProps = Omit<ReCAPTCHAProps, "sitekey">;
 
-// Componente dummy para reCAPTCHA deshabilitado temporalmente
-export const ReCaptchaInput = forwardRef<HTMLDivElement, ReCaptchaInputProps>((props, ref) => {
-  useEffect(() => {
-    props.onChange?.("recaptcha-disabled");
-  }, [props.onChange]);
-
+// Componente para reCAPTCHA
+export const ReCaptchaInput = forwardRef<ReCAPTCHA, ReCaptchaInputProps>((props, ref) => {
   return (
-    <div ref={ref} className="p-3 border border-gray-300 rounded bg-gray-50 text-sm text-gray-600">
-      reCAPTCHA deshabilitado temporalmente
-    </div>
+    <ReCAPTCHA
+      ref={ref}
+      sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
+      {...props}
+    />
   );
 });
 
