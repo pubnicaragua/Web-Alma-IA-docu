@@ -68,10 +68,7 @@ export default function LoginPage() {
   }, [email, rememberMe]);
 
   const onSubmit = useCallback(async (values: AuthLoginSchemaType) => {
-    console.log('[LOGIN] Enviando credenciales:', { email: values.email, password: '***' });
-
     const response = await ActionMakeLogin(values);
-    console.log('[LOGIN] Respuesta del servidor:', response);
 
     if (response.status === 'error') {
       form.resetField('password');

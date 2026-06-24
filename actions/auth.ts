@@ -58,10 +58,6 @@ export async function ActionMakeLogin(values: AuthLoginSchemaType): Promise<Serv
 async function validateCredentials(values: AuthLoginSchemaType) {
     const loginUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login`
 
-    console.log('[AUTH] ========== INICIO LOGIN ==========');
-    console.log('[AUTH] URL:', loginUrl);
-    console.log('[AUTH] Email:', values.email);
-
     try {
         const response = await fetch(loginUrl, {
             method: "POST",
@@ -74,11 +70,7 @@ async function validateCredentials(values: AuthLoginSchemaType) {
             }),
         });
 
-        console.log('[AUTH] Status HTTP:', response.status);
-        console.log('[AUTH] Status Text:', response.statusText);
-
         const responseText = await response.text();
-        console.log('[AUTH] Response Body:', responseText);
 
         if (!response.ok) {
             console.error('[AUTH] ❌ ERROR - Login fallido');
@@ -95,16 +87,11 @@ async function validateCredentials(values: AuthLoginSchemaType) {
             throw new Error("Respuesta inválida del servidor");
         }
 
-        console.log('[AUTH] ✅ Login exitoso');
-        console.log('[AUTH] Token recibido:', !!data.token);
-        console.log('[AUTH] Datos:', { token: !!data.token, user: data.user ? 'presente' : 'ausente' });
-
         if (!data.token) {
             console.error('[AUTH] ❌ ERROR - No hay token en la respuesta');
             throw new Error("No se recibió un token válido");
         }
 
-        console.log('[AUTH] ========== FIN LOGIN EXITOSO ==========');
         return data;
     } catch (error) {
         console.error('[AUTH] ========== ERROR EN LOGIN ==========');
