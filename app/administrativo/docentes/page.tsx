@@ -166,8 +166,31 @@ function TeachersPageContent() {
 
   // Función para agregar un nuevo docente
   const handleAddTeacher = useCallback<AddTeacherModalProps["onAddTeacher"]>(
-    (teacher) => {
-      setTeachersData((prev) => [teacher, ...prev]);
+    (teacherInput) => {
+      let schoolName = "Colegio";
+      if (typeof window !== "undefined") {
+        try {
+          const schoolData = localStorage.getItem("schoolData");
+          if (schoolData) {
+            const parsed = JSON.parse(schoolData);
+            schoolName = parsed.nombre || "Colegio";
+          }
+        } catch (e) {
+          console.error("Error reading schoolData from localStorage:", e);
+        }
+      }
+
+      const newTeacher: Teacher = {
+        id: Date.now().toString(),
+        name: `${teacherInput.nombres} ${teacherInput.apellidos}`,
+        subject: teacherInput.especialidad,
+        status: teacherInput.estado,
+        school: schoolName,
+        email: teacherInput.email,
+        image: "https://avatar.iran.liara.run/public",
+      };
+
+      setTeachersData((prev) => [newTeacher, ...prev]);
     },
     []
   );

@@ -18,7 +18,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { EditAlertModal } from "@/components/edit-alert-modal";
 import { hasSearchParam } from "@/lib/search-params";
-import { AlertPagev1 } from "@/services/alerts-service";
+import { AlertPage, AlertPagev1 } from "@/services/alerts-service";
 
 export default function AlertDetailPage({
   searchParams,
@@ -28,7 +28,7 @@ export default function AlertDetailPage({
   const { id } = useParams();
   const router = useRouter();
   const { toast } = useToast();
-  const [alert, setAlert] = useState<AlertPagev1 | null>(null);
+  const [alert, setAlert] = useState<AlertPage | null>(null);
   const [bitacoras, setBitacoras] = useState<BitacoraResponse[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -79,7 +79,7 @@ export default function AlertDetailPage({
     if (!alert) return;
 
     try {
-      await loadAlert(alert.id);
+      await loadAlert(alert.alumno_alerta_id);
       setIsEditModalOpen(false);
     } catch {}
   };
@@ -355,7 +355,7 @@ export default function AlertDetailPage({
           <EditAlertModal
             isOpen={isEditModalOpen}
             onClose={() => setIsEditModalOpen(false)}
-            alert={alert}
+            alert={alert as unknown as AlertPagev1}
             onSave={handleSaveChanges}
           />
         </AppLayout>

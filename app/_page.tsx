@@ -308,18 +308,12 @@ export default function Home() {
           {getFuntions("Grafico Patologias") ? (
             <BarChartComparisonPatologieGeneral
               title="Patologias"
-              selectedEmotions={selectedEmotions}
-              onToggleEmotion={handleToggleEmotion}
-              setSelectedEmotions={setSelectedEmotions}
             />
           ) : null}
 
           {getFuntions("Grafico Neurodivergencias") ? (
             <BarChartComparisonNeurodivergences
               title="Neurodivergencias"
-              initialSelectedEmotions={selectedEmotions}
-              onEmotionsChange={handleToggleEmotionNeuro}
-              setSelectedEmotions={setSelectedEmotions}
             />
           ) : null}
         </div>
