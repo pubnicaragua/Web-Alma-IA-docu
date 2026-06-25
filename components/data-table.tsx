@@ -15,6 +15,8 @@ interface DataTableProps<T> {
   pageSize?: number
   currentPage?: number
   onPageChange?: (page: number) => void
+  loading?: boolean
+  emptyMessage?: string
 }
 
 export function DataTable<T>({
@@ -25,6 +27,8 @@ export function DataTable<T>({
   pageSize = 10,
   currentPage: externalCurrentPage,
   onPageChange: externalOnPageChange,
+  loading = false,
+  emptyMessage = "No hay datos disponibles",
 }: DataTableProps<T>) {
   const [internalCurrentPage, setInternalCurrentPage] = useState(1)
   
@@ -95,7 +99,16 @@ export function DataTable<T>({
           </tr>
         </thead>
         <tbody>
-          {paginatedData.length > 0 ? (
+          {loading ? (
+            <tr>
+              <td colSpan={columns.length} className="px-4 py-8 text-center text-gray-500">
+                <div className="flex items-center justify-center space-x-2">
+                  <div className="w-4 h-4 rounded-full bg-blue-500 animate-pulse"></div>
+                  <span>Cargando datos...</span>
+                </div>
+              </td>
+            </tr>
+          ) : paginatedData.length > 0 ? (
             paginatedData.map((item, index) => (
               <tr
                 key={index}
@@ -111,7 +124,7 @@ export function DataTable<T>({
           ) : (
             <tr>
               <td colSpan={columns.length} className="px-4 py-4 text-center text-gray-500">
-                No hay datos disponibles
+                {emptyMessage}
               </td>
             </tr>
           )}

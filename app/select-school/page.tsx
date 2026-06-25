@@ -67,6 +67,8 @@ export default function SelectSchoolPage() {
       localStorage.setItem("powerUsers", JSON.stringify(powerUsers));
 
       const profile = await fetchUserProfile();
+      if (!profile) return;
+
       const schoolsData = await loadSchoolsByUsuario_id(
         profile.usuario.usuario_id
       );

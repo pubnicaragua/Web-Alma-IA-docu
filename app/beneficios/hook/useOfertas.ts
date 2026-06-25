@@ -15,8 +15,8 @@ interface UseOfertasReturn {
 }
 
 export const useOfertas = (): UseOfertasReturn => {
-  const [ofertas, setOfertas] = useState<Beneficio[] | null>([]);
-  const [promociones, setPromociones] = useState<Beneficio[] | null>([]);
+  const [ofertas, setOfertas] = useState<Beneficio[]>([]);
+  const [promociones, setPromociones] = useState<Beneficio[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [marcas, setMarcas] = useState<MarcaCircular[]>([]);

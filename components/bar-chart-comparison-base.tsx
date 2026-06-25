@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { themeColors } from "@/lib/theme-colors";
 import { DatePicker } from "@/components/ui/date-picker";
+import { type Emotion } from "@/services/home-service";
 
 interface BarChartComparisonBaseProps {
   title: string;
@@ -113,10 +114,8 @@ export function BarChartComparisonBase({
             Actualizar
           </button>
           <DatePicker
-            mode={dateMode}
-            onModeChange={setDateMode}
-            selectedDate={selectedDate}
-            onDateChange={setSelectedDate}
+            selected={selectedDate}
+            onChange={setSelectedDate}
           />
         </div>
       </div>

@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useState, useEffect } from "react"
 import {
@@ -54,7 +54,7 @@ export function BarChartComparisonCategory({ title, grado }: BarChartComparisonC
       })
 
       // Asegurar que cada entrada tenga todas las emociones con valor 0 si faltan
-      const completeData = normalizedData.map((item) => {
+      const completeData = normalizedData.map((item: any) => {
         const completeItem: EmotionData = { name: item.name }
         allEmotions.forEach((emotion) => {
           completeItem[emotion] = item[emotion] ?? 0

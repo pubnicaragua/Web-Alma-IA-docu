@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import {
@@ -80,6 +80,7 @@ export function BarChartComparisonNeurodivergences({
         cantidad_respuestas: Math.round(emotion.valor / 100),
         cantidad_negativas: 0,
         cantidad_neutras: 0,
+        color: getNeurodivergenceColor(emotion.nombre),
       }));
       setData(transformedData);
 

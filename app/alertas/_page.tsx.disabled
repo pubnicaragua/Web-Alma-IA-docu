@@ -73,12 +73,12 @@ export default function AlertsPage({
         setIsLoading(true);
         setError(null);
 
-        let data = await fetchAlerts();
+        let data = (await fetchAlerts()) as unknown as Alert[];
 
         // Filtrar por notificaciones si aplica  
         const params = getSearchParam(searchParams, "notifications");
         if (params) {
-          data = data.filter((alert) => alert.status === "Pendiente");
+          data = data.filter((alert: Alert) => alert.status === "Pendiente");
         }
 
         setAlerts(data);

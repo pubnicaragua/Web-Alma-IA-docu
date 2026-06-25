@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import {
@@ -79,6 +79,7 @@ export function BarChartComparisonPatologieGeneral({
         cantidad_respuestas: Math.round(emotion.valor / 100),
         cantidad_negativas: 0,
         cantidad_neutras: 0,
+        color: getPatologieColor(emotion.nombre),
       }));
       setData(transformedData);
 
