@@ -6,6 +6,10 @@ import { isAuthenticated, getAuthToken } from "@/lib/api-config";
 import { subscribeToAuthChanges } from "@/lib/auth-events";
 
 export function AuthDebug() {
+  if (process.env.NODE_ENV === "production") {
+    return null;
+  }
+
   const { isAuthenticated: contextAuth, checkAuth } = useAuth();
   const [directAuth, setDirectAuth] = useState(isAuthenticated());
   const [token, setToken] = useState<string | null>(null);
