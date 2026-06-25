@@ -17,6 +17,24 @@ function isPublicPath(path: string) {
   );
 }
 
+function isTokenExpiredOrInvalid(encryptedToken: string): boolean {
+  try {
+    const token = decodeURIComponent(encryptedToken);
+    const parts = token.split(".");
+    if (parts.length !== 3) return true;
+
+    // atob decodifica base64 en entornos Web y Edge Runtime
+    const payload = JSON.parse(atob(parts[1]));
+    if (typeof payload.exp === "number") {
+      const currentTime = Math.floor(Date.now() / 1000);
+      return payload.exp < currentTime;
+    }
+    return false;
+  } catch (error) {
+    return true;
+  }
+}
+
 // Obtener la lista blanca de orígenes permitidos desde las variables de entorno
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || "")
   .split(",")
@@ -54,7 +72,7 @@ export function middleware(request: NextRequest) {
 
   // 3. Aplicar control de acceso para páginas del frontend
   const token = request.cookies.get("auth_token")?.value;
-  const hasAuthCookie = Boolean(token);
+  const hasAuthCookie = token ? !isTokenExpiredOrInvalid(token) : false;
 
   let response: NextResponse;
 
