@@ -68,15 +68,14 @@ export function EditAlertModal({
 
     try {
       const updateData = {
-        alumno_alerta_id: alert.alumno_alerta_id,
-        alumno_id: alert.alumno.alumno_id,
+        ...alert,
         prioridad_id: parseInt(formData.prioridad_id) || 1,
         severidad_id: parseInt(formData.severidad_id) || 1,
-        responsable_actual_id: 1,
-        accion_tomada: formData.accion_tomada || null,
+        responsable_actual_id: "1",
+        accion_tomada: { action: formData.accion_tomada || null },
       };
 
-      const updatedAlert = await updateAlert(updateData);
+      const updatedAlert = await updateAlert(updateData as any);
 
       if (onSave) {
         await onSave(updatedAlert);
