@@ -4,6 +4,8 @@ import { AuthLoginSchemaType } from "@/types/auth";
 import { ProfileResponse } from "@/services/profile-service";
 import { validateRecaptch } from "@/lib/reacaptcha";
 import { normalizeLoginActionErrorMessage, PROFILE_VALIDATION_ERROR } from "@/lib/auth-login-error";
+import { cookies } from "next/headers";
+import { encryptData } from "@/lib/crypto-utils";
 
 function getLoginErrorMessage(status: number, responseText: string) {
     try {
@@ -39,19 +41,51 @@ function getLoginErrorMessage(status: number, responseText: string) {
 export async function ActionMakeLogin(values: AuthLoginSchemaType): Promise<ServerActionResponse> {
     let message = '¡Inicio sesión con exito!';
     let status: 'success' | 'error' = 'success';
-    let data = null;
+    let data: any = null;
 
     try {
         // ToDo: Crear una instancia de axios del lado del servidor
         await validateRecaptch(values.captcha ?? '');
         data = await validateCredentials(values);
         await validateProfileType(data.token);
+
+        // Guardar el token de forma segura en una cookie httpOnly encriptada
+        const encryptedToken = encryptData(data.token);
+        const cookieStore = await cookies();
+        cookieStore.set("auth_token", encryptedToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            path: "/",
+            maxAge: values.rememberMe ? 15 * 24 * 60 * 60 : undefined, // 15 días
+        });
+
+        // Reemplazar el token real devuelto al cliente con un placeholder para mitigar robo por XSS
+        const tokenHash = Buffer.from(data.token.slice(-16)).toString("hex");
+        data.token = `session_${tokenHash}`;
     } catch (error) {
         message = normalizeLoginActionErrorMessage(error);
         status = 'error';
+        data = null;
     }
 
     return { message, status, data };
+}
+
+export async function ActionMakeLogout(): Promise<ServerActionResponse> {
+    try {
+        const cookieStore = await cookies();
+        cookieStore.set("auth_token", "", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            path: "/",
+            expires: new Date(0), // expirar inmediatamente
+        });
+        return { message: "Sesión cerrada correctamente", status: "success", data: null };
+    } catch (error) {
+        return { message: "Error al cerrar sesión", status: "error", data: null };
+    }
 }
 
 // Validar Credenciales con el servidor

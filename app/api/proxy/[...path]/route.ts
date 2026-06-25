@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { decryptData } from "@/lib/crypto-utils";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
@@ -25,6 +26,22 @@ const handleApiError = (error: unknown, path: string) => {
   );
 };
 
+const getClientIp = (request: NextRequest): string => {
+  const forwardedFor = request.headers.get("x-forwarded-for");
+  if (forwardedFor) {
+    const ip = forwardedFor.split(",")[0].trim();
+    if (ip) return ip;
+  }
+  const realIp = request.headers.get("x-real-ip");
+  if (realIp) return realIp.trim();
+  
+  // Cast to any since 'ip' may not be present in the TypeScript definitions of NextRequest in this version
+  const runtimeIp = (request as any).ip;
+  if (runtimeIp) return runtimeIp;
+  
+  return "127.0.0.1";
+};
+
 async function handleProxyRequest(
   request: NextRequest,
   context: { params: Promise<{ path: string[] }> } | { params: { path: string[] } }
@@ -37,9 +54,10 @@ async function handleProxyRequest(
 
     if (search) apiUrl += `?${search}`;
 
+    const pathJoined = pathArray.join("/");
     console.log("Proxy ->", {
       method: request.method,
-      path: pathArray.join("/"),
+      path: pathJoined,
       target: apiUrl,
     });
 
@@ -47,17 +65,47 @@ async function handleProxyRequest(
       request.bodyUsed === false &&
       request.headers.has("content-length");
 
-    const body = hasBody ? await request.blob() : null;
-
     const headers = new Headers();
     request.headers.forEach((v, k) => {
       if (k !== "host") headers.set(k, v);
     });
 
+    let body: BodyInit | null = null;
+    const isAudit = pathJoined === "auditoria";
+
+    if (request.method === "POST" && isAudit) {
+      try {
+        const json = await request.json();
+        const clientIp = getClientIp(request);
+        json.ip_origen = clientIp;
+        body = JSON.stringify(json);
+        headers.delete("content-length");
+        headers.set("content-type", "application/json");
+        
+        console.log(`[PROXY-AUDIT] Intercepted audit request. Substituted ip_origen with client IP: ${clientIp}`);
+      } catch (err) {
+        console.error("Error reading/modifying audit request body:", err);
+        body = hasBody ? await request.blob() : null;
+      }
+    } else {
+      body = hasBody ? await request.blob() : null;
+    }
+
     const isLogin = pathArray.join("/") === "auth/login";
 
     if (!isLogin) {
-      const auth = request.headers.get("authorization");
+      // Intentar extraer y decodificar el token JWT real desde la cookie httpOnly
+      const encryptedTokenCookie = request.cookies.get("auth_token")?.value;
+      if (encryptedTokenCookie) {
+        try {
+          const realToken = decryptData(encryptedTokenCookie);
+          headers.set("authorization", `Bearer ${realToken}`);
+        } catch (e) {
+          console.error("[PROXY] Error decrypting auth_token cookie:", e);
+        }
+      }
+
+      const auth = headers.get("authorization");
       if (!auth) {
         return NextResponse.json(
           { error: "Se requiere autenticacion" },

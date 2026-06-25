@@ -2,6 +2,7 @@
 import { dispatchAuthChangeEvent } from "./auth-events";
 import { decryptData, encryptData } from "./crypto-utils";
 import { normalizeSelectedSchoolId } from "./school-id";
+import { ActionMakeLogout } from "@/actions/auth";
 
 // API base URL para el proxy local
 export const API_BASE_URL = "/api/proxy";
@@ -39,18 +40,12 @@ export const setAuthToken = (
 ): void => {
   if (typeof window !== "undefined") {
     try {
-      // Cifrar token antes de guardar en localStorage  
+      // Cifrar el placeholder/token recibido antes de guardar en localStorage  
       const encryptedToken = encryptData(token);
       localStorage.setItem("auth_token", encryptedToken);
 
-      // Para cookies, también cifrar  
-      let cookieString = `auth_token=${encryptedToken}; path=/; SameSite=Lax`;
-      if (rememberMe) {
-        const expirationDate = new Date();
-        expirationDate.setDate(expirationDate.getDate() + 15);
-        cookieString += `; expires=${expirationDate.toUTCString()}`;
-      }
-      document.cookie = cookieString;
+      // NOTA: Ya no escribimos la cookie "auth_token" desde JavaScript (document.cookie)
+      // porque el servidor la establece de forma segura como httpOnly durante el login.
 
       dispatchAuthChangeEvent(true);
     } catch (error) {
@@ -64,8 +59,15 @@ export const removeAuthToken = (): void => {
   if (typeof window !== "undefined") {
     try {
       localStorage.removeItem("auth_token");
+      
+      // Intentar limpiar la cookie en el cliente (por si quedan remanentes no-httpOnly anteriores)
       document.cookie =
         "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax";
+
+      // Llamar a la Server Action de forma asíncrona para eliminar la cookie httpOnly del servidor
+      ActionMakeLogout().catch((err) => {
+        console.error("Error al eliminar la cookie httpOnly en el logout:", err);
+      });
 
       dispatchAuthChangeEvent(false);
     } catch (error) { }

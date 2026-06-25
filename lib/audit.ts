@@ -45,6 +45,12 @@ export interface AlertMediaAuditInput {
   accion: AlertAuditAction;
 }
 
+/**
+ * Genera el payload para la auditoría de pestañas de alumnos.
+ * Nota: El valor 'ip_origen: "127.0.0.1"' es un marcador de posición (placeholder)
+ * en el frontend y será reemplazado dinámicamente en el proxy de la API de Next.js
+ * (app/api/proxy/[...path]/route.ts) con la dirección IP pública real del cliente.
+ */
 export function buildStudentTabAuditPayload({
   alumnoId,
   colegioId,
@@ -60,12 +66,18 @@ export function buildStudentTabAuditPayload({
     descripcion: `Usuario consulto ${section} del alumno ${alumnoId}`,
     modulo_afectado: "alumnos",
     accion_realizada: `consultar_${section}`,
-    ip_origen: "127.0.0.1",
+    ip_origen: "127.0.0.1", // Reemplazado dinámicamente por el proxy
     model: "alumnos",
     referencia_id: alumnoId,
   };
 }
 
+/**
+ * Genera el payload para la auditoría de visualización/reproducción de recursos multimedia en alertas.
+ * Nota: El valor 'ip_origen: "127.0.0.1"' es un marcador de posición (placeholder)
+ * en el frontend y será reemplazado dinámicamente en el proxy de la API de Next.js
+ * (app/api/proxy/[...path]/route.ts) con la dirección IP pública real del cliente.
+ */
 export function buildAlertMediaAuditPayload({
   alertaId,
   colegioId,
@@ -80,7 +92,7 @@ export function buildAlertMediaAuditPayload({
     descripcion: `Usuario ${accion.replace("_", " ")} de la alerta ${alertaId}`,
     modulo_afectado: "alertas",
     accion_realizada: accion,
-    ip_origen: "127.0.0.1",
+    ip_origen: "127.0.0.1", // Reemplazado dinámicamente por el proxy
     model: "alertas",
     referencia_id: alertaId,
   };

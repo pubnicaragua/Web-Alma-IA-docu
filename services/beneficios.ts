@@ -1,4 +1,3 @@
-import { getAuthToken } from "@/lib/api-config";
 import axios from "axios";
 
 // Interfaces del backend (coinciden con la API)
@@ -47,7 +46,7 @@ export interface MarcaCircular {
   logoUrl: string;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+const API_BASE_URL = "/api/proxy";
 
 export const getBeneficios = async (): Promise<Beneficio[] | null> => {
   console.log("hola", API_BASE_URL);
@@ -72,14 +71,10 @@ export const getBeneficios = async (): Promise<Beneficio[] | null> => {
 export const getBeneficioDetalle = async (
   beneficioId: number
 ): Promise<BeneficioHttp | null> => {
-  const token = getAuthToken();
-  console.log(token);
   try {
-    const token = getAuthToken();
     const response = await fetch(`${API_BASE_URL}/beneficios/${beneficioId}`, {
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
     });
     if (!response.ok) {
@@ -97,14 +92,11 @@ export const getBeneficiosID = async (
   id: number
 ): Promise<Beneficio | null> => {
   try {
-    const token = getAuthToken();
     const response = await axios.get(
       `${API_BASE_URL}/beneficios/${id}`,
-
       {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
       }
     );
