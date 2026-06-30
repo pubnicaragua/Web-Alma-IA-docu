@@ -26,7 +26,7 @@ export default function TeachersPage() {
 function TeachersPageContent() {
   const router = useRouter();
 
-  // Estados para los datos y la carga
+  // Estados para los datos y la cargaaa
   const [teachersData, setTeachersData] = useState<Teacher[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
