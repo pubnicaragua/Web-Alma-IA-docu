@@ -18,7 +18,7 @@ export async function validateRecaptch(captcha: string) {
             "Content-Type": "application/x-www-form-urlencoded",
         },
         body: new URLSearchParams({
-            secret: process.env.RECAPTCHA_SECRET ?? "",
+            secret: process.env.NEXT_PUBLIC_RECAPTCHA_SECRET || process.env.RECAPTCHA_SECRET || "",
             response: captcha
         }),
     });
