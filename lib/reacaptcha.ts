@@ -12,13 +12,20 @@ export async function validateRecaptch(captcha: string) {
         throw new Error('Por favor, marca la casilla "No soy un robot".');
     }
 
+    const secret = process.env.RECAPTCHA_SECRET;
+
+    if (!secret) {
+        console.error("[reCAPTCHA] RECAPTCHA_SECRET is not configured");
+        throw new Error("reCAPTCHA no est\u00e1 configurado en el servidor.");
+    }
+
     const captchaRequest = await fetch("https://www.google.com/recaptcha/api/siteverify", {
         method: "POST",
         headers: {
             "Content-Type": "application/x-www-form-urlencoded",
         },
         body: new URLSearchParams({
-            secret: process.env.NEXT_PUBLIC_RECAPTCHA_SECRET || process.env.RECAPTCHA_SECRET || "",
+            secret,
             response: captcha
         }),
     });
@@ -26,6 +33,17 @@ export async function validateRecaptch(captcha: string) {
     const captchaData = await captchaRequest.json();
 
     if (!captchaData.success) {
-        throw new Error("El ReCaptcha expiro, vuelva a intentarlo.");
+        const errorCodes = Array.isArray(captchaData["error-codes"])
+            ? captchaData["error-codes"]
+            : [];
+
+        console.error("[reCAPTCHA] Validation failed:", JSON.stringify({
+            errorCodes,
+            hostname: captchaData.hostname,
+        }));
+
+        throw new Error(
+            `reCAPTCHA rechazado: ${errorCodes.join(", ") || "error desconocido"}`
+        );
     }
 }
