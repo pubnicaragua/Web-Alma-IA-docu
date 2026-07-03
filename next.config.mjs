@@ -5,7 +5,7 @@ const cspHeader = `
   default-src 'self';
   script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.google.com https://www.gstatic.com;
   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-  img-src 'self' blob: data: https://*.google.com https://*.gstatic.com https://images.unsplash.com https://avatar.iran.liara.run;
+  img-src 'self' blob: data: https://*.google.com https://*.gstatic.com https://images.unsplash.com https://avatar.iran.liara.run https://*.supabase.co;
   font-src 'self' https://fonts.gstatic.com data:;
   object-src 'none';
   base-uri 'self';
