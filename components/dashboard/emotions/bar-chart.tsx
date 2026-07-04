@@ -24,6 +24,31 @@ interface PropTypes {
 }
 
 const DEFAULT_EMOTION_COLOR = '#6c757d';
+const CHART_TOP_MARGIN = 28;
+const Y_AXIS_STEP = 0.5;
+
+const createBarKindLabel = (label: string) => (props: any) => {
+  const { x = 0, y = 0, width = 0, height = 0, value } = props;
+
+  if (value === null || value === undefined) return null;
+
+  const labelWouldClip = y < CHART_TOP_MARGIN - 8 && height > 0;
+  const labelY = labelWouldClip ? y + 14 : y - 6;
+
+  return (
+    <text
+      x={x + width / 2}
+      y={labelY}
+      textAnchor="middle"
+      dominantBaseline="middle"
+      fill={labelWouldClip ? '#f8fafc' : '#374151'}
+      fontSize={12}
+      fontWeight={600}
+    >
+      {label}
+    </text>
+  );
+};
 
 export function BarEmotionChart({ data }: Readonly<PropTypes>) {
   const [excluded, setExcluded] = React.useState<string[]>([]);
@@ -31,6 +56,31 @@ export function BarEmotionChart({ data }: Readonly<PropTypes>) {
   const emotions = useMemo(() => {
     return data.filter((emotion) => !excluded.includes(emotion.nombre));
   }, [data, excluded]);
+
+  const yAxisMax = useMemo(() => {
+    const maxValue = Math.max(
+      0,
+      ...emotions.flatMap((emotion) => [
+        emotion.positivos ?? 0,
+        emotion.neutrales ?? 0,
+        emotion.negativos ?? 0,
+      ])
+    );
+
+    return Math.max(
+      Y_AXIS_STEP,
+      Math.ceil((maxValue + Y_AXIS_STEP) / Y_AXIS_STEP) * Y_AXIS_STEP
+    );
+  }, [emotions]);
+
+  const yAxisTicks = useMemo(
+    () =>
+      Array.from(
+        { length: Math.floor(yAxisMax / Y_AXIS_STEP) + 1 },
+        (_, index) => Number((index * Y_AXIS_STEP).toFixed(1))
+      ),
+    [yAxisMax]
+  );
 
   const toggleEmotion = (emotion: string) => {
     setExcluded((prev) =>
@@ -116,30 +166,43 @@ export function BarEmotionChart({ data }: Readonly<PropTypes>) {
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={emotions}
-              margin={{ top: 5, right: 5, left: 0, bottom: 20 }}
+              margin={{ top: CHART_TOP_MARGIN, right: 5, left: 0, bottom: 20 }}
               maxBarSize={50}
             >
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey="nombre" />
-              <YAxis />
+              <YAxis
+                domain={[0, yAxisMax]}
+                ticks={yAxisTicks}
+                tickFormatter={(value) => Number(value).toString()}
+              />
               <Tooltip content={renderTooltip} />
               <Bar dataKey="positivos" radius={[4, 4, 0, 0]}>
                 {emotions.map((entry) => (
                   <Cell key={`cell-${entry.nombre}-p`} fill={emotionSeriesColor(entry)} />
                 ))}
-                <LabelList dataKey="positivos" position="top" formatter={() => 'Pos'} />
+                <LabelList
+                  dataKey="positivos"
+                  content={createBarKindLabel('Pos')}
+                />
               </Bar>
               <Bar dataKey="neutrales" radius={[4, 4, 0, 0]}>
                 {emotions.map((entry) => (
                   <Cell key={`cell-${entry.nombre}-n`} fill={emotionSeriesColor(entry)} />
                 ))}
-                <LabelList dataKey="neutrales" position="top" formatter={() => 'Neu'} />
+                <LabelList
+                  dataKey="neutrales"
+                  content={createBarKindLabel('Neu')}
+                />
               </Bar>
               <Bar dataKey="negativos" radius={[4, 4, 0, 0]}>
                 {emotions.map((entry) => (
                   <Cell key={`cell-${entry.nombre}-ng`} fill={emotionSeriesColor(entry)} />
                 ))}
-                <LabelList dataKey="negativos" position="top" formatter={() => 'Neg'} />
+                <LabelList
+                  dataKey="negativos"
+                  content={createBarKindLabel('Neg')}
+                />
               </Bar>
             </BarChart>
           </ResponsiveContainer >
