@@ -60,7 +60,6 @@ export const getBeneficios = async (): Promise<Beneficio[] | null> => {
 
     const data = response.data as Beneficio[];
 
-    alert("completado");
     return data;
   } catch (error) {
     console.error("Error en getBeneficios:", error);
