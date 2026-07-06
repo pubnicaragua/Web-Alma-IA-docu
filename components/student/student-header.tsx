@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Check } from "lucide-react"
+import { Check, User } from "lucide-react"
 import { useIsMobile } from "@/hooks/use-mobile"
 import Image from "next/image"
 
@@ -36,14 +36,18 @@ export function StudentHeader({ student }: StudentHeaderProps) {
     <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 mb-6 border border-blue-200">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0 border-2 border-blue-100">
-            <Image
-              src={student.image || "/placeholder.svg"}
-              alt={student.name}
-              width={64}
-              height={64}
-              className="w-full h-full object-cover"
-            />
+          <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0 border-2 border-blue-100 bg-gray-100 flex items-center justify-center">
+            {student.image && student.image !== "" && !student.image.includes("placeholder.svg") ? (
+              <Image
+                src={student.image}
+                alt={student.name}
+                width={64}
+                height={64}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <User className="w-8 h-8 text-gray-400" />
+            )}
           </div>
           <div>
             <h2 className="text-2xl font-bold text-gray-800">{student.name}</h2>

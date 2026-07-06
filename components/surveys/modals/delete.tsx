@@ -51,8 +51,8 @@ export function SurveyModalDelete({ survey }: any) {
 
     return (
         <>
-            <Button size={'sm'} variant={'link'} onClick={onOpen}>
-                <Trash />
+            <Button size={'sm'} variant={'link'} onClick={onOpen} title="Eliminar Encuesta">
+                <Trash className="text-red-600 hover:text-red-800 h-5 w-5 transition-transform duration-200 hover:scale-125" />
             </Button>
             <Dialog open={isOpen} onOpenChange={onClose}>
                 <DialogContent className="sm:max-w-1xl max-h-[90vh] overflow-y-auto">

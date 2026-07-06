@@ -20,8 +20,8 @@ export function SurveyModalEdit({ survey }: any) {
 
     return (
         <>
-            <Button size={'sm'} variant={'link'} onClick={onOpen}>
-                <Pencil />
+            <Button size={'sm'} variant={'link'} onClick={onOpen} title="Editar Encuesta">
+                <Pencil className="text-yellow-600 hover:text-yellow-800 h-5 w-5 transition-transform duration-200 hover:scale-125" />
             </Button>
             <Dialog open={isOpen} onOpenChange={onClose}>
                 <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">

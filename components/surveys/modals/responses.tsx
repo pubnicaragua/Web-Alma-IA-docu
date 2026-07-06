@@ -69,9 +69,13 @@ export function SurveyModalResponses({ survey }: any) {
     }, [axios.data?.encuesta_detalle, destinataryId]);
 
     useEffect(() => {
-        if (!isOpen || destinataryId !== null || allDestinataries.length === 0) return;
-        setDestinataryId(allDestinataries[0].id);
-    }, [allDestinataries, destinataryId, isOpen]);
+        if (!isOpen) return;
+        if (destinataries.length === 0) {
+            setDestinataryId(null);
+        } else if (destinataryId === null || !destinataries.some((d: any) => d.id === destinataryId)) {
+            setDestinataryId(destinataries[0].id);
+        }
+    }, [destinataries, destinataryId, isOpen]);
 
     const handleSelecDestinatary = (destinataryId: number) => {
         setDestinataryId(destinataryId);
@@ -80,8 +84,8 @@ export function SurveyModalResponses({ survey }: any) {
 
     return (
         <>
-            <Button size={"sm"} variant={"link"} onClick={onOpen}>
-                <Clipboard />
+            <Button size={"sm"} variant={"link"} onClick={onOpen} title="Ver Respuestas por Encuestado">
+                <Clipboard className="text-blue-600 hover:text-blue-800 h-5 w-5 transition-transform duration-200 hover:scale-125" />
             </Button>
             <Dialog open={isOpen} onOpenChange={onClose}>
                 <DialogContent className="sm:max-w-3xl max-h-[90vh] min-h-[300px] overflow-y-auto block">
