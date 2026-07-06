@@ -22,6 +22,7 @@ const columns = [
   { key: "informe_id", title: "Informe ID" },
   { key: "fecha_generacion", title: "Fecha de generacion" },
   { key: "periodo", title: "Periodo" },
+  { key: "tipo", title: "Tipo" },
   { key: "creado_por_nombre", title: "Generado por" },
   { key: "url_reporte", title: "Informe", className: "text-left" },
 ];
@@ -57,6 +58,10 @@ export function ReportsList({ reports = [] }: ReportsListProps) {
             }).format(date)}
           </span>
         );
+      }
+      case "tipo": {
+        const tipoText = report.tipo ? report.tipo.charAt(0).toUpperCase() + report.tipo.slice(1).toLowerCase() : "";
+        return <span>{tipoText}</span>;
       }
       case "creado_por_nombre":
         return <span>{report.creado_por_nombre || "Sin nombre"}</span>;
