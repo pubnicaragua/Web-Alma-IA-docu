@@ -49,6 +49,28 @@ const getStudentDisplayName = (student?: StudentDetailResponse["alumno"] | null)
   return fullName || generateNameFromEmail(student?.email);
 };
 
+function StudentProfileAvatar({ url, name }: { url?: string; name: string }) {
+  const [imageError, setImageError] = useState(false);
+
+  const hasImage = url && url !== "" && !url.includes("placeholder.svg") && !imageError;
+
+  return (
+    <div className="relative w-32 h-32 rounded-full overflow-hidden flex-shrink-0 border-4 border-blue-100 bg-gray-100 flex items-center justify-center">
+      {hasImage ? (
+        <img
+          src={url}
+          alt={name}
+          width={128}
+          height={128}
+          className="w-full h-full object-cover"
+          onError={() => setImageError(true)}
+        />
+      ) : (
+        <User className="w-16 h-16 text-gray-400" />
+      )}
+    </div>
+  );
+}
 
 export default function StudentDetailPage() {
   const { id } = useParams();
@@ -157,15 +179,10 @@ export default function StudentDetailPage() {
                 {/* Zona 1: Información principal del estudiante */}
                 <div className="bg-white rounded-lg shadow-sm p-6 mb-6 border border-blue-200">
                   <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-                    <div className="relative w-32 h-32 rounded-full overflow-hidden flex-shrink-0 border-4 border-blue-100">
-                      <Image
-                        src={studentDetails.alumno?.url_foto_perfil || "/placeholder.svg"}
-                        alt={studentName}
-                        width={128}
-                        height={128}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
+                    <StudentProfileAvatar
+                      url={studentDetails.alumno?.url_foto_perfil}
+                      name={studentName}
+                    />
                     <div className="flex flex-col items-center md:items-start">
                       <h1 className="text-3xl font-bold text-gray-800">{studentName}</h1>
                       <div className="flex flex-wrap gap-4">

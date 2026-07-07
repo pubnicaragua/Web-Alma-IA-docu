@@ -1,4 +1,4 @@
-﻿import React, { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import {
   BarChart,
   Bar,
@@ -142,18 +142,25 @@ export function BarEmotionChart({ data }: Readonly<PropTypes>) {
   return (
     <div>
       <div className="flex flex-wrap gap-2 mb-4">
-        {data.map((emotion) => (
-          <Badge
-            key={emotion.nombre}
-            className={`cursor-pointer capitalize ${!excluded.includes(emotion.nombre)
-              ? ''
-              : 'bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700'
+        {data.map((emotion) => {
+          const isSelected = !excluded.includes(emotion.nombre);
+          const color = emotionSeriesColor(emotion);
+          return (
+            <Badge
+              key={emotion.nombre}
+              variant={isSelected ? "outline" : "default"}
+              className={`cursor-pointer capitalize transition-colors ${
+                isSelected
+                  ? 'text-white border-transparent hover:opacity-90'
+                  : 'bg-gray-100 text-gray-400 border-transparent hover:bg-gray-200 hover:text-gray-600'
               }`}
-            onClick={() => toggleEmotion(emotion.nombre)}
-          >
-            {emotion.nombre}
-          </Badge>
-        ))}
+              style={isSelected ? { backgroundColor: color } : undefined}
+              onClick={() => toggleEmotion(emotion.nombre)}
+            >
+              {emotion.nombre}
+            </Badge>
+          );
+        })}
       </div>
 
       {(data.length === excluded.length) ? (

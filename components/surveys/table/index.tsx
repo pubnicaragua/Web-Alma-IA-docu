@@ -58,6 +58,7 @@ export function SurveyTable({ filters }: Readonly<PropTypes>) {
                                     <TableHead className="text-white">Estado</TableHead>
                                     <TableHead className="text-white">Frecuencía</TableHead>
                                     <TableHead className="text-white">Fecha Inicio | Fin</TableHead>
+                                    <TableHead className="text-white text-center">Resultados</TableHead>
                                     <TableHead className="text-white text-center">Acciones</TableHead>
                                 </TableRow>
                             </TableHeader>

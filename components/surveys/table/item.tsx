@@ -25,13 +25,17 @@ export function SurveyTableItem({ survey }: any) {
                     </>
                 )}
             </TableCell>
-            <TableCell>
-                <div className="flex content-center">
+            <TableCell className="text-center">
+                <div className="flex justify-center items-center">
                     <SurveyModalView survey={survey} />
+                </div>
+            </TableCell>
+            <TableCell>
+                <div className="flex justify-center items-center gap-1">
                     {survey.tipo_encuesta_id == 1 && (
                         <Link href={`/encuestas/${survey.encuesta_id}/sociograma`}>
-                            <Button size={'sm'} variant={'link'}>
-                                <ChartNetwork />
+                            <Button size={'sm'} variant={'link'} title="Ver Sociograma">
+                                <ChartNetwork className="text-purple-600 hover:text-purple-800 h-5 w-5 transition-transform duration-200 hover:scale-125" />
                             </Button>
                         </Link>
                     )}

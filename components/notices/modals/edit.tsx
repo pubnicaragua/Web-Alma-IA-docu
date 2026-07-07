@@ -12,6 +12,26 @@ import { NoticeForm } from "../form";
 import { useCallback } from "react";
 import { useRefresh } from "@/hooks/use-refresh";
 
+const formatForDatetimeLocal = (dateString?: string) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "";
+    
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
+const isFutureDate = (dateString?: string) => {
+    if (!dateString) return false;
+    const date = new Date(dateString);
+    return !isNaN(date.getTime()) && date > new Date();
+};
+
 export function NoticeModalEdit({ notice }: any) {
     
     const { isOpen, onOpen, onClose } = useModal();
@@ -49,8 +69,8 @@ export function NoticeModalEdit({ notice }: any) {
                                 descripcion: notice.aviso_contenido || "",
                                 palabras_clave: (notice.palabras_clave || []).join(", "),
                                 archivo: notice.aviso_ruta_archivo || undefined,
-                                fecha_programacion: notice.aviso_fecha_programacion || "",
-                                tipo_programacion: 'Programar'
+                                fecha_programacion: formatForDatetimeLocal(notice.aviso_fecha_programacion),
+                                tipo_programacion: isFutureDate(notice.aviso_fecha_programacion) ? 'Programar' : 'Ahora'
                             },
                             destinatarios: {
                                 aviso_tipo_id: notice.aviso_tipo_id || 0,
@@ -65,5 +85,3 @@ export function NoticeModalEdit({ notice }: any) {
         </>
     )
 }
-
-
