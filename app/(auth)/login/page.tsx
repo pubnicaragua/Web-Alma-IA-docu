@@ -99,7 +99,7 @@ export default function LoginPage() {
     try {
       await fetchUserProfile();
     } catch (error) {
-      removeAuthToken();
+      await removeAuthToken();
       localStorage.setItem("isAuthenticated", "false");
       return;
     }

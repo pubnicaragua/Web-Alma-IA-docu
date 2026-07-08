@@ -116,10 +116,10 @@ export function UserProvider({ children }: UserProviderProps) {
     lastFetchTimeRef.current = null;
   }, []);
 
-  const clearInvalidSession = useCallback(() => {
+  const clearInvalidSession = useCallback(async () => {
     clearUserData();
     cacheService.clear();
-    removeAuthToken();
+    await removeAuthToken();
     if (typeof window !== "undefined") {
       localStorage.removeItem("isAuthenticated");
       sessionStorage.clear();

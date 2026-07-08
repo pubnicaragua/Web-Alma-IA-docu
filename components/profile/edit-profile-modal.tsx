@@ -32,7 +32,7 @@ import {
 import {
   parsePhoneNumberFromString,
   type CountryCode,
-} from "libphonenumber-js/max";
+} from "libphonenumber-js";
 
 interface FormErrors {
   nombre_social?: string;

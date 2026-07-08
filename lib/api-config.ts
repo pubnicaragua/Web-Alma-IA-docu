@@ -55,7 +55,7 @@ export const setAuthToken = (
 };
 
 // Function to remove the auth token (for logout)
-export const removeAuthToken = (): void => {
+export const removeAuthToken = async (): Promise<void> => {
   if (typeof window !== "undefined") {
     try {
       localStorage.removeItem("auth_token");
@@ -65,7 +65,7 @@ export const removeAuthToken = (): void => {
         "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax";
 
       // Llamar a la Server Action de forma asíncrona para eliminar la cookie httpOnly del servidor
-      ActionMakeLogout().catch((err) => {
+      await ActionMakeLogout().catch((err) => {
         console.error("Error al eliminar la cookie httpOnly en el logout:", err);
       });
 

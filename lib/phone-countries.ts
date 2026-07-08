@@ -6,7 +6,7 @@ import {
   getCountries,
   getCountryCallingCode,
   type CountryCode,
-} from "libphonenumber-js/max";
+} from "libphonenumber-js";
 
 countries.registerLocale(esLocale);
 

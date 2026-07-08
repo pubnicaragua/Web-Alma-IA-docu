@@ -10,13 +10,13 @@ import { cacheService } from "@/lib/cache-service";
 
 type AuthContextType = {
   isAuthenticated: boolean;
-  logout: (isForTime?: boolean) => void;
+  logout: (isForTime?: boolean) => Promise<void>;
   checkAuth: () => boolean;
 };
 
 const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
-  logout: () => {},
+  logout: async () => {},
   checkAuth: () => false,
 });
 
@@ -56,10 +56,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const logout = (isForTime = false) => {
+  const logout = async (isForTime = false) => {
     localStorage.clear();
     sessionStorage.clear();
-    removeAuthToken();
+    await removeAuthToken();
     setIsAuth(false);
     cacheService.clear();
     window.location.href = "/login";
