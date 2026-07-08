@@ -9,15 +9,12 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
 } from "recharts";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Smile, RefreshCw, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import {
-  fetchEmotionsForGrade,
-  fetchPatologieForGrade,
-} from "@/services/home-service";
+import { fetchPatologieForGrade } from "@/services/home-service";
 import { useColoresCatalog } from "@/hooks/use-colores";
 
 interface EmotionData {
@@ -28,14 +25,18 @@ interface EmotionData {
 interface BarChartComparisonPatologieProps {
   title: string;
   grado: number;
+  courseName?: string | null;
 }
 
 export function BarChartComparisonPatologie({
   title,
   grado,
+  courseName,
 }: BarChartComparisonPatologieProps) {
   const [data, setData] = useState<EmotionData[]>([]);
+  const [allEmotions, setAllEmotions] = useState<string[]>([]);
   const [selectedEmotions, setSelectedEmotions] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -43,7 +44,7 @@ export function BarChartComparisonPatologie({
 
   useEffect(() => {
     loadData();
-  }, [grado]);
+  }, [grado, courseName]);
 
   const getEmotionColor = (emotion: string): string =>
     getColor("patologias", emotion, "#6c757d");
@@ -53,26 +54,31 @@ export function BarChartComparisonPatologie({
       setIsLoading(true);
       setError(null);
       const emotionsData = await fetchPatologieForGrade(grado);
-      const allEmotions = new Set<string>();
+      const uniqueEmotions = new Set<string>();
 
       // Normalizar datos y recopilar todas las patologías
-      const normalizedData = emotionsData.map((item) => {
+      const filteredData = courseName
+        ? emotionsData.filter((item) => item.name === courseName)
+        : emotionsData;
+      const normalizedData = filteredData.map((item) => {
         const { name, ...emotions } = item;
-        Object.keys(emotions).forEach((emotion) => allEmotions.add(emotion));
+        Object.keys(emotions).forEach((emotion) => uniqueEmotions.add(emotion));
         return { name, ...emotions };
       });
 
       // Asegurar que cada entrada tenga todas las patologias con valor 0 si faltan
       const completeData = normalizedData.map((item: any) => {
         const completeItem: EmotionData = { name: item.name };
-        allEmotions.forEach((emotion) => {
+        uniqueEmotions.forEach((emotion) => {
           completeItem[emotion] = item[emotion] ?? 0;
         });
         return completeItem;
       });
 
+      const emotionsList = Array.from(uniqueEmotions);
       setData(completeData);
-      setSelectedEmotions(Array.from(allEmotions));
+      setAllEmotions(emotionsList);
+      setSelectedEmotions(emotionsList);
     } catch (err) {
       setError(
         "No se pudieron cargar los datos de patologias. Intente nuevamente."
@@ -95,6 +101,18 @@ export function BarChartComparisonPatologie({
         : [...prev, emotion]
     );
   };
+
+  const selectAll = () => {
+    setSelectedEmotions(allEmotions);
+  };
+
+  const deselectAll = () => {
+    setSelectedEmotions([]);
+  };
+
+  const filteredEmotions = allEmotions.filter((emotion) =>
+    emotion.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   if (isLoading) {
     return (
@@ -146,61 +164,99 @@ export function BarChartComparisonPatologie({
   }
 
   return (
-    <div className="bg-white rounded-lg p-3 sm:p-6 shadow-sm border border-blue-200">
-      <div className="flex items-center mb-4">
-        <Smile className="mr-2 text-gray-700" />
-        <h3 className="font-medium text-gray-800">{title}</h3>
+    <div className="bg-white rounded-lg p-3 sm:p-6 shadow-sm border border-blue-200 flex flex-col justify-between">
+      <div>
+        <div className="flex items-center mb-4">
+          <Smile className="mr-2 text-gray-700" />
+          <h3 className="font-medium text-gray-800">{title}</h3>
+        </div>
+
+        {/* Controles de Búsqueda y Selección Rápida */}
+        <div className="flex flex-col gap-2 mb-4">
+          <div className="flex justify-between items-center gap-2">
+            <input
+              type="text"
+              placeholder="Buscar patología..."
+              className="px-3 py-1 text-sm border border-gray-200 rounded-md w-full max-w-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <div className="flex gap-2 shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs px-2 py-1 h-7 border-blue-200 text-blue-600 hover:bg-blue-50"
+                onClick={selectAll}
+              >
+                Todas
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs px-2 py-1 h-7 border-gray-200 text-gray-600 hover:bg-gray-50"
+                onClick={deselectAll}
+              >
+                Ninguna
+              </Button>
+            </div>
+          </div>
+
+          {/* Listado Scrollable de Badges */}
+          <div className="flex flex-wrap gap-2 max-h-28 overflow-y-auto p-2 bg-gray-50/50 rounded-md border border-gray-100 scrollbar-thin">
+            {filteredEmotions.length === 0 ? (
+              <span className="text-xs text-gray-400 p-1">No se encontraron patologías.</span>
+            ) : (
+              filteredEmotions.map((emotion) => (
+                <Badge
+                  key={emotion}
+                  variant={selectedEmotions.includes(emotion) ? "default" : "outline"}
+                  className={`cursor-pointer transition-colors ${
+                    selectedEmotions.includes(emotion)
+                      ? ""
+                      : "bg-white text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                  }`}
+                  style={{
+                    backgroundColor: selectedEmotions.includes(emotion)
+                      ? getEmotionColor(emotion)
+                      : "",
+                    borderColor: getEmotionColor(emotion),
+                    color: selectedEmotions.includes(emotion) ? "white" : "",
+                  }}
+                  onClick={() => toggleEmotion(emotion)}
+                >
+                  {emotion}
+                </Badge>
+              ))
+            )}
+          </div>
+        </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-4">
-        {Array.from(new Set(selectedEmotions)).map((emotion) => (
-          <Badge
-            key={emotion}
-            variant={selectedEmotions.includes(emotion) ? "default" : "outline"}
-            className={`cursor-pointer ${
-              selectedEmotions.includes(emotion)
-                ? ""
-                : "bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700"
-            }`}
-            style={{
-              backgroundColor: selectedEmotions.includes(emotion)
-                ? getEmotionColor(emotion)
-                : "",
-              borderColor: getEmotionColor(emotion),
-              color: selectedEmotions.includes(emotion) ? "white" : "",
-            }}
-            onClick={() => toggleEmotion(emotion)}
-          >
-            {emotion}
-          </Badge>
-        ))}
-      </div>
-
-      <div className="h-64 w-full">
+      <div className="h-72 w-full mt-2">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={data}
-            margin={{ top: 5, right: 5, left: 0, bottom: 20 }}
+            margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
             barCategoryGap={20}
           >
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
             <XAxis
               dataKey="name"
-              tick={{ fontSize: 12 }}
+              tick={{ fontSize: 11, fill: "#4b5563" }}
               tickFormatter={(value) =>
-                value.length > 6 ? `${value.substring(0, 6)}...` : value
+                value.length > 12 ? `${value.substring(0, 10)}...` : value
               }
             />
-            <YAxis />
+            <YAxis tick={{ fontSize: 11, fill: "#4b5563" }} />
             <Tooltip
               formatter={(value: number, name: string) => [`${value}`, name]}
               contentStyle={{
                 borderRadius: "8px",
                 border: "none",
                 boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                fontSize: "12px",
               }}
             />
-            <Legend />
             {selectedEmotions.map((emotion) => (
               <Bar
                 key={emotion}
