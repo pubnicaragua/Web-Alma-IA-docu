@@ -1,9 +1,14 @@
 #!/bin/bash
+set -euo pipefail
 
 # Script de deploy a Vercel
 # Este script hace commit y push a la rama development
 
 echo "========== INICIANDO DEPLOY =========="
+
+echo "[0/4] Ejecutando pruebas y compilacion de produccion..."
+node --test tests/*.test.mjs
+npm run build
 
 # Verificar estado de git
 echo "[1/4] Verificando estado de git..."

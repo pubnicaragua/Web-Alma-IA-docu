@@ -15,19 +15,15 @@ export function VerifyAccess({ permission = "", children }: Readonly<PropTypes>)
     const router = useRouter();
 
     const haveAccess = useMemo(
-        () => {
-            if (!userData) return true;
-            if (isLoading) return true;
-            return getFuntions(permission);
-        },
-        [permission, userData]
+        () => Boolean(userData) && !isLoading && getFuntions(permission),
+        [getFuntions, isLoading, permission, userData]
     );
 
     useEffect(() => {
-        if (isLoading) return;
+        if (isLoading || !userData) return;
         if (haveAccess) return;
         router.push("/unauthorized");
-    }, [haveAccess, isLoading]);
+    }, [haveAccess, isLoading, router, userData]);
 
     return (
         <>

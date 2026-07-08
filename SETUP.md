@@ -10,7 +10,10 @@ NEXT_PUBLIC_API_BASE_URL=http://tu-api-url.com
 
 # reCAPTCHA (Opcional - actualmente deshabilitado)
 NEXT_PUBLIC_RECAPTCHA_SITE_KEY=tu_site_key
-NEXT_PUBLIC_RECAPTCHA_SECRET=tu_secret_key
+RECAPTCHA_SECRET=tu_secret_key
+
+# OrÃ­genes CORS permitidos, separados por coma (sin comodÃ­n *)
+ALLOWED_ORIGINS=http://localhost:3000
 ```
 
 ## Errores Corregidos

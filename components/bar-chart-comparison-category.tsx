@@ -25,9 +25,10 @@ interface EmotionData {
 interface BarChartComparisonCategoryProps {
   title: string
   grado: number
+  courseName?: string | null
 }
 
-export function BarChartComparisonCategory({ title, grado }: BarChartComparisonCategoryProps) {
+export function BarChartComparisonCategory({ title, grado, courseName }: BarChartComparisonCategoryProps) {
   const [data, setData] = useState<EmotionData[]>([])
   const [selectedEmotions, setSelectedEmotions] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -37,7 +38,7 @@ export function BarChartComparisonCategory({ title, grado }: BarChartComparisonC
 
   useEffect(() => {
     loadData()
-  }, [grado])
+  }, [grado, courseName])
 
   const loadData = async () => {
     try {
@@ -47,7 +48,10 @@ export function BarChartComparisonCategory({ title, grado }: BarChartComparisonC
       const allEmotions = new Set<string>()
 
       // Normalizar datos y recopilar todas las emociones
-      const normalizedData = emotionsData.map((item) => {
+      const filteredData = courseName
+        ? emotionsData.filter((item) => item.name === courseName)
+        : emotionsData
+      const normalizedData = filteredData.map((item) => {
         const { name, ...emotions } = item
         Object.keys(emotions).forEach((emotion) => allEmotions.add(emotion))
         return { name, ...emotions }

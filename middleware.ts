@@ -41,6 +41,12 @@ const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || "")
   .map((origin) => origin.trim())
   .filter((origin) => origin && origin !== "*");
 
+if (process.env.NODE_ENV === "production" && ALLOWED_ORIGINS.length === 0) {
+  console.error(
+    "[CONFIG] ALLOWED_ORIGINS is empty; cross-origin requests will be denied."
+  );
+}
+
 export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const origin = request.headers.get("origin");

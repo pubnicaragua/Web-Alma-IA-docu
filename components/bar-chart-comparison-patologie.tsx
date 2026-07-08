@@ -28,11 +28,13 @@ interface EmotionData {
 interface BarChartComparisonPatologieProps {
   title: string;
   grado: number;
+  courseName?: string | null;
 }
 
 export function BarChartComparisonPatologie({
   title,
   grado,
+  courseName,
 }: BarChartComparisonPatologieProps) {
   const [data, setData] = useState<EmotionData[]>([]);
   const [selectedEmotions, setSelectedEmotions] = useState<string[]>([]);
@@ -43,7 +45,7 @@ export function BarChartComparisonPatologie({
 
   useEffect(() => {
     loadData();
-  }, [grado]);
+  }, [grado, courseName]);
 
   const getEmotionColor = (emotion: string): string =>
     getColor("patologias", emotion, "#6c757d");
@@ -56,7 +58,10 @@ export function BarChartComparisonPatologie({
       const allEmotions = new Set<string>();
 
       // Normalizar datos y recopilar todas las patologías
-      const normalizedData = emotionsData.map((item) => {
+      const filteredData = courseName
+        ? emotionsData.filter((item) => item.name === courseName)
+        : emotionsData;
+      const normalizedData = filteredData.map((item) => {
         const { name, ...emotions } = item;
         Object.keys(emotions).forEach((emotion) => allEmotions.add(emotion));
         return { name, ...emotions };

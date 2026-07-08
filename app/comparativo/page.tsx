@@ -10,10 +10,13 @@ import { FilterDropdownObject } from "@/components/filter-dropdown-object";
 import { LineChartComparison } from "@/components/line-chart-comparison";
 import { LineChartHistory } from "@/components/line-chart-history";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { fetchGrade, Grade } from "@/services/grade-service";
+import type { Grade } from "@/services/grade-service";
+import { fetchCoursesForSchool, type SchoolCourse } from "@/services/course-service";
+import { useUser } from "@/middleware/user-context";
 import { Download } from "lucide-react";
 
 export default function ComparativePage() {
+  const { selectedSchoolId } = useUser();
   // Estados para los filtros
   const [levelFilter, setLevelFilter] = useState<Grade>({
     grado_id: 1,
@@ -21,14 +24,20 @@ export default function ComparativePage() {
     creado_por: 1,
     estado: "activo",
   });
-  const [courseFilter, setCourseFilter] = useState<string>("Todos");
+  const [courseFilter, setCourseFilter] = useState<SchoolCourse | null>(null);
   const [yearFilter, setYearFilter] = useState<string>("2025");
   const [monthFilter, setMonthFilter] = useState<string>("Abril");
 
   // Opciones para los filtros
   const [levelOptions, setLevelOptions] = useState<Grade[]>([]);
+  const [allCourses, setAllCourses] = useState<SchoolCourse[]>([]);
 
-  const courseOptions = ["Todos", "3°B", "4°A", "5°A", "6°C", "1°A", "2°B"];
+  const courseOptions = useMemo(() => [
+    { curso_id: 0, nombre_curso: "Todos", grados: levelFilter },
+    ...allCourses.filter(
+      (course) => course.grados?.grado_id === levelFilter?.grado_id
+    ),
+  ], [allCourses, levelFilter]);
   const yearOptions = ["2023", "2024", "2025"];
   const monthOptions = [
     "Enero",
@@ -45,17 +54,44 @@ export default function ComparativePage() {
     "Diciembre",
   ];
 
-  const loadData = async () => {
+  const loadData = async (schoolId: string) => {
     try {
-      const grados = await fetchGrade();
-      setLevelOptions(grados);
+      const courses = await fetchCoursesForSchool(schoolId);
+      const grades = Array.from(
+        new Map(
+          courses
+            .filter((course) => course.grados)
+            .map((course) => [course.grados!.grado_id, course.grados!])
+        ).values()
+      );
+      setAllCourses(courses);
+      setLevelOptions(grades);
+      setLevelFilter((current) =>
+        grades.some((grade) => grade.grado_id === current.grado_id)
+          ? current
+          : grades[0] ?? current
+      );
+      setCourseFilter(null);
     } catch (err) {
+      setAllCourses([]);
+      setLevelOptions([]);
+      setCourseFilter(null);
     }
   };
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (!selectedSchoolId) return;
+    loadData(selectedSchoolId);
+  }, [selectedSchoolId]);
+
+  useEffect(() => {
+    if (
+      courseFilter?.curso_id &&
+      courseFilter.grados?.grado_id !== levelFilter?.grado_id
+    ) {
+      setCourseFilter(null);
+    }
+  }, [courseFilter, levelFilter]);
 
   // ESTADOS INDEPENDIENTES para los cursos seleccionados en cada gráfico de líneas
   const [selectedCoursesComparison, setSelectedCoursesComparison] = useState<
@@ -124,11 +160,13 @@ export default function ComparativePage() {
             labelKey="nombre"
             idKey="grado_id"
           />
-          <FilterDropdown
+          <FilterDropdownObject
             label="Curso"
             options={courseOptions}
-            value={courseFilter}
+            value={courseFilter ?? courseOptions[0]}
             onChange={setCourseFilter}
+            labelKey="nombre_curso"
+            idKey="curso_id"
           />
           <FilterDropdown
             label="Año"
@@ -149,10 +187,12 @@ export default function ComparativePage() {
           <BarChartComparisonCategory
             title="Emociones"
             grado={levelFilter?.grado_id}
+            courseName={courseFilter?.curso_id ? courseFilter.nombre_curso : null}
           />
           <BarChartComparisonPatologie
             title="Patologias"
             grado={levelFilter?.grado_id}
+            courseName={courseFilter?.curso_id ? courseFilter.nombre_curso : null}
           />
         </div>
 
