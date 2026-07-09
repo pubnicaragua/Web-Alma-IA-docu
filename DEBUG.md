@@ -4,7 +4,7 @@
 - ✅ POST /login retorna 200 (éxito HTTP)
 - ❌ GET /perfil/obtener retorna 401 (no autorizado)
 - ❌ El token no se está enviando correctamente
-- prueba de vercel por pub5
+- prueba de vercel por pub6
 
 
 ## Pasos para Debuggear
