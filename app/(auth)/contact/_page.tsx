@@ -9,13 +9,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ContactUsSchema } from "@/zod/contact";
 import { ContactUsSchemaType } from "@/types/contact";
 import { ActionSendContact } from "@/actions/contact";
-import ReCAPTCHA from "react-google-recaptcha";
-import { ReCaptchaInput } from "@/components/ui/recaptcha";
+import { ReCaptchaInput, type ReCaptchaInputRef } from "@/components/ui/recaptcha";
 
 export default function ContactForm() {
 
   const { toast } = useToast();
-  const captchRef = useRef<ReCAPTCHA>(null);
+  const captchRef = useRef<ReCaptchaInputRef>(null);
 
   const form = useForm<ContactUsSchemaType>({
     resolver: zodResolver(ContactUsSchema),

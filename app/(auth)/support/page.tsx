@@ -7,8 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SupportFormSchema } from "@/zod/support";
 import type { SupportFormSchemaType } from "@/types/support";
-import { ReCaptchaInput } from "@/components/ui/recaptcha";
-import ReCAPTCHA from "react-google-recaptcha";
+import { ReCaptchaInput, type ReCaptchaInputRef } from "@/components/ui/recaptcha";
 import { ActionSendSupport } from "@/actions/support";
 import { FormError } from "@/components/form/form-error";
 
@@ -16,7 +15,7 @@ export default function SupportContact() {
 
   const [sent, setSent] = useState(false);
   const { toast } = useToast();
-  const captchRef = useRef<ReCAPTCHA>(null);
+  const captchRef = useRef<ReCaptchaInputRef>(null);
 
   const { register,
     handleSubmit,

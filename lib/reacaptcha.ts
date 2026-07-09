@@ -3,15 +3,15 @@
 // Validar el captcha
 export async function validateRecaptch(captcha: string) {
 
-    if (!captcha) {
-        throw new Error('Por favor, marca la casilla "No soy un robot".');
-    }
-
     // En desarrollo, saltar la validación del servidor de Google
     // ya que las claves de prueba pueden fallar desde Node.js
     if (process.env.NODE_ENV === "development") {
         console.log("[reCAPTCHA] Validación omitida en modo desarrollo");
         return;
+    }
+
+    if (!captcha) {
+        throw new Error('Por favor, marca la casilla "No soy un robot".');
     }
 
     const captchaRequest = await fetch("https://www.google.com/recaptcha/api/siteverify", {
@@ -30,4 +30,4 @@ export async function validateRecaptch(captcha: string) {
     if (!captchaData.success) {
         throw new Error("El ReCaptcha expiró, vuelva a intentarlo.");
     }
-}
+}
