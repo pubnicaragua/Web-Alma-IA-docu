@@ -1,6 +1,6 @@
 "use client";
 import type React from "react";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { Header } from "@/components/header";
 import { MobileSidebar } from "@/components/mobile-sidebar";
 import { AndroidNavMenu } from "@/components/android-nav-menu";
@@ -29,7 +29,9 @@ export function AppLayout({ children, isOpen = false }: AppLayoutProps) {
   return (
     <div className="flex flex-col min-h-screen bg-white">
       {/* Header */}
-      <Header toggleSidebar={toggleMobileMenu} />
+      <Suspense fallback={null}>
+        <Header toggleSidebar={toggleMobileMenu} />
+      </Suspense>
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar para escritorio (siempre visible en md y superior) */}

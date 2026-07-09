@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Building2, Bell, Users } from "lucide-react";
 import { Header } from "@/components/header";
@@ -82,7 +82,9 @@ export default function SelectSchoolPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col bg-white">
-        <Header toggleSidebar={toggleSidebar} />
+        <Suspense fallback={null}>
+          <Header toggleSidebar={toggleSidebar} />
+        </Suspense>
         <div className="flex-1 px-2 sm:px-6 py-4 sm:py-8">
           <div className="container mx-auto">
             <Skeleton className="h-8 w-48 mb-6" />
@@ -100,7 +102,9 @@ export default function SelectSchoolPage() {
   return (
     <AppLayout isOpen={true}>
       <div className="min-h-screen flex flex-col bg-white">
-        <Header toggleSidebar={toggleSidebar} />
+        <Suspense fallback={null}>
+          <Header toggleSidebar={toggleSidebar} />
+        </Suspense>
         <div className="flex-1 px-2 sm:px-6 py-4 sm:py-8">
           <div className="container mx-auto">
             <h2 className="text-2xl font-bold text-gray-800 mb-6">
