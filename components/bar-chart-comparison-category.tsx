@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import {
   BarChart,
   Bar,
@@ -29,6 +29,7 @@ interface BarChartComparisonCategoryProps {
 }
 
 export function BarChartComparisonCategory({ title, grado, courseName }: BarChartComparisonCategoryProps) {
+  const [rawData, setRawData] = useState<EmotionData[]>([])
   const [data, setData] = useState<EmotionData[]>([])
   const [allEmotions, setAllEmotions] = useState<string[]>([])
   const [selectedEmotions, setSelectedEmotions] = useState<string[]>([])
@@ -38,51 +39,72 @@ export function BarChartComparisonCategory({ title, grado, courseName }: BarChar
   const { toast } = useToast()
   const { getColor } = useColoresCatalog()
 
-  useEffect(() => {
-    loadData()
-  }, [grado, courseName])
+  const currentRequest = useRef(0)
 
-  const loadData = async () => {
+  const fetchGradoData = async (currentGrado: number) => {
+    const requestId = ++currentRequest.current
     try {
       setIsLoading(true)
       setError(null)
-      const emotionsData = await fetchEmotionsForGrade(grado)
-      const uniqueEmotions = new Set<string>()
-
-      // Normalizar datos y recopilar todas las emociones
-      const filteredData = courseName
-        ? emotionsData.filter((item) => item.name === courseName)
-        : emotionsData
-      const normalizedData = filteredData.map((item) => {
-        const { name, ...emotions } = item
-        Object.keys(emotions).forEach((emotion) => uniqueEmotions.add(emotion))
-        return { name, ...emotions }
-      })
-
-      // Asegurar que cada entrada tenga todas las emociones con valor 0 si faltan
-      const completeData = normalizedData.map((item: any) => {
-        const completeItem: EmotionData = { name: item.name }
-        uniqueEmotions.forEach((emotion) => {
-          completeItem[emotion] = item[emotion] ?? 0
-        })
-        return completeItem
-      })
-
-      const emotionsList = Array.from(uniqueEmotions)
-      setData(completeData)
-      setAllEmotions(emotionsList)
-      setSelectedEmotions(emotionsList)
+      const emotionsData = await fetchEmotionsForGrade(currentGrado)
+      if (requestId === currentRequest.current) {
+        setRawData(emotionsData)
+      }
     } catch (err) {
-      setError("No se pudieron cargar los datos de emociones. Intente nuevamente.")
-      toast({
-        title: "Error al cargar datos",
-        description: "No se pudieron cargar los datos de emociones. Intente nuevamente.",
-        variant: "destructive",
-      })
+      if (requestId === currentRequest.current) {
+        setError("No se pudieron cargar los datos de emociones. Intente nuevamente.")
+        toast({
+          title: "Error al cargar datos",
+          description: "No se pudieron cargar los datos de emociones. Intente nuevamente.",
+          variant: "destructive",
+        })
+      }
     } finally {
-      setIsLoading(false)
+      if (requestId === currentRequest.current) {
+        setIsLoading(false)
+      }
     }
   }
+
+  useEffect(() => {
+    if (grado !== undefined) {
+      fetchGradoData(grado)
+    }
+  }, [grado])
+
+  useEffect(() => {
+    if (!rawData) return;
+
+    const uniqueEmotions = new Set<string>()
+
+    const filteredData = courseName
+      ? rawData.filter((item) => item.name === courseName)
+      : rawData
+
+    const normalizedData = filteredData.map((item) => {
+      const { name, ...emotions } = item
+      Object.keys(emotions).forEach((emotion) => uniqueEmotions.add(emotion))
+      return { name, ...emotions }
+    })
+
+    const completeData = normalizedData.map((item: any) => {
+      const completeItem: EmotionData = { name: item.name }
+      uniqueEmotions.forEach((emotion) => {
+        completeItem[emotion] = item[emotion] ?? 0
+      })
+      return completeItem
+    })
+
+    const emotionsList = Array.from(uniqueEmotions)
+    setData(completeData)
+    setAllEmotions(emotionsList)
+    
+    setSelectedEmotions((prev) => {
+      const prevSet = new Set(prev)
+      const missing = emotionsList.filter(e => !prevSet.has(e))
+      return missing.length > 0 ? [...prev, ...missing] : prev.filter(e => emotionsList.includes(e))
+    })
+  }, [rawData, courseName])
 
   const toggleEmotion = (emotion: string) => {
     setSelectedEmotions((prev) =>
@@ -131,7 +153,7 @@ export function BarChartComparisonCategory({ title, grado, courseName }: BarChar
         </div>
         <div className="text-red-500 mb-4">{error}</div>
         <button
-          onClick={loadData}
+          onClick={() => fetchGradoData(grado)}
           className="flex items-center justify-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
         >
           <RefreshCw className="w-4 h-4 mr-2" /> Reintentar
