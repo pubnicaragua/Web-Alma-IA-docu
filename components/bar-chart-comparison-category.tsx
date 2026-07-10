@@ -260,12 +260,39 @@ export function BarChartComparisonCategory({ title, grado, courseName }: BarChar
             />
             <YAxis tick={{ fontSize: 11, fill: "#4b5563" }} />
             <Tooltip
-              formatter={(value: number, name: string) => [`${value}`, name]}
-              contentStyle={{
-                borderRadius: "8px",
-                border: "none",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                fontSize: "12px",
+              cursor={{ fill: 'rgba(0,0,0,0.05)' }}
+              wrapperStyle={{ pointerEvents: 'auto', zIndex: 100 }}
+              content={({ active, payload, label }) => {
+                if (active && payload && payload.length) {
+                  const validPayload = payload
+                    .filter((p) => Number(p.value) > 0)
+                    .sort((a, b) => Number(b.value) - Number(a.value));
+                  
+                  if (validPayload.length === 0) return null;
+
+                  return (
+                    <div 
+                      className="bg-white border border-gray-100 rounded-lg shadow-lg max-h-[400px] overflow-y-auto w-56 scrollbar-thin scrollbar-thumb-gray-200"
+                      onWheel={(e) => e.stopPropagation()}
+                    >
+                      <p className="font-semibold text-gray-800 text-sm border-b p-3 sticky top-0 bg-white z-10 mb-2">
+                        {label}
+                      </p>
+                      <div className="flex flex-col gap-1.5 px-3 pb-3">
+                        {validPayload.map((entry, index) => (
+                          <div key={`item-${index}`} className="flex justify-between items-center text-xs">
+                            <div className="flex items-center gap-1.5 overflow-hidden">
+                              <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: entry.color }} />
+                              <span className="text-gray-600 truncate">{entry.name}</span>
+                            </div>
+                            <span className="font-semibold text-gray-700 ml-2 shrink-0">{entry.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
               }}
             />
             {selectedEmotions.map((emotion) => (
