@@ -9,6 +9,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Cell,
 } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,19 +23,31 @@ interface EmotionData {
   [emotion: string]: string | number; // Ejemplo: "Ansiedad": 3, "Felicidad": 2
 }
 
+interface ComparisonData {
+  name: string;
+  cursoA: number;
+  cursoB?: number;
+  color: string;
+}
+
 interface BarChartComparisonPatologieProps {
   title: string;
-  grado: number;
-  courseName?: string | null;
+  gradoA: number;
+  gradoB?: number;
+  courseAName?: string | null;
+  courseBName?: string | null;
 }
 
 export function BarChartComparisonPatologie({
   title,
-  grado,
-  courseName,
+  gradoA,
+  gradoB,
+  courseAName,
+  courseBName,
 }: BarChartComparisonPatologieProps) {
-  const [rawData, setRawData] = useState<EmotionData[]>([]);
-  const [data, setData] = useState<EmotionData[]>([]);
+  const [rawDataA, setRawDataA] = useState<EmotionData[]>([]);
+  const [rawDataB, setRawDataB] = useState<EmotionData[]>([]);
+  const [data, setData] = useState<ComparisonData[]>([]);
   const [allEmotions, setAllEmotions] = useState<string[]>([]);
   const [selectedEmotions, setSelectedEmotions] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -48,14 +61,18 @@ export function BarChartComparisonPatologie({
 
   const currentRequest = useRef(0);
 
-  const fetchGradoData = async (currentGrado: number) => {
+  const fetchGradoData = async (currentGradoA: number, currentGradoB?: number) => {
     const requestId = ++currentRequest.current;
     try {
       setIsLoading(true);
       setError(null);
-      const emotionsData = await fetchPatologieForGrade(currentGrado);
+      const [emotionsDataA, emotionsDataB] = await Promise.all([
+        fetchPatologieForGrade(currentGradoA),
+        currentGradoB ? fetchPatologieForGrade(currentGradoB) : Promise.resolve([]),
+      ]);
       if (requestId === currentRequest.current) {
-        setRawData(emotionsData);
+        setRawDataA(emotionsDataA as unknown as EmotionData[]);
+        setRawDataB(emotionsDataB as unknown as EmotionData[]);
       }
     } catch (err) {
       if (requestId === currentRequest.current) {
@@ -77,36 +94,32 @@ export function BarChartComparisonPatologie({
   };
 
   useEffect(() => {
-    if (grado !== undefined) {
-      fetchGradoData(grado);
+    if (gradoA !== undefined) {
+      fetchGradoData(gradoA, gradoB);
     }
-  }, [grado]);
+  }, [gradoA, gradoB]);
 
   useEffect(() => {
-    if (!rawData) return;
+    if (!rawDataA) return;
 
-    const uniqueEmotions = new Set<string>();
+    const courseA = rawDataA.find((item) => item.name === courseAName) ?? rawDataA[0];
+    const courseB = courseBName
+      ? (rawDataB.find((item) => item.name === courseBName) ?? rawDataA.find((item) => item.name === courseBName))
+      : undefined;
+    const { name: _courseAName, ...valuesA } = courseA ?? { name: "" };
+    const { name: _courseBName, ...valuesB } = courseB ?? { name: "" };
+    const emotionsList = Array.from(
+      new Set([...Object.keys(valuesA), ...Object.keys(valuesB)])
+    ).filter((key) => !key.startsWith("__"));
 
-    const filteredData = courseName
-      ? rawData.filter((item) => item.name === courseName)
-      : rawData;
-
-    const normalizedData = filteredData.map((item) => {
-      const { name, ...emotions } = item;
-      Object.keys(emotions).forEach((emotion) => uniqueEmotions.add(emotion));
-      return { name, ...emotions };
-    });
-
-    const completeData = normalizedData.map((item: any) => {
-      const completeItem: EmotionData = { name: item.name };
-      uniqueEmotions.forEach((emotion) => {
-        completeItem[emotion] = item[emotion] ?? 0;
-      });
-      return completeItem;
-    });
-
-    const emotionsList = Array.from(uniqueEmotions);
-    setData(completeData);
+    setData(
+      emotionsList.map((emotion) => ({
+        name: emotion,
+        cursoA: Number(valuesA[emotion] ?? 0),
+        cursoB: courseB ? Number(valuesB[emotion] ?? 0) : undefined,
+        color: getEmotionColor(emotion),
+      }))
+    );
     setAllEmotions(emotionsList);
     
     setSelectedEmotions((prev) => {
@@ -114,7 +127,7 @@ export function BarChartComparisonPatologie({
       const missing = emotionsList.filter(e => !prevSet.has(e));
       return missing.length > 0 ? [...prev, ...missing] : prev.filter(e => emotionsList.includes(e));
     });
-  }, [rawData, courseName]);
+  }, [rawDataA, rawDataB, courseAName, courseBName]);
 
   const toggleEmotion = (emotion: string) => {
     setSelectedEmotions((prev) =>
@@ -135,6 +148,8 @@ export function BarChartComparisonPatologie({
   const filteredEmotions = allEmotions.filter((emotion) =>
     emotion.toLowerCase().includes(searchTerm.toLowerCase())
   );
+  const chartData = data.filter((item) => selectedEmotions.includes(item.name));
+  const hasCourseB = Boolean(courseBName);
 
   if (isLoading) {
     return (
@@ -162,7 +177,7 @@ export function BarChartComparisonPatologie({
         </div>
         <div className="text-red-500 mb-4">{error}</div>
         <button
-          onClick={() => fetchGradoData(grado)}
+          onClick={() => fetchGradoData(gradoA, gradoB)}
           className="flex items-center justify-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
         >
           <RefreshCw className="w-4 h-4 mr-2" /> Reintentar
@@ -257,7 +272,7 @@ export function BarChartComparisonPatologie({
       <div className="h-72 w-full mt-2">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
-            data={data}
+            data={chartData}
             margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
             barCategoryGap={20}
           >
@@ -294,7 +309,9 @@ export function BarChartComparisonPatologie({
                           <div key={`item-${index}`} className="flex justify-between items-center text-xs">
                             <div className="flex items-center gap-1.5 overflow-hidden">
                               <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: entry.color }} />
-                              <span className="text-gray-600 truncate">{entry.name}</span>
+                              <span className="text-gray-600 truncate">
+                                {entry.name === "cursoA" ? courseAName : courseBName}
+                              </span>
                             </div>
                             <span className="font-semibold text-gray-700 ml-2 shrink-0">{entry.value}</span>
                           </div>
@@ -306,17 +323,33 @@ export function BarChartComparisonPatologie({
                 return null;
               }}
             />
-            {selectedEmotions.map((emotion) => (
-              <Bar
-                key={emotion}
-                dataKey={emotion}
-                name={emotion}
-                fill={getEmotionColor(emotion)}
-                radius={[4, 4, 0, 0]}
-              />
-            ))}
+            <Bar dataKey="cursoA" name={courseAName ?? "Curso"} radius={[4, 4, 0, 0]}>
+              {chartData.map((entry) => (
+                <Cell key={`a-${entry.name}`} fill={entry.color} />
+              ))}
+            </Bar>
+            {hasCourseB && (
+              <Bar dataKey="cursoB" name={courseBName ?? "Curso B"} radius={[4, 4, 0, 0]} fillOpacity={0.55}>
+                {chartData.map((entry) => (
+                  <Cell key={`b-${entry.name}`} fill={entry.color} />
+                ))}
+              </Bar>
+            )}
           </BarChart>
         </ResponsiveContainer>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-gray-600">
+        <span className="inline-flex items-center gap-2">
+          <span className="h-3 w-3 rounded-sm bg-gray-800" />
+          {courseAName ?? "Curso"} {hasCourseB ? "(barra izq)" : ""}
+        </span>
+        {hasCourseB && (
+          <span className="inline-flex items-center gap-2">
+            <span className="h-3 w-3 rounded-sm bg-gray-400" />
+            {courseBName} (barra der)
+          </span>
+        )}
       </div>
     </div>
   );

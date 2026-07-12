@@ -485,6 +485,35 @@ export async function fetchPatologieForGrade(
   }
 }
 
+export async function fetchNeurodivergencesForGrade(
+  grado_id: number
+): Promise<Emotion[]> {
+  try {
+    const response = await fetchWithAuth(
+      "/comparativa/neurodivergencias/grado?grado_id=" + grado_id,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+
+      throw new Error(
+        `Error al obtener neurodivergencias: ${response.status} - ${errorText}`
+      );
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    throw error;
+  }
+}
+
 export async function fetchPatologieGeneral(): Promise<Emotion[]> {
   try {
     const response = await fetchWithAuth("/home/barra/patologias", {

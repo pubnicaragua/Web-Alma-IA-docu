@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef } from "react";
 import {
   BarChart,
   Bar,
@@ -10,101 +10,107 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
-} from "recharts"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Smile, RefreshCw, AlertCircle } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
-import { useColoresCatalog } from "@/hooks/use-colores"
-import { fetchEmotionsForGrade } from "@/services/home-service"
+} from "recharts";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Smile, RefreshCw, AlertCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { fetchNeurodivergencesForGrade } from "@/services/home-service";
+import { useColoresCatalog } from "@/hooks/use-colores";
 
 interface EmotionData {
-  name: string // Ejemplo: "1Â° Medio A - Jornada MaÃ±ana"
-  [emotion: string]: string | number // Ejemplo: "Ansiedad": 3, "Felicidad": 2
+  name: string; // Ejemplo: "1Â° Medio A - Jornada MaÃ±ana"
+  [emotion: string]: string | number; // Ejemplo: "Ansiedad": 3, "Felicidad": 2
 }
 
 interface ComparisonData {
-  name: string
-  cursoA: number
-  cursoB?: number
-  color: string
+  name: string;
+  cursoA: number;
+  cursoB?: number;
+  color: string;
 }
 
-interface BarChartComparisonCategoryProps {
-  title: string
-  gradoA: number
-  gradoB?: number
-  courseAName?: string | null
-  courseBName?: string | null
+interface BarChartComparisonNeurodivergenceGradeProps {
+  title: string;
+  gradoA: number;
+  gradoB?: number;
+  courseAName?: string | null;
+  courseBName?: string | null;
 }
 
-export function BarChartComparisonCategory({
+export function BarChartComparisonNeurodivergenceGrade({
   title,
   gradoA,
   gradoB,
   courseAName,
   courseBName,
-}: BarChartComparisonCategoryProps) {
-  const [rawDataA, setRawDataA] = useState<EmotionData[]>([])
-  const [rawDataB, setRawDataB] = useState<EmotionData[]>([])
-  const [data, setData] = useState<ComparisonData[]>([])
-  const [allEmotions, setAllEmotions] = useState<string[]>([])
-  const [selectedEmotions, setSelectedEmotions] = useState<string[]>([])
-  const [searchTerm, setSearchTerm] = useState("")
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const { toast } = useToast()
-  const { getColor } = useColoresCatalog()
+}: BarChartComparisonNeurodivergenceGradeProps) {
+  const [rawDataA, setRawDataA] = useState<EmotionData[]>([]);
+  const [rawDataB, setRawDataB] = useState<EmotionData[]>([]);
+  const [data, setData] = useState<ComparisonData[]>([]);
+  const [allEmotions, setAllEmotions] = useState<string[]>([]);
+  const [selectedEmotions, setSelectedEmotions] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
+  const { getColor } = useColoresCatalog();
 
-  const currentRequest = useRef(0)
+  const getEmotionColor = (emotion: string): string =>
+    getColor("neurodivergencias", emotion, "#6c757d");
+
+  const currentRequest = useRef(0);
 
   const fetchGradoData = async (currentGradoA: number, currentGradoB?: number) => {
-    const requestId = ++currentRequest.current
+    const requestId = ++currentRequest.current;
     try {
-      setIsLoading(true)
-      setError(null)
+      setIsLoading(true);
+      setError(null);
       const [emotionsDataA, emotionsDataB] = await Promise.all([
-        fetchEmotionsForGrade(currentGradoA),
-        currentGradoB ? fetchEmotionsForGrade(currentGradoB) : Promise.resolve([]),
-      ])
+        fetchNeurodivergencesForGrade(currentGradoA),
+        currentGradoB ? fetchNeurodivergencesForGrade(currentGradoB) : Promise.resolve([]),
+      ]);
       if (requestId === currentRequest.current) {
-        setRawDataA(emotionsDataA as unknown as EmotionData[])
-        setRawDataB(emotionsDataB as unknown as EmotionData[])
+        setRawDataA(emotionsDataA as unknown as EmotionData[]);
+        setRawDataB(emotionsDataB as unknown as EmotionData[]);
       }
     } catch (err) {
       if (requestId === currentRequest.current) {
-        setError("No se pudieron cargar los datos de emociones. Intente nuevamente.")
+        setError(
+          "No se pudieron cargar los datos de neurodivergencias. Intente nuevamente."
+        );
         toast({
           title: "Error al cargar datos",
-          description: "No se pudieron cargar los datos de emociones. Intente nuevamente.",
+          description:
+            "No se pudieron cargar los datos de neurodivergencias. Intente nuevamente.",
           variant: "destructive",
-        })
+        });
       }
     } finally {
       if (requestId === currentRequest.current) {
-        setIsLoading(false)
+        setIsLoading(false);
       }
     }
-  }
+  };
 
   useEffect(() => {
     if (gradoA !== undefined) {
-      fetchGradoData(gradoA, gradoB)
+      fetchGradoData(gradoA, gradoB);
     }
-  }, [gradoA, gradoB])
+  }, [gradoA, gradoB]);
 
   useEffect(() => {
     if (!rawDataA) return;
 
-    const courseA = rawDataA.find((item) => item.name === courseAName) ?? rawDataA[0]
+    const courseA = rawDataA.find((item) => item.name === courseAName) ?? rawDataA[0];
     const courseB = courseBName
       ? (rawDataB.find((item) => item.name === courseBName) ?? rawDataA.find((item) => item.name === courseBName))
-      : undefined
-    const { name: _courseAName, ...valuesA } = courseA ?? { name: "" }
-    const { name: _courseBName, ...valuesB } = courseB ?? { name: "" }
+      : undefined;
+    const { name: _courseAName, ...valuesA } = courseA ?? { name: "" };
+    const { name: _courseBName, ...valuesB } = courseB ?? { name: "" };
     const emotionsList = Array.from(
       new Set([...Object.keys(valuesA), ...Object.keys(valuesB)])
-    ).filter((key) => !key.startsWith("__"))
+    ).filter((key) => !key.startsWith("__"));
 
     setData(
       emotionsList.map((emotion) => ({
@@ -113,38 +119,37 @@ export function BarChartComparisonCategory({
         cursoB: courseB ? Number(valuesB[emotion] ?? 0) : undefined,
         color: getEmotionColor(emotion),
       }))
-    )
-    setAllEmotions(emotionsList)
+    );
+    setAllEmotions(emotionsList);
     
     setSelectedEmotions((prev) => {
-      const prevSet = new Set(prev)
-      const missing = emotionsList.filter(e => !prevSet.has(e))
-      return missing.length > 0 ? [...prev, ...missing] : prev.filter(e => emotionsList.includes(e))
-    })
-  }, [rawDataA, rawDataB, courseAName, courseBName])
+      const prevSet = new Set(prev);
+      const missing = emotionsList.filter(e => !prevSet.has(e));
+      return missing.length > 0 ? [...prev, ...missing] : prev.filter(e => emotionsList.includes(e));
+    });
+  }, [rawDataA, rawDataB, courseAName, courseBName]);
 
   const toggleEmotion = (emotion: string) => {
     setSelectedEmotions((prev) =>
-      prev.includes(emotion) ? prev.filter((e) => e !== emotion) : [...prev, emotion]
-    )
-  }
+      prev.includes(emotion)
+        ? prev.filter((e) => e !== emotion)
+        : [...prev, emotion]
+    );
+  };
 
   const selectAll = () => {
-    setSelectedEmotions(allEmotions)
-  }
+    setSelectedEmotions(allEmotions);
+  };
 
   const deselectAll = () => {
-    setSelectedEmotions([])
-  }
-
-  const getEmotionColor = (emotion: string): string =>
-    getColor("emociones", emotion, "#6c757d")
+    setSelectedEmotions([]);
+  };
 
   const filteredEmotions = allEmotions.filter((emotion) =>
     emotion.toLowerCase().includes(searchTerm.toLowerCase())
-  )
-  const chartData = data.filter((item) => selectedEmotions.includes(item.name))
-  const hasCourseB = Boolean(courseBName)
+  );
+  const chartData = data.filter((item) => selectedEmotions.includes(item.name));
+  const hasCourseB = Boolean(courseBName);
 
   if (isLoading) {
     return (
@@ -160,7 +165,7 @@ export function BarChartComparisonCategory({
         </div>
         <div className="h-64 w-full bg-gray-100 rounded"></div>
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -178,7 +183,7 @@ export function BarChartComparisonCategory({
           <RefreshCw className="w-4 h-4 mr-2" /> Reintentar
         </button>
       </div>
-    )
+    );
   }
 
   if (!data || data.length === 0) {
@@ -188,9 +193,11 @@ export function BarChartComparisonCategory({
           <Smile className="mr-2 text-gray-700" />
           <h3 className="font-medium text-gray-800">{title}</h3>
         </div>
-        <div className="text-gray-500 text-center py-10">No hay datos de emociones disponibles.</div>
+        <div className="text-gray-500 text-center py-10">
+          No hay datos de neurodivergencias disponibles.
+        </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -206,7 +213,7 @@ export function BarChartComparisonCategory({
           <div className="flex justify-between items-center gap-2">
             <input
               type="text"
-              placeholder="Buscar emoción..."
+              placeholder="Buscar neurodivergencia..."
               className="px-3 py-1 text-sm border border-gray-200 rounded-md w-full max-w-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -218,7 +225,7 @@ export function BarChartComparisonCategory({
                 className="text-xs px-2 py-1 h-7 border-blue-200 text-blue-600 hover:bg-blue-50"
                 onClick={selectAll}
               >
-                Todos
+                Todas
               </Button>
               <Button
                 variant="outline"
@@ -226,7 +233,7 @@ export function BarChartComparisonCategory({
                 className="text-xs px-2 py-1 h-7 border-gray-200 text-gray-600 hover:bg-gray-50"
                 onClick={deselectAll}
               >
-                Ninguno
+                Ninguna
               </Button>
             </div>
           </div>
@@ -234,7 +241,7 @@ export function BarChartComparisonCategory({
           {/* Listado Scrollable de Badges */}
           <div className="flex flex-wrap gap-2 max-h-28 overflow-y-auto p-2 bg-gray-50/50 rounded-md border border-gray-100 scrollbar-thin">
             {filteredEmotions.length === 0 ? (
-              <span className="text-xs text-gray-400 p-1">No se encontraron emociones.</span>
+              <span className="text-xs text-gray-400 p-1">No se encontraron neurodivergencias.</span>
             ) : (
               filteredEmotions.map((emotion) => (
                 <Badge
@@ -345,5 +352,5 @@ export function BarChartComparisonCategory({
         )}
       </div>
     </div>
-  )
+  );
 }
