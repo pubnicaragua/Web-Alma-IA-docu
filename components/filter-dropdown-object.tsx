@@ -56,7 +56,7 @@ export function FilterDropdownObject({
         </DropdownMenuTrigger>
         <DropdownMenuContent
           align="start"
-          className="overflow-y-scroll lg:max-h-[320px] w-[250px] p-1"
+          className="overflow-y-auto max-h-[250px] w-[250px] p-1"
         >
           {options.map((option) => {
             const selected = isEqual(option, value);

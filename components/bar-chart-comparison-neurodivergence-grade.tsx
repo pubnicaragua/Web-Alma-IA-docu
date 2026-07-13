@@ -33,9 +33,10 @@ interface ComparisonData {
 interface BarChartComparisonNeurodivergenceGradeProps {
   title: string;
   gradoA: number;
-  gradoB?: number;
   courseAName?: string | null;
   courseBName?: string | null;
+  fechaDesde?: string;
+  fechaHasta?: string;
 }
 
 export function BarChartComparisonNeurodivergenceGrade({
@@ -44,6 +45,8 @@ export function BarChartComparisonNeurodivergenceGrade({
   gradoB,
   courseAName,
   courseBName,
+  fechaDesde,
+  fechaHasta,
 }: BarChartComparisonNeurodivergenceGradeProps) {
   const [rawDataA, setRawDataA] = useState<EmotionData[]>([]);
   const [rawDataB, setRawDataB] = useState<EmotionData[]>([]);
@@ -67,8 +70,8 @@ export function BarChartComparisonNeurodivergenceGrade({
       setIsLoading(true);
       setError(null);
       const [emotionsDataA, emotionsDataB] = await Promise.all([
-        fetchNeurodivergencesForGrade(currentGradoA),
-        currentGradoB ? fetchNeurodivergencesForGrade(currentGradoB) : Promise.resolve([]),
+        fetchNeurodivergencesForGrade(currentGradoA, fechaDesde, fechaHasta),
+        currentGradoB ? fetchNeurodivergencesForGrade(currentGradoB, fechaDesde, fechaHasta) : Promise.resolve([]),
       ]);
       if (requestId === currentRequest.current) {
         setRawDataA(emotionsDataA as unknown as EmotionData[]);
@@ -97,7 +100,7 @@ export function BarChartComparisonNeurodivergenceGrade({
     if (gradoA !== undefined) {
       fetchGradoData(gradoA, gradoB);
     }
-  }, [gradoA, gradoB]);
+  }, [gradoA, gradoB, fechaDesde, fechaHasta]);
 
   useEffect(() => {
     if (!rawDataA) return;

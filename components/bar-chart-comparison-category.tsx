@@ -36,6 +36,8 @@ interface BarChartComparisonCategoryProps {
   gradoB?: number
   courseAName?: string | null
   courseBName?: string | null
+  fechaDesde?: string
+  fechaHasta?: string
 }
 
 export function BarChartComparisonCategory({
@@ -44,6 +46,8 @@ export function BarChartComparisonCategory({
   gradoB,
   courseAName,
   courseBName,
+  fechaDesde,
+  fechaHasta,
 }: BarChartComparisonCategoryProps) {
   const [rawDataA, setRawDataA] = useState<EmotionData[]>([])
   const [rawDataB, setRawDataB] = useState<EmotionData[]>([])
@@ -64,8 +68,8 @@ export function BarChartComparisonCategory({
       setIsLoading(true)
       setError(null)
       const [emotionsDataA, emotionsDataB] = await Promise.all([
-        fetchEmotionsForGrade(currentGradoA),
-        currentGradoB ? fetchEmotionsForGrade(currentGradoB) : Promise.resolve([]),
+        fetchEmotionsForGrade(currentGradoA, fechaDesde, fechaHasta),
+        currentGradoB ? fetchEmotionsForGrade(currentGradoB, fechaDesde, fechaHasta) : Promise.resolve([]),
       ])
       if (requestId === currentRequest.current) {
         setRawDataA(emotionsDataA as unknown as EmotionData[])
@@ -91,7 +95,7 @@ export function BarChartComparisonCategory({
     if (gradoA !== undefined) {
       fetchGradoData(gradoA, gradoB)
     }
-  }, [gradoA, gradoB])
+  }, [gradoA, gradoB, fechaDesde, fechaHasta])
 
   useEffect(() => {
     if (!rawDataA) return;

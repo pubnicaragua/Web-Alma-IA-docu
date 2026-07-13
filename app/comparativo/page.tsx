@@ -46,7 +46,11 @@ export default function ComparativePage() {
     allCourses.filter(
       (course) => course.grados?.grado_id === levelBFilter?.grado_id
     ), [allCourses, levelBFilter]);
-  const yearOptions = ["2023", "2024", "2025"];
+  const currentYear = new Date().getFullYear();
+  const yearOptions = Array.from(
+    { length: currentYear - 2022 },
+    (_, i) => (2023 + i).toString()
+  );
   const monthOptions = [
     "Enero",
     "Febrero",
@@ -61,6 +65,25 @@ export default function ComparativePage() {
     "Noviembre",
     "Diciembre",
   ];
+
+  const monthMap: Record<string, number> = {
+    Enero: 1, Febrero: 2, Marzo: 3, Abril: 4, Mayo: 5, Junio: 6,
+    Julio: 7, Agosto: 8, Septiembre: 9, Octubre: 10, Noviembre: 11, Diciembre: 12
+  };
+
+  const getDatesFromFilters = (year: string, month: string) => {
+    const m = monthMap[month];
+    if (!year || !m) return { fechaDesde: undefined, fechaHasta: undefined };
+    
+    const fechaDesde = `${year}-01-01`;
+    const lastDay = new Date(Number(year), m, 0).getDate();
+    const monthStr = m.toString().padStart(2, '0');
+    const fechaHasta = `${year}-${monthStr}-${lastDay}`;
+    
+    return { fechaDesde, fechaHasta };
+  }
+
+  const { fechaDesde, fechaHasta } = useMemo(() => getDatesFromFilters(yearFilter, monthFilter), [yearFilter, monthFilter]);
 
   const loadData = async (schoolId: string) => {
     try {
@@ -201,6 +224,16 @@ export default function ComparativePage() {
           />
         </div>
 
+        {/* Indicador de Rango de Fechas */}
+        {fechaDesde && fechaHasta && (
+          <div className="mb-6 text-sm text-gray-600 bg-blue-50/50 p-3 rounded-md border border-blue-100 flex items-center gap-2">
+            <span className="font-semibold text-blue-800">Período analizado:</span>
+            <span>
+              {fechaDesde.split('-').reverse().join('/')} al {fechaHasta.split('-').reverse().join('/')}
+            </span>
+          </div>
+        )}
+
         {/* Gráficos de barras */}
         <div className="grid grid-cols-1 gap-6 mb-6">
           <BarChartComparisonCategory
@@ -209,6 +242,8 @@ export default function ComparativePage() {
             gradoB={levelBFilter?.grado_id}
             courseAName={courseAFilter?.nombre_curso ?? null}
             courseBName={courseBFilter?.nombre_curso ?? null}
+            fechaDesde={fechaDesde}
+            fechaHasta={fechaHasta}
           />
           <BarChartComparisonPatologie
             title="Patologías"
@@ -216,6 +251,8 @@ export default function ComparativePage() {
             gradoB={levelBFilter?.grado_id}
             courseAName={courseAFilter?.nombre_curso ?? null}
             courseBName={courseBFilter?.nombre_curso ?? null}
+            fechaDesde={fechaDesde}
+            fechaHasta={fechaHasta}
           />
           <BarChartComparisonNeurodivergenceGrade
             title="Neurodivergencias"
@@ -223,6 +260,8 @@ export default function ComparativePage() {
             gradoB={levelBFilter?.grado_id}
             courseAName={courseAFilter?.nombre_curso ?? null}
             courseBName={courseBFilter?.nombre_curso ?? null}
+            fechaDesde={fechaDesde}
+            fechaHasta={fechaHasta}
           />
         </div>
 

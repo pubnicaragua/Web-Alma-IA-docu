@@ -33,9 +33,10 @@ interface ComparisonData {
 interface BarChartComparisonPatologieProps {
   title: string;
   gradoA: number;
-  gradoB?: number;
   courseAName?: string | null;
   courseBName?: string | null;
+  fechaDesde?: string;
+  fechaHasta?: string;
 }
 
 export function BarChartComparisonPatologie({
@@ -44,6 +45,8 @@ export function BarChartComparisonPatologie({
   gradoB,
   courseAName,
   courseBName,
+  fechaDesde,
+  fechaHasta,
 }: BarChartComparisonPatologieProps) {
   const [rawDataA, setRawDataA] = useState<EmotionData[]>([]);
   const [rawDataB, setRawDataB] = useState<EmotionData[]>([]);
@@ -67,8 +70,8 @@ export function BarChartComparisonPatologie({
       setIsLoading(true);
       setError(null);
       const [emotionsDataA, emotionsDataB] = await Promise.all([
-        fetchPatologieForGrade(currentGradoA),
-        currentGradoB ? fetchPatologieForGrade(currentGradoB) : Promise.resolve([]),
+        fetchPatologieForGrade(currentGradoA, fechaDesde, fechaHasta),
+        currentGradoB ? fetchPatologieForGrade(currentGradoB, fechaDesde, fechaHasta) : Promise.resolve([]),
       ]);
       if (requestId === currentRequest.current) {
         setRawDataA(emotionsDataA as unknown as EmotionData[]);
@@ -97,7 +100,7 @@ export function BarChartComparisonPatologie({
     if (gradoA !== undefined) {
       fetchGradoData(gradoA, gradoB);
     }
-  }, [gradoA, gradoB]);
+  }, [gradoA, gradoB, fechaDesde, fechaHasta]);
 
   useEffect(() => {
     if (!rawDataA) return;
