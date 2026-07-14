@@ -629,3 +629,11 @@ export async function fetchfetchNeurodivergencesByDate(
     throw error;
   }
 }
+
+export async function fetchAvailableYears(schoolId: string): Promise<string[]> {
+  const params = new URLSearchParams({ colegio_id: schoolId });
+  const response = await fetchWithAuth(`/comparativa/anios-disponibles?${params.toString()}`, { method: 'GET' }, false);
+  if (!response.ok) { return [new Date().getFullYear().toString()]; }
+  const data = await response.json();
+  return Array.isArray(data) && data.length > 0 ? data.map(String) : [new Date().getFullYear().toString()];
+}

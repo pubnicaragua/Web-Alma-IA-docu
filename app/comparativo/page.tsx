@@ -11,6 +11,7 @@ import { FilterDropdownObject } from "@/components/filter-dropdown-object";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { Grade } from "@/services/grade-service";
 import { fetchCoursesForSchool, type SchoolCourse } from "@/services/course-service";
+import { fetchAvailableYears } from "@/services/home-service";
 import { useUser } from "@/middleware/user-context";
 import { Download } from "lucide-react";
 
@@ -31,8 +32,15 @@ export default function ComparativePage() {
   });
   const [courseAFilter, setCourseAFilter] = useState<SchoolCourse | null>(null);
   const [courseBFilter, setCourseBFilter] = useState<SchoolCourse | null>(null);
-  const [yearFilter, setYearFilter] = useState<string>("2025");
-  const [monthFilter, setMonthFilter] = useState<string>("Abril");
+  const currentYear = new Date().getFullYear().toString();
+  const currentMonthIndex = new Date().getMonth();
+  const monthOptions = [
+    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+  ];
+  
+  const [yearFilter, setYearFilter] = useState<string>(currentYear);
+  const [monthFilter, setMonthFilter] = useState<string>(monthOptions[currentMonthIndex]);
 
   // Opciones para los filtros
   const [levelOptions, setLevelOptions] = useState<Grade[]>([]);
@@ -46,25 +54,20 @@ export default function ComparativePage() {
     allCourses.filter(
       (course) => course.grados?.grado_id === levelBFilter?.grado_id
     ), [allCourses, levelBFilter]);
-  const currentYear = new Date().getFullYear();
-  const yearOptions = Array.from(
-    { length: currentYear - 2022 },
-    (_, i) => (2023 + i).toString()
-  );
-  const monthOptions = [
-    "Enero",
-    "Febrero",
-    "Marzo",
-    "Abril",
-    "Mayo",
-    "Junio",
-    "Julio",
-    "Agosto",
-    "Septiembre",
-    "Octubre",
-    "Noviembre",
-    "Diciembre",
-  ];
+  const [yearOptions, setYearOptions] = useState<string[]>([currentYear]);
+  
+  useEffect(() => {
+    if (selectedSchoolId) {
+      fetchAvailableYears(selectedSchoolId).then((years) => {
+        setYearOptions(years);
+        if (!years.includes(yearFilter) && years.length > 0) {
+          // Si el año actual existe en los disponibles, úsalo. Si no, usa el último (más reciente)
+          setYearFilter(years.includes(currentYear) ? currentYear : years[years.length - 1]);
+        }
+      });
+    }
+  }, [selectedSchoolId]);
+
 
   const monthMap: Record<string, number> = {
     Enero: 1, Febrero: 2, Marzo: 3, Abril: 4, Mayo: 5, Junio: 6,
