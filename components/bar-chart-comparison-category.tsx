@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import {
   BarChart,
   Bar,
@@ -9,6 +9,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Cell,
 } from "recharts"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -22,14 +23,35 @@ interface EmotionData {
   [emotion: string]: string | number // Ejemplo: "Ansiedad": 3, "Felicidad": 2
 }
 
-interface BarChartComparisonCategoryProps {
-  title: string
-  grado: number
-  courseName?: string | null
+interface ComparisonData {
+  name: string
+  cursoA: number
+  cursoB?: number
+  color: string
 }
 
-export function BarChartComparisonCategory({ title, grado, courseName }: BarChartComparisonCategoryProps) {
-  const [data, setData] = useState<EmotionData[]>([])
+interface BarChartComparisonCategoryProps {
+  title: string
+  gradoA: number
+  gradoB?: number
+  courseAName?: string | null
+  courseBName?: string | null
+  fechaDesde?: string
+  fechaHasta?: string
+}
+
+export function BarChartComparisonCategory({
+  title,
+  gradoA,
+  gradoB,
+  courseAName,
+  courseBName,
+  fechaDesde,
+  fechaHasta,
+}: BarChartComparisonCategoryProps) {
+  const [rawDataA, setRawDataA] = useState<EmotionData[]>([])
+  const [rawDataB, setRawDataB] = useState<EmotionData[]>([])
+  const [data, setData] = useState<ComparisonData[]>([])
   const [allEmotions, setAllEmotions] = useState<string[]>([])
   const [selectedEmotions, setSelectedEmotions] = useState<string[]>([])
   const [searchTerm, setSearchTerm] = useState("")
@@ -38,51 +60,72 @@ export function BarChartComparisonCategory({ title, grado, courseName }: BarChar
   const { toast } = useToast()
   const { getColor } = useColoresCatalog()
 
-  useEffect(() => {
-    loadData()
-  }, [grado, courseName])
+  const currentRequest = useRef(0)
 
-  const loadData = async () => {
+  const fetchGradoData = async (currentGradoA: number, currentGradoB?: number) => {
+    const requestId = ++currentRequest.current
     try {
       setIsLoading(true)
       setError(null)
-      const emotionsData = await fetchEmotionsForGrade(grado)
-      const uniqueEmotions = new Set<string>()
-
-      // Normalizar datos y recopilar todas las emociones
-      const filteredData = courseName
-        ? emotionsData.filter((item) => item.name === courseName)
-        : emotionsData
-      const normalizedData = filteredData.map((item) => {
-        const { name, ...emotions } = item
-        Object.keys(emotions).forEach((emotion) => uniqueEmotions.add(emotion))
-        return { name, ...emotions }
-      })
-
-      // Asegurar que cada entrada tenga todas las emociones con valor 0 si faltan
-      const completeData = normalizedData.map((item: any) => {
-        const completeItem: EmotionData = { name: item.name }
-        uniqueEmotions.forEach((emotion) => {
-          completeItem[emotion] = item[emotion] ?? 0
-        })
-        return completeItem
-      })
-
-      const emotionsList = Array.from(uniqueEmotions)
-      setData(completeData)
-      setAllEmotions(emotionsList)
-      setSelectedEmotions(emotionsList)
+      const [emotionsDataA, emotionsDataB] = await Promise.all([
+        fetchEmotionsForGrade(currentGradoA, fechaDesde, fechaHasta),
+        currentGradoB ? fetchEmotionsForGrade(currentGradoB, fechaDesde, fechaHasta) : Promise.resolve([]),
+      ])
+      if (requestId === currentRequest.current) {
+        setRawDataA(emotionsDataA as unknown as EmotionData[])
+        setRawDataB(emotionsDataB as unknown as EmotionData[])
+      }
     } catch (err) {
-      setError("No se pudieron cargar los datos de emociones. Intente nuevamente.")
-      toast({
-        title: "Error al cargar datos",
-        description: "No se pudieron cargar los datos de emociones. Intente nuevamente.",
-        variant: "destructive",
-      })
+      if (requestId === currentRequest.current) {
+        setError("No se pudieron cargar los datos de emociones. Intente nuevamente.")
+        toast({
+          title: "Error al cargar datos",
+          description: "No se pudieron cargar los datos de emociones. Intente nuevamente.",
+          variant: "destructive",
+        })
+      }
     } finally {
-      setIsLoading(false)
+      if (requestId === currentRequest.current) {
+        setIsLoading(false)
+      }
     }
   }
+
+  useEffect(() => {
+    if (gradoA !== undefined) {
+      fetchGradoData(gradoA, gradoB)
+    }
+  }, [gradoA, gradoB, fechaDesde, fechaHasta])
+
+  useEffect(() => {
+    if (!rawDataA) return;
+
+    const courseA = rawDataA.find((item) => item.name === courseAName) ?? rawDataA[0]
+    const courseB = courseBName
+      ? (rawDataB.find((item) => item.name === courseBName) ?? rawDataA.find((item) => item.name === courseBName))
+      : undefined
+    const { name: _courseAName, ...valuesA } = courseA ?? { name: "" }
+    const { name: _courseBName, ...valuesB } = courseB ?? { name: "" }
+    const emotionsList = Array.from(
+      new Set([...Object.keys(valuesA), ...Object.keys(valuesB)])
+    ).filter((key) => !key.startsWith("__"))
+
+    setData(
+      emotionsList.map((emotion) => ({
+        name: emotion,
+        cursoA: Number(valuesA[emotion] ?? 0),
+        cursoB: courseB ? Number(valuesB[emotion] ?? 0) : undefined,
+        color: getEmotionColor(emotion),
+      }))
+    )
+    setAllEmotions(emotionsList)
+    
+    setSelectedEmotions((prev) => {
+      const prevSet = new Set(prev)
+      const missing = emotionsList.filter(e => !prevSet.has(e))
+      return missing.length > 0 ? [...prev, ...missing] : prev.filter(e => emotionsList.includes(e))
+    })
+  }, [rawDataA, rawDataB, courseAName, courseBName])
 
   const toggleEmotion = (emotion: string) => {
     setSelectedEmotions((prev) =>
@@ -104,6 +147,8 @@ export function BarChartComparisonCategory({ title, grado, courseName }: BarChar
   const filteredEmotions = allEmotions.filter((emotion) =>
     emotion.toLowerCase().includes(searchTerm.toLowerCase())
   )
+  const chartData = data.filter((item) => selectedEmotions.includes(item.name))
+  const hasCourseB = Boolean(courseBName)
 
   if (isLoading) {
     return (
@@ -131,7 +176,7 @@ export function BarChartComparisonCategory({ title, grado, courseName }: BarChar
         </div>
         <div className="text-red-500 mb-4">{error}</div>
         <button
-          onClick={loadData}
+          onClick={() => fetchGradoData(gradoA, gradoB)}
           className="flex items-center justify-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
         >
           <RefreshCw className="w-4 h-4 mr-2" /> Reintentar
@@ -224,7 +269,7 @@ export function BarChartComparisonCategory({ title, grado, courseName }: BarChar
       <div className="h-72 w-full mt-2">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
-            data={data}
+            data={chartData}
             margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
             barCategoryGap={20}
           >
@@ -238,25 +283,70 @@ export function BarChartComparisonCategory({ title, grado, courseName }: BarChar
             />
             <YAxis tick={{ fontSize: 11, fill: "#4b5563" }} />
             <Tooltip
-              formatter={(value: number, name: string) => [`${value}`, name]}
-              contentStyle={{
-                borderRadius: "8px",
-                border: "none",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                fontSize: "12px",
+              cursor={{ fill: 'rgba(0,0,0,0.05)' }}
+              wrapperStyle={{ pointerEvents: 'auto', zIndex: 100 }}
+              content={({ active, payload, label }) => {
+                if (active && payload && payload.length) {
+                  const validPayload = payload
+                    .filter((p) => Number(p.value) > 0)
+                    .sort((a, b) => Number(b.value) - Number(a.value));
+                  
+                  if (validPayload.length === 0) return null;
+
+                  return (
+                    <div 
+                      className="bg-white border border-gray-100 rounded-lg shadow-lg max-h-[400px] overflow-y-auto w-56 scrollbar-thin scrollbar-thumb-gray-200"
+                      onWheel={(e) => e.stopPropagation()}
+                    >
+                      <p className="font-semibold text-gray-800 text-sm border-b p-3 sticky top-0 bg-white z-10 mb-2">
+                        {label}
+                      </p>
+                      <div className="flex flex-col gap-1.5 px-3 pb-3">
+                        {validPayload.map((entry, index) => (
+                          <div key={`item-${index}`} className="flex justify-between items-center text-xs">
+                            <div className="flex items-center gap-1.5 overflow-hidden">
+                              <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: entry.color }} />
+                              <span className="text-gray-600 truncate">
+                                {entry.name === "cursoA" ? courseAName : courseBName}
+                              </span>
+                            </div>
+                            <span className="font-semibold text-gray-700 ml-2 shrink-0">{entry.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
               }}
             />
-            {selectedEmotions.map((emotion) => (
-              <Bar
-                key={emotion}
-                dataKey={emotion}
-                name={emotion}
-                fill={getEmotionColor(emotion)}
-                radius={[4, 4, 0, 0]}
-              />
-            ))}
+            <Bar dataKey="cursoA" name={courseAName ?? "Curso"} radius={[4, 4, 0, 0]}>
+              {chartData.map((entry) => (
+                <Cell key={`a-${entry.name}`} fill={entry.color} />
+              ))}
+            </Bar>
+            {hasCourseB && (
+              <Bar dataKey="cursoB" name={courseBName ?? "Curso B"} radius={[4, 4, 0, 0]} fillOpacity={0.55}>
+                {chartData.map((entry) => (
+                  <Cell key={`b-${entry.name}`} fill={entry.color} />
+                ))}
+              </Bar>
+            )}
           </BarChart>
         </ResponsiveContainer>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-gray-600">
+        <span className="inline-flex items-center gap-2">
+          <span className="h-3 w-3 rounded-sm bg-gray-800" />
+          {courseAName ?? "Curso"} {hasCourseB ? "(barra izq)" : ""}
+        </span>
+        {hasCourseB && (
+          <span className="inline-flex items-center gap-2">
+            <span className="h-3 w-3 rounded-sm bg-gray-400" />
+            {courseBName} (barra der)
+          </span>
+        )}
       </div>
     </div>
   )

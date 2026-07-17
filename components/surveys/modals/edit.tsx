@@ -25,7 +25,7 @@ export function SurveyModalEdit({ survey }: any) {
             </Button>
             <Dialog open={isOpen} onOpenChange={onClose}>
                 <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader className="sticky top-0 bg-white z-10 pb-2">
+                    <DialogHeader className="sticky -top-6 -mx-6 px-6 pt-6 bg-white z-20 pb-2">
                         <div className="w-full flex items-center justify-between">
                             <DialogTitle className="text-xl font-semibold">
                                 Edición de Encuesta

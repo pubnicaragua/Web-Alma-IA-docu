@@ -89,7 +89,7 @@ export function SurveyModalResponses({ survey }: any) {
             </Button>
             <Dialog open={isOpen} onOpenChange={onClose}>
                 <DialogContent className="sm:max-w-3xl max-h-[90vh] min-h-[300px] overflow-y-auto block">
-                    <DialogHeader className="sticky top-0 bg-white z-10 pb-2">
+                    <DialogHeader className="sticky -top-6 -mx-6 px-6 pt-6 bg-white z-20 pb-2">
                         <div className="w-full flex items-center justify-between">
                             <DialogTitle className="text-xl font-semibold">
                                 Respuestas de la Encuesta

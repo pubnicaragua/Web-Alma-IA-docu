@@ -34,9 +34,9 @@ export function NoticeModalView({ avisoId, table = true }: any) {
     const resume = useMemo(
         () =>
             Object.entries(axios.data?.data?.resumen?.[0] ?? {})
-                .filter(([key]) => !['porcentaje_lectura', 'promedio_intentos'].includes(key))
+                .filter(([key, value]) => !['porcentaje_lectura', 'promedio_intentos'].includes(key) && Number(value) > 0)
                 .map(([key, value]) => ({
-                    name: key.replace("_", " "),
+                    name: key.replace(/total_?/i, "").replace(/_/g, " ").trim().replace(/^\w/, (c) => c.toUpperCase()),
                     value,
                 })),
         [axios.data]
@@ -86,12 +86,34 @@ export function NoticeModalView({ avisoId, table = true }: any) {
                         <div className="w-100 h-96">
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
+                                    <defs>
+                                        <filter id="label-bg" x="-0.1" y="-0.2" width="1.2" height="1.4">
+                                            <feFlood floodColor="#f1f5f9" floodOpacity="0.9" result="bg" />
+                                            <feMerge>
+                                                <feMergeNode in="bg" />
+                                                <feMergeNode in="SourceGraphic" />
+                                            </feMerge>
+                                        </filter>
+                                    </defs>
                                     <Pie
                                         data={resume}
                                         cx="50%"
                                         cy="50%"
-                                        labelLine={false}
-                                        label={({ name, value }) => `${name} ${((Number(value) / total) * 100).toFixed(0)}%`}
+                                        labelLine={{ stroke: '#94a3b8', strokeWidth: 1 }}
+                                        label={({ name, percent, x, y, textAnchor, fill }) => (
+                                            <text 
+                                                x={x} 
+                                                y={y} 
+                                                textAnchor={textAnchor} 
+                                                dominantBaseline="central" 
+                                                filter="url(#label-bg)"
+                                                fill={fill}
+                                                fontSize={13}
+                                                fontWeight="600"
+                                            >
+                                                {`${name} ${(percent * 100).toFixed(0)}%`}
+                                            </text>
+                                        )}
                                         outerRadius={120}
                                         fill="#8884d8"
                                         dataKey="value"
@@ -101,7 +123,13 @@ export function NoticeModalView({ avisoId, table = true }: any) {
                                         ))}
                                     </Pie>
                                     <Tooltip />
-                                    <Legend />
+                                    <Legend 
+                                        formatter={(value, entry: any) => (
+                                            <span className="bg-slate-100 px-2 py-1 rounded-md font-medium text-sm" style={{ color: entry?.color }}>
+                                                {value}
+                                            </span>
+                                        )}
+                                    />
                                 </PieChart>
                             </ResponsiveContainer>
                         </div>

@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Smile, RefreshCw, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { fetchPatologieForGrade } from "@/services/home-service";
+import { fetchNeurodivergencesForGrade } from "@/services/home-service";
 import { useColoresCatalog } from "@/hooks/use-colores";
 
 interface EmotionData {
@@ -30,7 +30,7 @@ interface ComparisonData {
   color: string;
 }
 
-interface BarChartComparisonPatologieProps {
+interface BarChartComparisonNeurodivergenceGradeProps {
   title: string;
   gradoA: number;
   courseAName?: string | null;
@@ -39,7 +39,7 @@ interface BarChartComparisonPatologieProps {
   fechaHasta?: string;
 }
 
-export function BarChartComparisonPatologie({
+export function BarChartComparisonNeurodivergenceGrade({
   title,
   gradoA,
   gradoB,
@@ -47,7 +47,7 @@ export function BarChartComparisonPatologie({
   courseBName,
   fechaDesde,
   fechaHasta,
-}: BarChartComparisonPatologieProps) {
+}: BarChartComparisonNeurodivergenceGradeProps) {
   const [rawDataA, setRawDataA] = useState<EmotionData[]>([]);
   const [rawDataB, setRawDataB] = useState<EmotionData[]>([]);
   const [data, setData] = useState<ComparisonData[]>([]);
@@ -60,7 +60,7 @@ export function BarChartComparisonPatologie({
   const { getColor } = useColoresCatalog();
 
   const getEmotionColor = (emotion: string): string =>
-    getColor("patologias", emotion, "#6c757d");
+    getColor("neurodivergencias", emotion, "#6c757d");
 
   const currentRequest = useRef(0);
 
@@ -70,8 +70,8 @@ export function BarChartComparisonPatologie({
       setIsLoading(true);
       setError(null);
       const [emotionsDataA, emotionsDataB] = await Promise.all([
-        fetchPatologieForGrade(currentGradoA, fechaDesde, fechaHasta),
-        currentGradoB ? fetchPatologieForGrade(currentGradoB, fechaDesde, fechaHasta) : Promise.resolve([]),
+        fetchNeurodivergencesForGrade(currentGradoA, fechaDesde, fechaHasta),
+        currentGradoB ? fetchNeurodivergencesForGrade(currentGradoB, fechaDesde, fechaHasta) : Promise.resolve([]),
       ]);
       if (requestId === currentRequest.current) {
         setRawDataA(emotionsDataA as unknown as EmotionData[]);
@@ -80,12 +80,12 @@ export function BarChartComparisonPatologie({
     } catch (err) {
       if (requestId === currentRequest.current) {
         setError(
-          "No se pudieron cargar los datos de patologias. Intente nuevamente."
+          "No se pudieron cargar los datos de neurodivergencias. Intente nuevamente."
         );
         toast({
           title: "Error al cargar datos",
           description:
-            "No se pudieron cargar los datos de patologias. Intente nuevamente.",
+            "No se pudieron cargar los datos de neurodivergencias. Intente nuevamente.",
           variant: "destructive",
         });
       }
@@ -197,7 +197,7 @@ export function BarChartComparisonPatologie({
           <h3 className="font-medium text-gray-800">{title}</h3>
         </div>
         <div className="text-gray-500 text-center py-10">
-          No hay datos de patologias disponibles.
+          No hay datos de neurodivergencias disponibles.
         </div>
       </div>
     );
@@ -216,7 +216,7 @@ export function BarChartComparisonPatologie({
           <div className="flex justify-between items-center gap-2">
             <input
               type="text"
-              placeholder="Buscar patología..."
+              placeholder="Buscar neurodivergencia..."
               className="px-3 py-1 text-sm border border-gray-200 rounded-md w-full max-w-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -244,7 +244,7 @@ export function BarChartComparisonPatologie({
           {/* Listado Scrollable de Badges */}
           <div className="flex flex-wrap gap-2 max-h-28 overflow-y-auto p-2 bg-gray-50/50 rounded-md border border-gray-100 scrollbar-thin">
             {filteredEmotions.length === 0 ? (
-              <span className="text-xs text-gray-400 p-1">No se encontraron patologías.</span>
+              <span className="text-xs text-gray-400 p-1">No se encontraron neurodivergencias.</span>
             ) : (
               filteredEmotions.map((emotion) => (
                 <Badge

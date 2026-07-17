@@ -127,9 +127,10 @@ function EmotionRadarCard({
   error,
   hasSelection,
 }: EmotionRadarCardProps) {
+  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const tooltipFontSize = 11;
-  const center = { x: 200, y: 200 };
-  const maxRadius = 120;
+  const center = { x: 300, y: 300 };
+  const maxRadius = 135;
   const maxValue = Math.max(...data.map((item) => Math.max(item.alumno, item.promedio)), 2);
   const angleStep = 360 / Math.max(data.length, 1);
 
@@ -166,8 +167,8 @@ function EmotionRadarCard({
 
     return {
       ...item,
-      x: center.x + (maxRadius + 28) * Math.sin(radian),
-      y: center.y - (maxRadius + 28) * Math.cos(radian),
+      x: center.x + (maxRadius + 60) * Math.sin(radian),
+      y: center.y - (maxRadius + 50) * Math.cos(radian),
       anchor,
     };
   }) as Array<(typeof data)[number] & { x: number; y: number; anchor: "middle" | "start" | "end" }>;
@@ -207,7 +208,23 @@ function EmotionRadarCard({
       ) : (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
           <div className="relative mx-auto w-full max-w-2xl overflow-hidden rounded-lg border border-gray-100">
-            <svg viewBox="0 0 400 400" width="100%" height="100%" className="min-h-[320px] bg-white">
+            <svg viewBox="0 0 600 600" width="100%" height="100%" className="min-h-[350px] bg-white overflow-visible">
+              <defs>
+                <linearGradient id="alumnoGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.4} />
+                  <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.1} />
+                </linearGradient>
+                <filter id="radarShadow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feDropShadow dx="0" dy="4" stdDeviation="6" floodOpacity="0.15" />
+                </filter>
+                <filter id="textBg" x="-15%" y="-25%" width="130%" height="150%">
+                  <feFlood floodColor="#f1f5f9" floodOpacity="1" result="bg" />
+                  <feMerge>
+                    <feMergeNode in="bg" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
               {[0.25, 0.5, 0.75, 1].map((scale) => (
                 <circle
                   key={scale}
@@ -252,7 +269,7 @@ function EmotionRadarCard({
 
               <polygon
                 points={buildPolygonPoints("promedio")}
-                fill="rgba(156, 163, 175, 0.22)"
+                fill="rgba(156, 163, 175, 0.15)"
                 stroke="#9ca3af"
                 strokeWidth="2"
                 strokeDasharray="5,3"
@@ -260,50 +277,69 @@ function EmotionRadarCard({
 
               <polygon
                 points={buildPolygonPoints("alumno")}
-                fill="rgba(59, 130, 246, 0.2)"
+                fill="url(#alumnoGradient)"
                 stroke="#3b82f6"
-                strokeWidth="2"
+                strokeWidth="2.5"
+                filter="url(#radarShadow)"
               />
 
               {data.map((item, index) => {
                 const alumnoPoint = valueToCoordinates(item.alumno, index);
                 const promedioPoint = valueToCoordinates(item.promedio, index);
+                const isHovered = hoveredItem === item.name;
 
                 return (
-                  <g key={item.name}>
+                  <g 
+                    key={item.name}
+                    onMouseEnter={() => setHoveredItem(item.name)}
+                    onMouseLeave={() => setHoveredItem(null)}
+                    className="cursor-pointer transition-all duration-200"
+                  >
                     <circle
                       cx={promedioPoint.x}
                       cy={promedioPoint.y}
-                      r="4"
-                      fill="white"
+                      r={isHovered ? "8" : "4"}
+                      fill={isHovered ? "#9ca3af" : "white"}
                       stroke="#9ca3af"
-                      strokeWidth="2"
-                    />
+                      strokeWidth={isHovered ? "3" : "2"}
+                    >
+                      <title>{item.name} (Promedio): {item.promedio.toFixed(1)}</title>
+                    </circle>
                     <circle
                       cx={alumnoPoint.x}
                       cy={alumnoPoint.y}
-                      r="5"
-                      fill="white"
+                      r={isHovered ? "10" : "5"}
+                      fill={isHovered ? "#3b82f6" : "white"}
                       stroke="#3b82f6"
-                      strokeWidth="2"
-                    />
+                      strokeWidth={isHovered ? "4" : "2"}
+                    >
+                      <title>{item.name} (Alumno): {item.alumno.toFixed(1)}</title>
+                    </circle>
                   </g>
                 );
               })}
 
-              {labels.map((label) => (
+              {labels.map((label) => {
+                const isHovered = hoveredItem === label.name;
+                return (
                 <text
                   key={label.name}
                   x={label.x}
                   y={label.y}
                   textAnchor={label.anchor as "start" | "middle" | "end"}
-                  fontSize="12"
-                  fontWeight="600"
+                  fontSize={isHovered ? "14" : "12"}
+                  fontWeight={isHovered ? "700" : "600"}
                   fill={label.color || FALLBACK_COLOR}
+                  filter={isHovered ? "url(#textBg)" : "none"}
+                  onMouseEnter={() => setHoveredItem(label.name)}
+                  onMouseLeave={() => setHoveredItem(null)}
+                  className="cursor-pointer transition-all duration-300"
+                  style={{ transform: isHovered ? "scale(1.1)" : "scale(1)", transformOrigin: `${label.x}px ${label.y}px` }}
                 >
                   {label.name}
                 </text>
-              ))}
+                );
+              })}
             </svg>
           </div>
 
@@ -322,9 +358,15 @@ function EmotionRadarCard({
                   const diff = item.alumno - item.promedio;
                   const diffClass =
                     diff > 0 ? "text-green-600" : diff < 0 ? "text-red-600" : "text-gray-500";
+                  const isHovered = hoveredItem === item.name;
 
                   return (
-                    <tr key={item.name} className="border-b border-gray-50">
+                    <tr 
+                      key={item.name} 
+                      className={`border-b border-gray-50 transition-colors duration-200 ${isHovered ? "bg-blue-100 shadow-sm" : ""}`}
+                      onMouseEnter={() => setHoveredItem(item.name)}
+                      onMouseLeave={() => setHoveredItem(null)}
+                    >
                       <td className="py-3 pr-3">
                         <div className="flex items-center gap-2">
                           <span

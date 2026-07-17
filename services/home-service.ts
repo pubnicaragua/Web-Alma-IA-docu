@@ -429,12 +429,16 @@ export async function fetchEmotionsByDate(date: string): Promise<Emotion[]> {
 }
 
 export async function fetchEmotionsForGrade(
-  grado_id: number
+  grado_id: number,
+  fecha_desde?: string,
+  fecha_hasta?: string
 ): Promise<Emotion[]> {
   try {
-    const response = await fetchWithAuth(
-      "/comparativa/emociones/grado?grado_id=" + grado_id,
-      {
+    let url = `/comparativa/emociones/grado?grado_id=${grado_id}`;
+    if (fecha_desde) url += `&fecha_desde=${fecha_desde}`;
+    if (fecha_hasta) url += `&fecha_hasta=${fecha_hasta}`;
+    
+    const response = await fetchWithAuth(url, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -457,12 +461,16 @@ export async function fetchEmotionsForGrade(
   }
 }
 export async function fetchPatologieForGrade(
-  grado_id: number
+  grado_id: number,
+  fecha_desde?: string,
+  fecha_hasta?: string
 ): Promise<Emotion[]> {
   try {
-    const response = await fetchWithAuth(
-      "/comparativa/patologias/grado?grado_id=" + grado_id,
-      {
+    let url = `/comparativa/patologias/grado?grado_id=${grado_id}`;
+    if (fecha_desde) url += `&fecha_desde=${fecha_desde}`;
+    if (fecha_hasta) url += `&fecha_hasta=${fecha_hasta}`;
+    
+    const response = await fetchWithAuth(url, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -475,6 +483,39 @@ export async function fetchPatologieForGrade(
 
       throw new Error(
         `Error al obtener emociones: ${response.status} - ${errorText}`
+      );
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function fetchNeurodivergencesForGrade(
+  grado_id: number,
+  fecha_desde?: string,
+  fecha_hasta?: string
+): Promise<Emotion[]> {
+  try {
+    let url = `/comparativa/neurodivergencias/grado?grado_id=${grado_id}`;
+    if (fecha_desde) url += `&fecha_desde=${fecha_desde}`;
+    if (fecha_hasta) url += `&fecha_hasta=${fecha_hasta}`;
+
+    const response = await fetchWithAuth(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+
+      throw new Error(
+        `Error al obtener neurodivergencias: ${response.status} - ${errorText}`
       );
     }
 
@@ -587,4 +628,12 @@ export async function fetchfetchNeurodivergencesByDate(
   } catch (error) {
     throw error;
   }
+}
+
+export async function fetchAvailableYears(schoolId: string): Promise<string[]> {
+  const params = new URLSearchParams({ colegio_id: schoolId });
+  const response = await fetchWithAuth(`/comparativa/anios-disponibles?${params.toString()}`, { method: 'GET' }, false);
+  if (!response.ok) { return [new Date().getFullYear().toString()]; }
+  const data = await response.json();
+  return Array.isArray(data) && data.length > 0 ? data.map(String) : [new Date().getFullYear().toString()];
 }

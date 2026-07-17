@@ -5,54 +5,88 @@ import { AppLayout } from "@/components/layout/app-layout";
 import { Button } from "@/components/ui/button";
 import { BarChartComparisonCategory } from "@/components/bar-chart-comparison-category";
 import { BarChartComparisonPatologie } from "@/components/bar-chart-comparison-patologie";
+import { BarChartComparisonNeurodivergenceGrade } from "@/components/bar-chart-comparison-neurodivergence-grade";
 import { FilterDropdown } from "@/components/filter-dropdown";
 import { FilterDropdownObject } from "@/components/filter-dropdown-object";
-import { LineChartComparison } from "@/components/line-chart-comparison";
-import { LineChartHistory } from "@/components/line-chart-history";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { Grade } from "@/services/grade-service";
 import { fetchCoursesForSchool, type SchoolCourse } from "@/services/course-service";
+import { fetchAvailableYears } from "@/services/home-service";
 import { useUser } from "@/middleware/user-context";
 import { Download } from "lucide-react";
 
 export default function ComparativePage() {
   const { selectedSchoolId } = useUser();
   // Estados para los filtros
-  const [levelFilter, setLevelFilter] = useState<Grade>({
+  const [levelAFilter, setLevelAFilter] = useState<Grade>({
     grado_id: 1,
     nombre: "Primero",
     creado_por: 1,
     estado: "activo",
   });
-  const [courseFilter, setCourseFilter] = useState<SchoolCourse | null>(null);
-  const [yearFilter, setYearFilter] = useState<string>("2025");
-  const [monthFilter, setMonthFilter] = useState<string>("Abril");
+  const [levelBFilter, setLevelBFilter] = useState<Grade>({
+    grado_id: 1,
+    nombre: "Primero",
+    creado_por: 1,
+    estado: "activo",
+  });
+  const [courseAFilter, setCourseAFilter] = useState<SchoolCourse | null>(null);
+  const [courseBFilter, setCourseBFilter] = useState<SchoolCourse | null>(null);
+  const currentYear = new Date().getFullYear().toString();
+  const currentMonthIndex = new Date().getMonth();
+  const monthOptions = [
+    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+  ];
+  
+  const [yearFilter, setYearFilter] = useState<string>(currentYear);
+  const [monthFilter, setMonthFilter] = useState<string>(monthOptions[currentMonthIndex]);
 
   // Opciones para los filtros
   const [levelOptions, setLevelOptions] = useState<Grade[]>([]);
   const [allCourses, setAllCourses] = useState<SchoolCourse[]>([]);
 
-  const courseOptions = useMemo(() => [
-    { curso_id: 0, nombre_curso: "Todos", grados: levelFilter },
-    ...allCourses.filter(
-      (course) => course.grados?.grado_id === levelFilter?.grado_id
-    ),
-  ], [allCourses, levelFilter]);
-  const yearOptions = ["2023", "2024", "2025"];
-  const monthOptions = [
-    "Enero",
-    "Febrero",
-    "Marzo",
-    "Abril",
-    "Mayo",
-    "Junio",
-    "Julio",
-    "Agosto",
-    "Septiembre",
-    "Octubre",
-    "Noviembre",
-    "Diciembre",
-  ];
+  const courseAOptions = useMemo(() =>
+    allCourses.filter(
+      (course) => course.grados?.grado_id === levelAFilter?.grado_id
+    ), [allCourses, levelAFilter]);
+  const courseBOptions = useMemo(() =>
+    allCourses.filter(
+      (course) => course.grados?.grado_id === levelBFilter?.grado_id
+    ), [allCourses, levelBFilter]);
+  const [yearOptions, setYearOptions] = useState<string[]>([currentYear]);
+  
+  useEffect(() => {
+    if (selectedSchoolId) {
+      fetchAvailableYears(selectedSchoolId).then((years) => {
+        setYearOptions(years);
+        if (!years.includes(yearFilter) && years.length > 0) {
+          // Si el año actual existe en los disponibles, úsalo. Si no, usa el último (más reciente)
+          setYearFilter(years.includes(currentYear) ? currentYear : years[years.length - 1]);
+        }
+      });
+    }
+  }, [selectedSchoolId]);
+
+
+  const monthMap: Record<string, number> = {
+    Enero: 1, Febrero: 2, Marzo: 3, Abril: 4, Mayo: 5, Junio: 6,
+    Julio: 7, Agosto: 8, Septiembre: 9, Octubre: 10, Noviembre: 11, Diciembre: 12
+  };
+
+  const getDatesFromFilters = (year: string, month: string) => {
+    const m = monthMap[month];
+    if (!year || !m) return { fechaDesde: undefined, fechaHasta: undefined };
+    
+    const fechaDesde = `${year}-01-01`;
+    const lastDay = new Date(Number(year), m, 0).getDate();
+    const monthStr = m.toString().padStart(2, '0');
+    const fechaHasta = `${year}-${monthStr}-${lastDay}`;
+    
+    return { fechaDesde, fechaHasta };
+  }
+
+  const { fechaDesde, fechaHasta } = useMemo(() => getDatesFromFilters(yearFilter, monthFilter), [yearFilter, monthFilter]);
 
   const loadData = async (schoolId: string) => {
     try {
@@ -66,16 +100,23 @@ export default function ComparativePage() {
       );
       setAllCourses(courses);
       setLevelOptions(grades);
-      setLevelFilter((current) =>
+      setLevelAFilter((current) =>
         grades.some((grade) => grade.grado_id === current.grado_id)
           ? current
           : grades[0] ?? current
       );
-      setCourseFilter(null);
+      setLevelBFilter((current) =>
+        grades.some((grade) => grade.grado_id === current.grado_id)
+          ? current
+          : grades[1] ?? grades[0] ?? current
+      );
+      setCourseAFilter(null);
+      setCourseBFilter(null);
     } catch (err) {
       setAllCourses([]);
       setLevelOptions([]);
-      setCourseFilter(null);
+      setCourseAFilter(null);
+      setCourseBFilter(null);
     }
   };
 
@@ -85,40 +126,28 @@ export default function ComparativePage() {
   }, [selectedSchoolId]);
 
   useEffect(() => {
-    if (
-      courseFilter?.curso_id &&
-      courseFilter.grados?.grado_id !== levelFilter?.grado_id
-    ) {
-      setCourseFilter(null);
-    }
-  }, [courseFilter, levelFilter]);
+    setCourseAFilter((current) =>
+      current && courseAOptions.some((course) => course.curso_id === current.curso_id)
+        ? current
+        : courseAOptions[0] ?? null
+    );
+  }, [courseAOptions]);
 
-  // ESTADOS INDEPENDIENTES para los cursos seleccionados en cada gráfico de líneas
-  const [selectedCoursesComparison, setSelectedCoursesComparison] = useState<
-    string[]
-  >(["vencidas", "atendidas"]);
-  const [selectedCoursesHistory, setSelectedCoursesHistory] = useState<
-    string[]
-  >(["vencidas", "atendidas"]);
+  useEffect(() => {
+    setCourseBFilter((current) =>
+      current && courseBOptions.some((course) => course.curso_id === current.curso_id)
+        ? current
+        : courseBOptions[0] ?? null
+    );
+  }, [courseBOptions]);
 
-  const handleToggleCourseComparison = (course: string) => {
-    if (selectedCoursesComparison.includes(course)) {
-      setSelectedCoursesComparison(
-        selectedCoursesComparison.filter((c) => c !== course)
+  useEffect(() => {
+    if (courseAFilter?.curso_id && courseAFilter.curso_id === courseBFilter?.curso_id) {
+      setCourseBFilter(
+        courseBOptions.find((course) => course.curso_id !== courseAFilter.curso_id) ?? null
       );
-    } else {
-      setSelectedCoursesComparison([...selectedCoursesComparison, course]);
     }
-  };
-  const handleToggleCourseHistory = (course: string) => {
-    if (selectedCoursesHistory.includes(course)) {
-      setSelectedCoursesHistory(
-        selectedCoursesHistory.filter((c) => c !== course)
-      );
-    } else {
-      setSelectedCoursesHistory([...selectedCoursesHistory, course]);
-    }
-  };
+  }, [courseAFilter, courseBFilter, courseBOptions]);
 
   // Función para imprimir la sección de comparativos (nativa)
   const comparativoRef = useRef<HTMLDivElement>(null);
@@ -151,20 +180,36 @@ export default function ComparativePage() {
         </div>
 
         {/* Filtros */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
           <FilterDropdownObject
-            label="Nivel"
+            label="Nivel A"
             options={levelOptions}
-            value={levelFilter}
-            onChange={setLevelFilter}
+            value={levelAFilter}
+            onChange={setLevelAFilter}
             labelKey="nombre"
             idKey="grado_id"
           />
           <FilterDropdownObject
-            label="Curso"
-            options={courseOptions}
-            value={courseFilter ?? courseOptions[0]}
-            onChange={setCourseFilter}
+            label="Curso A"
+            options={courseAOptions}
+            value={courseAFilter ?? courseAOptions[0]}
+            onChange={setCourseAFilter}
+            labelKey="nombre_curso"
+            idKey="curso_id"
+          />
+          <FilterDropdownObject
+            label="Nivel B"
+            options={levelOptions}
+            value={levelBFilter}
+            onChange={setLevelBFilter}
+            labelKey="nombre"
+            idKey="grado_id"
+          />
+          <FilterDropdownObject
+            label="Curso B"
+            options={courseBOptions}
+            value={courseBFilter ?? courseBOptions[0]}
+            onChange={setCourseBFilter}
             labelKey="nombre_curso"
             idKey="curso_id"
           />
@@ -182,37 +227,48 @@ export default function ComparativePage() {
           />
         </div>
 
+        {/* Indicador de Rango de Fechas */}
+        {fechaDesde && fechaHasta && (
+          <div className="mb-6 text-sm text-gray-600 bg-blue-50/50 p-3 rounded-md border border-blue-100 flex items-center gap-2">
+            <span className="font-semibold text-blue-800">Período analizado:</span>
+            <span>
+              {fechaDesde.split('-').reverse().join('/')} al {fechaHasta.split('-').reverse().join('/')}
+            </span>
+          </div>
+        )}
+
         {/* Gráficos de barras */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div className="grid grid-cols-1 gap-6 mb-6">
           <BarChartComparisonCategory
             title="Emociones"
-            grado={levelFilter?.grado_id}
-            courseName={courseFilter?.curso_id ? courseFilter.nombre_curso : null}
+            gradoA={levelAFilter?.grado_id}
+            gradoB={levelBFilter?.grado_id}
+            courseAName={courseAFilter?.nombre_curso ?? null}
+            courseBName={courseBFilter?.nombre_curso ?? null}
+            fechaDesde={fechaDesde}
+            fechaHasta={fechaHasta}
           />
           <BarChartComparisonPatologie
-            title="Patologias"
-            grado={levelFilter?.grado_id}
-            courseName={courseFilter?.curso_id ? courseFilter.nombre_curso : null}
+            title="Patologías"
+            gradoA={levelAFilter?.grado_id}
+            gradoB={levelBFilter?.grado_id}
+            courseAName={courseAFilter?.nombre_curso ?? null}
+            courseBName={courseBFilter?.nombre_curso ?? null}
+            fechaDesde={fechaDesde}
+            fechaHasta={fechaHasta}
+          />
+          <BarChartComparisonNeurodivergenceGrade
+            title="Neurodivergencias"
+            gradoA={levelAFilter?.grado_id}
+            gradoB={levelBFilter?.grado_id}
+            courseAName={courseAFilter?.nombre_curso ?? null}
+            courseBName={courseBFilter?.nombre_curso ?? null}
+            fechaDesde={fechaDesde}
+            fechaHasta={fechaHasta}
           />
         </div>
 
-        {/* Gráficos de líneas, cada uno con su estado independiente */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <div className="mb-6">
-            <LineChartComparison
-              title="Gestor Alertas Hoy"
-              selectedCourses={selectedCoursesComparison}
-              onToggleCourse={handleToggleCourseComparison}
-            />
-          </div>
-          <div className="mb-6">
-            <LineChartHistory
-              title="Gestor Historial"
-              selectedCourses={selectedCoursesHistory}
-              onToggleCourse={handleToggleCourseHistory}
-            />
-          </div>
-        </div>
+        {/* Alertas del período y Gestor Historial ocultos: este módulo compara cursos. */}
       </div>
     </AppLayout>
   );

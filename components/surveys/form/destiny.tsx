@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SSRPagination } from "@/components/utils/pagination-sr";
+import { Input } from "@/components/ui/input";
 import { DESTINY_TYPES, NOTICE_TYPES } from "@/constants/notices";
 
 export function SurveyFormDestiny({ form, metaInit }: any) {
@@ -33,6 +34,7 @@ export function SurveyFormDestiny({ form, metaInit }: any) {
     const [grades, setGrades] = useState<any[]>([]);
 
     const [selectAlumnos, setSelectAlumnos] = useState<any[]>([]);
+    const [searchAlumno, setSearchAlumno] = useState<string>('');
     const [filters, setFilters] = useState(metaInit ?? {
         colegio_id: '',
         curso_id: '',
@@ -45,7 +47,7 @@ export function SurveyFormDestiny({ form, metaInit }: any) {
     const pagination = usePaginationSR<ApiStudent>({
         route: "/alumnos",
         filters: filters,
-        perPage: 10,
+        perPage: (Boolean(filters.curso_id) && noticeTypeId == 4) ? 1000 : 10,
         enabled: Boolean(filters.curso_id) && noticeTypeId == 4 && Boolean(selectedSchoolId)
     });
 
@@ -106,11 +108,25 @@ export function SurveyFormDestiny({ form, metaInit }: any) {
     }, [noticeTypeId, filters, selectAlumnos]);
 
     const alumnos = useMemo(() => {
-        return pagination.data.map((student) => ({
+        let list = pagination.data.map((student) => ({
             alumno_id: student.alumno_id,
             nombre_completo: `${student.personas.nombres} ${student.personas.apellidos}`,
-        })) || []
-    }, [pagination.data]);
+        })) || [];
+        
+        if (searchAlumno.trim()) {
+            list = list.filter(a => a.nombre_completo.toLowerCase().includes(searchAlumno.toLowerCase()));
+        }
+        
+        list.sort((a, b) => {
+            const isASelected = selectAlumnos.includes(a.alumno_id);
+            const isBSelected = selectAlumnos.includes(b.alumno_id);
+            if (isASelected && !isBSelected) return -1;
+            if (!isASelected && isBSelected) return 1;
+            return a.nombre_completo.localeCompare(b.nombre_completo);
+        });
+        
+        return list;
+    }, [pagination.data, searchAlumno, selectAlumnos]);
 
     const filteredCourses = useMemo(() => {
         if (!courses.length) return [];
@@ -223,6 +239,15 @@ export function SurveyFormDestiny({ form, metaInit }: any) {
                 {noticeTypeId == 4 && (
                     <div className="col-span-2">
                         <div className="w-full">
+                            <div className="mb-4">
+                                <Input
+                                    placeholder="Buscar alumno por nombre..."
+                                    value={searchAlumno}
+                                    onChange={(e) => setSearchAlumno(e.target.value)}
+                                    className="max-w-sm"
+                                    disabled={!Boolean(filters.curso_id) || isCatalogLoading}
+                                />
+                            </div>
                             <Table>
                                 <TableHeader>
                                     <TableRow>

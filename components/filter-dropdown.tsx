@@ -44,7 +44,7 @@ export function FilterDropdown({
             <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="overflow-y-scroll lg:max-h-[320px] w-[250px] p-1">
+        <DropdownMenuContent align="start" className="overflow-y-auto max-h-[250px] w-[250px] p-1">
           {options.map((option) => {
             const isSelected = value === option;
             return (

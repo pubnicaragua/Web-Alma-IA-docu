@@ -36,10 +36,11 @@ export async function getNotificationCount(colegioId?: string): Promise<number> 
       resueltas: number;
       cerradas: number;
       anuladas: number;
+      no_leidas?: number;
     };
 
-    // Usar 'pendientes' para la campanita, ya que son las que requieren atención  
-    const count = data.pendientes || 0;
+    // Usar 'no_leidas' para la campanita, ya que el usuario espera que bajen al verlas
+    const count = data.no_leidas ?? data.pendientes ?? 0;
 
     cacheService.set(cacheKey, count, 2 * 60 * 1000);
 
