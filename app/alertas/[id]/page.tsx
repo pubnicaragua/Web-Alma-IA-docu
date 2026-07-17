@@ -13,6 +13,7 @@ import { AlertBinnacleSection } from "@/components/alerts/detail-sections/binnac
 import { AlertInfoSection } from "@/components/alerts/detail-sections/info";
 import ErrorBoundary from "@/components/utils/error-bountdry"
 import { AlertStudentSection } from "@/components/alerts/detail-sections/student";
+import { invalidateNotificationCache } from "@/services/cache-service";
 import { useAxios } from "@/hooks/use-axios";
 import { useUser } from "@/middleware/user-context";
 
@@ -31,14 +32,18 @@ export default function AlertDetailPage() {
 
   useEffect(() => {
     (async function () {
-      if (hasSearchParam(searchParams, "notifications")) {
-        try {
-          const id = Number(searchParams.get("notifications"));
-          await changeLeida(id);
-        } catch (error) { }
-      }
+      try {
+        const alertId = Number(id);
+        if (!isNaN(alertId)) {
+          await changeLeida(alertId);
+          if (selectedSchoolId) {
+            invalidateNotificationCache(selectedSchoolId);
+            window.dispatchEvent(new CustomEvent('refresh-notifications'));
+          }
+        }
+      } catch (error) { }
     })();
-  }, []);
+  }, [id, selectedSchoolId]);
 
   useEffect(() => {
     axios.refetch();
@@ -47,7 +52,11 @@ export default function AlertDetailPage() {
   const handleSaveChanges = async (data: any) => {
     if (!alert) return;
     try {
-      axios.refetch()
+      axios.refetch();
+      if (selectedSchoolId) {
+        invalidateNotificationCache(selectedSchoolId);
+        window.dispatchEvent(new CustomEvent('refresh-notifications'));
+      }
       setIsEditModalOpen(false);
     } catch { }
   };

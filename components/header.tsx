@@ -312,7 +312,7 @@ function HeaderInner({ toggleSidebar }: HeaderProps) {
 
         {pathname !== "/select-school" && (
           <div className="flex items-center justify-between w-full max-w-2xl mx-4">
-            <h2 className="hidden md:block text-xl font-semibold text-white mr-4 min-w-[180px] max-w-[220px] leading-tight">
+            <h2 className="hidden md:block text-xl font-semibold text-white mr-4 min-w-[180px] max-w-[220px] leading-tight drop-shadow-md">
               {dataSchool.fantasyName}
             </h2>
 
@@ -357,7 +357,7 @@ function HeaderInner({ toggleSidebar }: HeaderProps) {
               tabIndex={canOpenAlerts ? 0 : undefined}
               aria-label={`Notificaciones: ${notificationCount}`}
             >
-              <Bell className="text-white h-7 w-7 hidden sm:block" />
+              <Bell className="text-white h-7 w-7 hidden sm:block drop-shadow-md" />
               {isClient && notificationCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                   {notificationCount}
@@ -392,10 +392,10 @@ function HeaderInner({ toggleSidebar }: HeaderProps) {
                     </>
                   ) : (
                     <>
-                      <p className="text-base font-medium leading-tight">
+                      <p className="text-base font-medium leading-tight drop-shadow-md">
                         {getFullName()}
                       </p>
-                      <p className="text-sm text-white/80 leading-tight">
+                      <p className="text-sm text-white/90 leading-tight drop-shadow-md font-medium">
                         {getUserRole()}
                       </p>
                     </>

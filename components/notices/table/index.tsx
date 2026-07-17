@@ -63,11 +63,11 @@ export function NoticeTable({ filters }: Readonly<PropTypes>) {
                             <TableHeader className="bg-[#89C2F8]">
                                 <TableRow>
                                     <TableHead className="text-white">ID</TableHead>
-                                    <TableHead className="text-white">TÃ­tulo</TableHead>
+                                    <TableHead className="text-white">Título</TableHead>
                                     <TableHead className="text-white">Tipo Aviso</TableHead>
                                     <TableHead className="text-white">Tipo Persona</TableHead>
                                     <TableHead className="text-white">Palabras Clave</TableHead>
-                                    <TableHead className="text-white">Fecha ProgramaciÃ³n</TableHead>
+                                    <TableHead className="text-white">Fecha Programación</TableHead>
                                     <TableHead className="text-white text-center">Estado</TableHead>
                                     <TableHead className="text-white text-center">Acciones</TableHead>
                                 </TableRow>
