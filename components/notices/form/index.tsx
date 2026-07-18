@@ -102,10 +102,12 @@ export function NoticeForm({
         formData.append('descripcion', values.aviso.descripcion);
         formData.append('palabras_claves', values.aviso.palabras_clave);
 
-        const fechaProgramacion =
-            values.aviso.tipo_programacion === "Ahora"
-                ? new Date().toISOString()
-                : new Date(values.aviso.fecha_programacion ?? "").toISOString();
+        let fechaProgramacion = values.aviso.fecha_programacion ?? "";
+        if (values.aviso.tipo_programacion === "Ahora") {
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            fechaProgramacion = now.toISOString().slice(0, 16);
+        }
 
         formData.append("fecha_programacion", fechaProgramacion);
         formData.append('archivo', values.aviso.archivo ?? '');
