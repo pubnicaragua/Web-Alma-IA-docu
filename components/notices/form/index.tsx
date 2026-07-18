@@ -117,12 +117,8 @@ export function NoticeForm({
         try {
             const response = await axios.execute<ServerActionResponse>(() =>
                 avisoId
-                    ? window.axios.patch(`/avisosApp/avisos/actualizar/${avisoId}`, formData, {
-                        headers: { 'Content-Type': 'multipart/form-data' },
-                    })
-                    : window.axios.post('/avisosApp/avisos/crear', formData, {
-                        headers: { 'Content-Type': 'multipart/form-data' },
-                    })
+                    ? window.axios.patch(`/avisosApp/avisos/actualizar/${avisoId}`, formData)
+                    : window.axios.post('/avisosApp/avisos/crear', formData)
             );
 
             toast({

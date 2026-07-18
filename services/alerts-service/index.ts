@@ -249,7 +249,7 @@ export function mapApiAlertsToAlerts(apiAlerts: ApiAlert[]): Alert[] {
       const isRead = Boolean(apiAlert.leida);
       const message = apiAlert.mensaje || "";
       const isAnonymous = Boolean(apiAlert.anonimo);
-      const studentImage = apiAlert.alumnos?.url_foto_perfil || "/confident-businessman.png";
+      const studentImage = apiAlert.alumnos?.url_foto_perfil || "/anonymous-student-avatar.png";
 
       return {
         id: apiAlert.alumno_alerta_id.toString(),
