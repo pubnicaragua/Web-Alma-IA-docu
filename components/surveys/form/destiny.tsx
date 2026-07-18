@@ -38,7 +38,8 @@ export function SurveyFormDestiny({ form, metaInit }: any) {
     const [filters, setFilters] = useState(metaInit ?? {
         colegio_id: '',
         curso_id: '',
-        grado_id: ''
+        grado_id: '',
+        shourh: ''
     });
 
     const noticeTypeId = form.watch('destinatarios.tipo_id');
@@ -47,9 +48,16 @@ export function SurveyFormDestiny({ form, metaInit }: any) {
     const pagination = usePaginationSR<ApiStudent>({
         route: "/alumnos",
         filters: filters,
-        perPage: (Boolean(filters.curso_id) && noticeTypeId == 4) ? 1000 : 10,
+        perPage: 10,
         enabled: Boolean(filters.curso_id) && noticeTypeId == 4 && Boolean(selectedSchoolId)
     });
+
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            setFilters((prev: any) => ({ ...prev, shourh: searchAlumno }));
+        }, 500);
+        return () => clearTimeout(timeout);
+    }, [searchAlumno]);
 
     useEffect(() => {
         if (!noticeTypeId) return;
@@ -57,7 +65,8 @@ export function SurveyFormDestiny({ form, metaInit }: any) {
         setFilters({
             colegio_id: selectedSchoolId ?? '',
             curso_id: '',
-            grado_id: ''
+            grado_id: '',
+            shourh: ''
         });
         setSelectAlumnos([]);
     }, [noticeTypeId]);
@@ -113,10 +122,6 @@ export function SurveyFormDestiny({ form, metaInit }: any) {
             nombre_completo: `${student.personas.nombres} ${student.personas.apellidos}`,
         })) || [];
         
-        if (searchAlumno.trim()) {
-            list = list.filter(a => a.nombre_completo.toLowerCase().includes(searchAlumno.toLowerCase()));
-        }
-        
         list.sort((a, b) => {
             const isASelected = selectAlumnos.includes(a.alumno_id);
             const isBSelected = selectAlumnos.includes(b.alumno_id);
@@ -126,7 +131,7 @@ export function SurveyFormDestiny({ form, metaInit }: any) {
         });
         
         return list;
-    }, [pagination.data, searchAlumno, selectAlumnos]);
+    }, [pagination.data, selectAlumnos]);
 
     const filteredCourses = useMemo(() => {
         if (!courses.length) return [];

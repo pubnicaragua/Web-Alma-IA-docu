@@ -38,6 +38,7 @@ export function AlertsTable({ filters }: Readonly<PropTypes>) {
         route: "/alumnos/alertas",
         filters: computedFilters,
         perPage: 25,
+        enabled: !!selectedSchoolId,
     });
 
     const formatted = useMemo(

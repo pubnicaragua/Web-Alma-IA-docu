@@ -13,7 +13,7 @@ import { AlertBinnacleSection } from "@/components/alerts/detail-sections/binnac
 import { AlertInfoSection } from "@/components/alerts/detail-sections/info";
 import ErrorBoundary from "@/components/utils/error-bountdry"
 import { AlertStudentSection } from "@/components/alerts/detail-sections/student";
-import { invalidateNotificationCache } from "@/services/cache-service";
+import { invalidateNotificationCache } from "@/services/header-service";
 import { useAxios } from "@/hooks/use-axios";
 import { useUser } from "@/middleware/user-context";
 
