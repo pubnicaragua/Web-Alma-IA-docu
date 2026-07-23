@@ -61,9 +61,8 @@ async function handleProxyRequest(
       target: apiUrl,
     });
 
-    const hasBody =
-      request.bodyUsed === false &&
-      request.headers.has("content-length");
+    const methodsWithBody = ["POST", "PUT", "PATCH"];
+    const hasBody = methodsWithBody.includes(request.method);
 
     const headers = new Headers();
     request.headers.forEach((v, k) => {
