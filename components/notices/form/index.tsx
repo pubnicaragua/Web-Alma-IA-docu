@@ -110,7 +110,9 @@ export function NoticeForm({
         }
 
         formData.append("fecha_programacion", fechaProgramacion);
-        formData.append('archivo', values.aviso.archivo ?? '');
+        if (values.aviso.archivo instanceof File) {
+            formData.append('archivo', values.aviso.archivo);
+        }
         formData.append('aviso_destinatario_tipo', values.destinatarios.aviso_destinatario_tipo);
         formData.append('aviso_tipo_id', values.destinatarios.aviso_tipo_id.toString());
         formData.append("destinario", values.destinatarios.destinatarios.toString());
