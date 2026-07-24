@@ -19,6 +19,12 @@ export function createApiAxiosInstante(): AxiosInstance {
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
+        // When sending FormData (file uploads), let the browser set the
+        // correct Content-Type with the multipart boundary. The default
+        // "application/json" header would prevent multer from parsing files.
+        if (config.data instanceof FormData) {
+            delete config.headers['Content-Type'];
+        }
         return config;
     });
 

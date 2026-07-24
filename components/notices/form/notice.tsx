@@ -87,9 +87,29 @@ export function NoticeFormNotice({ form, programacion = '' }: Readonly<PropTypes
                 <FormError message={avisoErrors?.descripcion?.message} />
             </div>
             <div className="col-span-3">
-                <Label className="text-sm text-gray-500">
+                <Label className="text-sm text-gray-500 mb-1 block">
                     Subir archivo (opcional)
                 </Label>
+                {typeof form.watch('aviso.archivo') === 'string' && form.watch('aviso.archivo') ? (
+                    <div className="mb-2 p-2 bg-blue-50 border border-blue-200 rounded flex items-center justify-between text-xs">
+                        <span className="text-blue-700 font-medium truncate">
+                            📎 Archivo actual adjunto
+                        </span>
+                        <a
+                            href={form.watch('aviso.archivo')}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 underline font-semibold ml-2 hover:text-blue-800"
+                        >
+                            Ver archivo adjunto
+                        </a>
+                    </div>
+                ) : null}
+                {form.watch('aviso.archivo') instanceof File ? (
+                    <div className="mb-2 p-2 bg-green-50 border border-green-200 rounded text-xs text-green-700 font-medium truncate">
+                        📄 Nuevo archivo seleccionado: {(form.watch('aviso.archivo') as File).name}
+                    </div>
+                ) : null}
                 <Controller
                     name="aviso.archivo"
                     control={form.control}

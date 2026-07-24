@@ -15,7 +15,23 @@ export function NoticeTableItem({ notice }: any) {
     return (
         <TableRow>
             <TableCell>{notice.aviso_id}</TableCell>
-            <TableCell>{notice.aviso_titulo}</TableCell>
+            <TableCell>
+                <div>
+                    <span className="font-medium">{notice.aviso_titulo}</span>
+                    {notice.aviso_ruta_archivo ? (
+                        <div className="mt-1">
+                            <a
+                                href={notice.aviso_ruta_archivo}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center text-xs text-blue-600 hover:underline gap-1"
+                            >
+                                📎 Ver archivo
+                            </a>
+                        </div>
+                    ) : null}
+                </div>
+            </TableCell>
             <TableCell>{notice.tipo_aviso}</TableCell>
             <TableCell>
                 <span className="capitalize">

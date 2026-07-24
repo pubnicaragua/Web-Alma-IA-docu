@@ -71,8 +71,14 @@ async function handleProxyRequest(
 
     let body: BodyInit | null = null;
     const isAudit = pathJoined === "auditoria";
+    const reqContentType = request.headers.get("content-type") || "";
+    const isMultipart = reqContentType.includes("multipart/form-data");
 
-    if (request.method === "POST" && isAudit) {
+    if (isMultipart && hasBody) {
+      body = await request.formData();
+      headers.delete("content-type");
+      headers.delete("content-length");
+    } else if (request.method === "POST" && isAudit) {
       try {
         const json = await request.json();
         const clientIp = getClientIp(request);
